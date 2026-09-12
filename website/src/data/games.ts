@@ -18,7 +18,7 @@ import type { Game } from '../types'
  * │ NOVA advertises no play link at all, which is the honest state.          │
  * └──────────────────────────────────────────────────────────────────────────┘
  */
-const RUNOUT_PLAY_URL = ''
+const RUNOUT_PLAY_URL = 'https://runout-game.netlify.app'
 
 /**
  * RUNOUT's source. It lives in the same monorepo as this website:
