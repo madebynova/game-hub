@@ -85,6 +85,11 @@ export const games: Game[] = [
     playUrl: RUNOUT_PLAY_URL || undefined,
     githubUrl: RUNOUT_SOURCE_URL || undefined,
 
+    artwork: '/games/runout/cover.svg',
+    banner: '/games/runout/banner.svg',
+    artworkAlt:
+      'A suburban street at night: a porch light on, someone at the door with a torch, and a figure sprinting along the pavement towards a parked van.',
+
     // Everything below is taken from RUNOUT's own README — no invented copy.
     description:
       'A solo ding-dong-and-run extraction game. Ring the bell, get seen legging it, lose them, and decide whether to risk one more house before you run for the van.',
