@@ -1,0 +1,194 @@
+.game {
+  padding-block: var(--s-5) var(--s-8);
+}
+
+.game__back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-sm);
+  font-weight: 550;
+  color: var(--text-muted);
+  transition: color var(--fast) var(--ease);
+}
+
+.game__back:hover {
+  color: var(--text);
+}
+
+.game__back-icon {
+  transform: rotate(180deg);
+  transition: transform var(--fast) var(--ease);
+}
+
+.game__back:hover .game__back-icon {
+  transform: rotate(180deg) translateX(2px);
+}
+
+/* Masthead -------------------------------------------------------------- */
+
+.game__head {
+  display: grid;
+  gap: var(--s-5);
+  margin-top: var(--s-5);
+}
+
+.game__art {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.game__art .art {
+  border-radius: 0;
+}
+
+.game__intro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-3);
+}
+
+.game__title {
+  font-size: var(--t-2xl);
+  letter-spacing: -0.035em;
+}
+
+.game__subtitle {
+  font-size: var(--t-sm);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-top: calc(var(--s-2) * -1);
+}
+
+.game__desc {
+  max-width: 62ch;
+  color: var(--text-muted);
+  font-size: var(--t-md);
+}
+
+.game__intro .actions {
+  margin-top: var(--s-2);
+}
+
+/* Sections -------------------------------------------------------------- */
+
+.game__sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-7);
+  margin-top: var(--s-8);
+}
+
+.game__section-title {
+  font-size: var(--t-lg);
+  padding-bottom: var(--s-3);
+  margin-bottom: var(--s-5);
+  border-bottom: 1px solid var(--line);
+}
+
+.game__prose {
+  display: grid;
+  gap: var(--s-4);
+  max-width: 70ch;
+  color: var(--text-muted);
+}
+
+.game__features {
+  display: grid;
+  gap: var(--s-3);
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 900px;
+}
+
+.game__features li {
+  position: relative;
+  padding: var(--s-3) var(--s-4) var(--s-3) var(--s-6);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+  font-size: var(--t-sm);
+  color: var(--text-muted);
+}
+
+.game__features li::before {
+  content: '';
+  position: absolute;
+  left: var(--s-4);
+  top: 1.25em;
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  background: var(--accent);
+}
+
+.game__controls {
+  display: grid;
+  gap: 0;
+  max-width: 640px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.game__control {
+  display: grid;
+  grid-template-columns: minmax(140px, 190px) 1fr;
+  gap: var(--s-4);
+  align-items: baseline;
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-1);
+}
+
+.game__control:last-child {
+  border-bottom: 0;
+}
+
+.game__control dd {
+  margin: 0;
+  font-size: var(--t-sm);
+  color: var(--text-muted);
+}
+
+.game__control kbd {
+  display: inline-block;
+  padding: 2px var(--s-2);
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--r-sm);
+  background: var(--surface-3);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--text);
+  white-space: nowrap;
+}
+
+/* Narrow screens: a fixed key column starves the description, so stack them. */
+@media (max-width: 559px) {
+  .game__control {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-2);
+  }
+}
+
+@media (min-width: 640px) {
+  .game__features {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .game__head {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: var(--s-7);
+  }
+
+  .game__title {
+    font-size: var(--t-3xl);
+  }
+}

@@ -1,0 +1,7 @@
+.library__note {
+  margin-top: var(--s-7);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--line);
+  font-size: var(--t-sm);
+  color: var(--text-faint);
+}
