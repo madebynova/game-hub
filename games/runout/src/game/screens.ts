@@ -2,6 +2,7 @@ import type { Stage } from '../engine/stage';
 import type { RunSummary } from './run';
 import type { SaveData } from './save';
 import { UPGRADES, upgradeCost } from './upgrades';
+import { jobEffects, type Job } from './jobs';
 
 export interface Button {
   id: string;
@@ -111,12 +112,17 @@ export function drawSummary(stage: Stage, summary: RunSummary, save: SaveData): 
   );
 
   const rows: Array<[string, string, string]> = [
+    ['JOB', summary.jobName, '#7dd3fc'],
     ['DOORBELLS RUNG', `${summary.doorbells}`, '#e6e9f0'],
     ['CLIPS LANDED', `${summary.clips}`, '#e6e9f0'],
     ['PEAK HEAT', `${summary.maxHeat}`, summary.maxHeat > 75 ? '#f87171' : '#e6e9f0'],
     ['TIME OUT THERE', `${Math.floor(summary.duration / 60)}:${Math.floor(summary.duration % 60).toString().padStart(2, '0')}`, '#e6e9f0'],
     [won ? 'BANKED' : 'LOST', `$${won ? summary.stash : summary.stash - summary.recovered}`, won ? '#4ade80' : '#f87171'],
   ];
+
+  if (summary.quotaBonus > 0) {
+    rows.push(['JOB BONUS', `$${summary.quotaBonus}`, '#fbbf24']);
+  }
 
   if (!won && summary.recovered > 0) {
     rows.push(['SALVAGED FROM THE DRAINPIPE', `$${summary.recovered}`, '#4ade80']);
@@ -150,6 +156,155 @@ export function drawSummary(stage: Stage, summary: RunSummary, save: SaveData): 
   ctx.fillText(`TOTAL BANKED  $${save.cash}`, cx, y + 12);
 
   return [primaryButton(stage, 'TO THE GARAGE', cx, y + 62, '[ E ]')];
+}
+
+// -------------------------------------------------------------------- jobs
+
+/**
+ * Pick the night. Every card says what it pays, what it costs to take, and the
+ * concrete things it changes — so the choice is made on readable trade-offs
+ * rather than on which number is biggest.
+ */
+export function drawJobSelect(stage: Stage, save: SaveData, offers: readonly Job[], message: string): ButtonList {
+  const { ctx, width, height } = stage;
+  backdrop(stage);
+
+  const buttons: ButtonList = [];
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  const top = Math.max(48, height / 2 - 280);
+
+  ctx.font = '900 32px system-ui, sans-serif';
+  ctx.fillStyle = '#e6e9f0';
+  ctx.fillText('TONIGHT’S WORK', width / 2, top);
+
+  ctx.font = '700 18px system-ui, sans-serif';
+  ctx.fillStyle = '#4ade80';
+  ctx.fillText(`$${save.cash} banked`, width / 2, top + 32);
+
+  ctx.font = '600 12px system-ui, sans-serif';
+  ctx.fillStyle = message ? '#f87171' : '#64748b';
+  ctx.fillText(message || 'Click a job, or press 1-3. The fence takes their cut up front.', width / 2, top + 56);
+
+  const columns = width > 1000 ? 3 : 1;
+  const cardW = columns === 1 ? Math.min(560, width - 60) : Math.min(300, (width - 70) / columns - 14);
+  const cardH = columns === 1 ? 124 : 250;
+  const gap = 14;
+  const gridW = columns * cardW + (columns - 1) * gap;
+  const startX = width / 2 - gridW / 2;
+  const startY = top + 84;
+
+  offers.forEach((job, index) => {
+    const column = index % columns;
+    const row = Math.floor(index / columns);
+    const x = startX + column * (cardW + gap);
+    const y = startY + row * (cardH + gap);
+    const affordable = save.cash >= job.entryCost;
+
+    ctx.fillStyle = 'rgba(14, 18, 28, 0.92)';
+    roundRect(ctx, x, y, cardW, cardH, 12);
+    ctx.fill();
+    ctx.strokeStyle = affordable ? riskColor(job.risk) : 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.textAlign = 'left';
+    ctx.font = '800 14px system-ui, sans-serif';
+    ctx.fillStyle = affordable ? '#e6e9f0' : '#64748b';
+    ctx.fillText(`${index + 1}. ${job.name}`, x + 14, y + 22);
+
+    // Risk pips, so danger reads before any of the text does.
+    for (let pip = 0; pip < 4; pip++) {
+      ctx.fillStyle = pip < job.risk ? riskColor(job.risk) : 'rgba(255,255,255,0.1)';
+      roundRect(ctx, x + cardW - 68 + pip * 14, y + 15, 10, 8, 2);
+      ctx.fill();
+    }
+
+    ctx.font = '800 20px system-ui, sans-serif';
+    ctx.fillStyle = affordable ? '#4ade80' : '#475569';
+    ctx.fillText(`PAYS x${job.payMultiplier}`, x + 14, y + 48);
+
+    ctx.font = '700 12px system-ui, sans-serif';
+    ctx.fillStyle = job.entryCost === 0 ? '#4ade80' : affordable ? '#fbbf24' : '#f87171';
+    ctx.fillText(job.entryCost === 0 ? 'NO CUT — FREE TO TAKE' : `CUT: $${job.entryCost}`, x + 14, y + 68);
+
+    // The reasons a job is dangerous are the whole point of the card, so they
+    // are shown at every width — stacked under the price on a tall card, beside
+    // it on a wide one.
+    const effects = jobEffects(job).slice(0, 4);
+    if (columns > 1) {
+      ctx.font = '600 11px system-ui, sans-serif';
+      ctx.fillStyle = '#8b94a8';
+      let lineY = wrapText(ctx, job.blurb, x + 14, y + 90, cardW - 28, 14);
+
+      ctx.fillStyle = '#cbd5e1';
+      lineY += 6;
+      for (const effect of effects) {
+        ctx.fillText(`· ${effect}`, x + 14, lineY);
+        lineY += 15;
+      }
+
+      ctx.fillStyle = '#64748b';
+      ctx.font = '600 10px system-ui, sans-serif';
+      wrapText(ctx, `Suits: ${job.suits}`, x + 14, y + cardH - 32, cardW - 28, 12);
+    } else {
+      const right = x + cardW * 0.42;
+      // Leave the top-right corner clear for the risk pips.
+      const rightW = cardW - (right - x) - 86;
+
+      ctx.font = '600 11px system-ui, sans-serif';
+      ctx.fillStyle = '#8b94a8';
+      let lineY = wrapText(ctx, job.blurb, right, y + 22, rightW, 13);
+
+      ctx.fillStyle = '#cbd5e1';
+      lineY += 4;
+      for (const effect of effects) {
+        ctx.fillText(`· ${effect}`, right, lineY);
+        lineY += 14;
+      }
+
+      ctx.font = '600 10px system-ui, sans-serif';
+      ctx.fillStyle = '#64748b';
+      wrapText(ctx, `Suits: ${job.suits}`, x + 14, y + cardH - 26, cardW * 0.4 - 14, 11);
+    }
+
+    if (!affordable) {
+      ctx.textAlign = 'right';
+      ctx.font = '700 11px system-ui, sans-serif';
+      ctx.fillStyle = '#f87171';
+      ctx.fillText(`NEED $${job.entryCost - save.cash} MORE`, x + cardW - 14, y + cardH - 14);
+    }
+
+    buttons.push({ id: `job:${job.id}`, rect: { x, y, w: cardW, h: cardH }, enabled: affordable });
+  });
+
+  ctx.textAlign = 'center';
+  ctx.font = '600 11px system-ui, sans-serif';
+  ctx.fillStyle = '#475569';
+  const rows = Math.ceil(offers.length / columns);
+  ctx.fillText(
+    'Only the stash you are carrying is ever at risk. Banked cash is safe.',
+    width / 2,
+    startY + rows * (cardH + gap) + 16,
+  );
+
+  return buttons;
+}
+
+const ROLE_COLORS: Record<string, string> = {
+  MOBILITY: '#7dd3fc',
+  ENDURANCE: '#4ade80',
+  STEALTH: '#a3e635',
+  INSURANCE: '#fbbf24',
+  INFO: '#c084fc',
+  TOOLS: '#fb923c',
+};
+
+const RISK_COLORS = ['#4ade80', '#4ade80', '#fbbf24', '#fb923c', '#f87171'] as const;
+
+function riskColor(risk: number): string {
+  return RISK_COLORS[Math.min(Math.max(risk, 0), 4)] ?? '#4ade80';
 }
 
 // -------------------------------------------------------------------- shop
@@ -214,6 +369,13 @@ export function drawShop(stage: Stage, save: SaveData, message: string): ButtonL
     ctx.fillStyle = '#e6e9f0';
     ctx.fillText(`${index + 1}. ${upgrade.name}`, x + 14, y + 22);
 
+    // One-word role, so what kind of build this belongs to reads instantly.
+    ctx.textAlign = 'right';
+    ctx.font = '800 9px system-ui, sans-serif';
+    ctx.fillStyle = ROLE_COLORS[upgrade.role] ?? '#8b94a8';
+    ctx.fillText(upgrade.role, x + cardW - 14, y + 22);
+    ctx.textAlign = 'left';
+
     ctx.font = '600 11px system-ui, sans-serif';
     ctx.fillStyle = '#8b94a8';
     ctx.fillText(upgrade.tagline, x + 14, y + 40);
@@ -245,7 +407,7 @@ export function drawShop(stage: Stage, save: SaveData, message: string): ButtonL
 
   ctx.textAlign = 'center';
   const goY = startY + rows * (cardH + gapY) + 34;
-  buttons.push(primaryButton(stage, 'START NEXT RUN', width / 2, goY, '[ E ]'));
+  buttons.push(primaryButton(stage, 'PICK TONIGHT’S JOB', width / 2, goY, '[ E ]'));
 
   ctx.font = '600 11px system-ui, sans-serif';
   ctx.fillStyle = '#475569';
@@ -302,7 +464,7 @@ function wrapText(
   y: number,
   maxWidth: number,
   lineHeight: number,
-): void {
+): number {
   const words = text.split(' ');
   let line = '';
   let cursorY = y;
@@ -318,6 +480,7 @@ function wrapText(
     }
   }
   if (line) ctx.fillText(line, x, cursorY);
+  return cursorY + lineHeight;
 }
 
 function roundRect(
