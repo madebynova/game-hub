@@ -21,6 +21,8 @@ export interface EventContext {
   /** Seconds of night left. */
   timeLeft: number;
   housesRung: number;
+  /** False while the street already has its patrol, or is in the quiet window. */
+  canPatrol: boolean;
   toast: (text: string, color?: string) => void;
   spawn: (kind: ChaserKind, x: number, y: number, roams?: boolean) => void;
   shake: (amount: number) => void;
@@ -180,7 +182,7 @@ const EVENTS: readonly EventDef[] = [
   },
   {
     id: 'watch-patrol',
-    weight: (ctx) => (ctx.heat > 40 ? 22 : 0),
+    weight: (ctx) => (ctx.canPatrol && ctx.heat > 40 ? 22 : 0),
     run: (ctx) => {
       const fromLeft = chance(0.5);
       const x = fromLeft ? 60 : WORLD.width - 60;
@@ -193,7 +195,7 @@ const EVENTS: readonly EventDef[] = [
   },
   {
     id: 'security',
-    weight: (ctx) => (ctx.heat > 74 ? 20 : 0),
+    weight: (ctx) => (ctx.canPatrol && ctx.heat > 74 ? 20 : 0),
     run: (ctx) => {
       const y = (WORLD.roadTop + WORLD.roadBottom) / 2;
       ctx.spawn('SECURITY', WORLD.width - 80, y, true);

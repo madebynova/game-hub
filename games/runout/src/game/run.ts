@@ -12,7 +12,7 @@ import {
   updateChaser,
   type ChaseContext,
 } from './chasers';
-import { DECOY, HEAT, LIGHT, NOISE, RING, RUN, WORLD, type ChaserKind } from './config';
+import { DECOY, HEAT, LIGHT, NOISE, PATROL, RING, RUN, WORLD, type ChaserKind } from './config';
 import { EventDirector } from './events';
 import { Player } from './player';
 import type { Loadout } from './upgrades';
@@ -120,6 +120,8 @@ export class Run {
   private sightModifier = 1;
   private sightModifierTimer = 0;
   private patrolsSpawned = 0;
+  /** Quiet window after a patrol leaves; no new one arrives while this runs. */
+  private patrolCooldown = 0;
   private decoyCooldown = 0;
   private stepSound = 0;
   private heatStingAt = 0;
@@ -207,6 +209,17 @@ export class Run {
     return base * this.loadout.noiseMultiplier;
   }
 
+  /**
+   * Whether the street is allowed another patrol right now. One at a time (two
+   * once things are critical), and never during the quiet window that escaping
+   * one earns you.
+   */
+  get canSpawnPatrol(): boolean {
+    if (this.patrolCooldown > 0) return false;
+    const cap = this.heat >= 78 ? PATROL.maxAtCriticalHeat : PATROL.maxOnStreet;
+    return this.chasers.filter((chaser) => chaser.roams).length < cap;
+  }
+
   /** True when the player actually bought firecrackers this run. */
   get hasDecoys(): boolean {
     return this.loadout.decoys > 0;
@@ -275,6 +288,7 @@ export class Run {
       heat: this.heat,
       timeLeft: this.timeLeft,
       housesRung: this.doorbells,
+      canPatrol: this.canSpawnPatrol,
       toast: (text, color) => this.toast(text, color),
       spawn: (kind, x, y, roams) => this.addChaser(kind, x, y, null, 0, roams),
       shake: (amount) => this.camera.addShake(amount),
@@ -564,7 +578,15 @@ export class Run {
     // night long every time you came near. New pressure arrives as new people.
     for (let i = this.chasers.length - 1; i >= 0; i--) {
       const chaser = this.chasers[i];
-      if (chaser?.done) this.chasers.splice(i, 1);
+      if (!chaser?.done) continue;
+
+      if (chaser.roams) {
+        // You lost a patrol. That is supposed to be worth something.
+        this.patrolCooldown = PATROL.cooldownAfterLeaving;
+        this.toast('PATROL HAS MOVED ON', '#a3e635');
+        audio.allClear();
+      }
+      this.chasers.splice(i, 1);
     }
   }
 
@@ -685,6 +707,8 @@ export class Run {
       this.toast('SUNRISE — THE STREET IS WAKING UP', '#fb7185');
     }
 
+    this.patrolCooldown = Math.max(0, this.patrolCooldown - step);
+
     if (this.sightModifierTimer > 0) {
       this.sightModifierTimer -= step;
       if (this.sightModifierTimer <= 0) this.sightModifier = 1;
@@ -695,6 +719,9 @@ export class Run {
   private updatePatrolPressure(): void {
     const due = HEAT.patrolThresholds.filter((threshold) => this.heat >= threshold).length;
     if (due <= this.patrolsSpawned) return;
+    // Hold the threshold rather than spending it: the patrol still owes you a
+    // visit, it just isn't allowed to arrive on top of the one you just lost.
+    if (!this.canSpawnPatrol) return;
 
     this.patrolsSpawned = due;
     const y = (WORLD.roadTop + WORLD.roadBottom) / 2;

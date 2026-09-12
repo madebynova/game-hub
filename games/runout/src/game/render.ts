@@ -295,11 +295,15 @@ export class Renderer {
     ctx.save();
     ctx.translate(player.x, player.y + bob);
 
-    // Body.
+    // Body, with a pale outline no chaser has. Colour alone was not enough to
+    // tell you apart from a chaser at a glance mid-chase.
     ctx.fillStyle = '#7dd3fc';
     ctx.beginPath();
     ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = 'rgba(248, 252, 255, 0.95)';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
 
     // Hood pointing where you are headed.
     ctx.fillStyle = '#0ea5e9';

@@ -221,6 +221,16 @@ export interface ChaserSpec {
   lead: number;
   /** How far a searcher fans out from the last known position. */
   searchSpread: number;
+  /**
+   * How sharply they can change direction, as a velocity damping rate. The
+   * player's is 14 (PLAYER.accel). Anything lower turns wider than you do, so
+   * corners cost them ground — which is what makes the neighbourhood's geometry
+   * an escape tool instead of scenery. Chasers used to set velocity directly,
+   * meaning they pivoted instantly while the player carried momentum: the
+   * pursuer was more agile than the pursued, and cutting a corner only ever
+   * cost the runner speed.
+   */
+  agility: number;
   speed: number;
   sight: number;
   /** Seconds of pursuit before they run out of steam. */
@@ -236,6 +246,7 @@ export const CHASERS: Record<ChaserKind, ChaserSpec> = {
   // Slower than your sprint: outrunnable, if you have the stamina.
   RESIDENT: {
     kind: 'RESIDENT',
+    agility: 10,
     burstSeconds: 0,
     tiredSpeed: 1,
     tactic: 'DIRECT',
@@ -252,6 +263,7 @@ export const CHASERS: Record<ChaserKind, ChaserSpec> = {
   },
   ANGRY: {
     kind: 'ANGRY',
+    agility: 9,
     burstSeconds: 0,
     tiredSpeed: 1,
     tactic: 'DIRECT',
@@ -260,7 +272,13 @@ export const CHASERS: Record<ChaserKind, ChaserSpec> = {
     label: 'FURIOUS HOMEOWNER',
     speed: 288,
     sight: 520,
-    patience: 11.5,
+    /**
+     * Was 11.5, which outlasted the player's entire 5.5s stamina bar — the only
+     * possible answer was to loop them, which is what made every chase feel like
+     * forced juking. Still clearly more dogged than the EASY resident's 8.5, so
+     * ALERT stays a step up from EASY.
+     */
+    patience: 10,
     giveUpDistance: 820,
     searchTime: 3,
     radius: 16,
@@ -269,8 +287,9 @@ export const CHASERS: Record<ChaserKind, ChaserSpec> = {
   // Faster than you. You cannot outrun a dog — you have to break its line of sight.
   DOG: {
     kind: 'DOG',
+    agility: 5.5,
     burstSeconds: 1.9,
-    tiredSpeed: 0.9,
+    tiredSpeed: 0.8,
     tactic: 'SCENT',
     lead: 0,
     searchSpread: 70,
@@ -285,6 +304,7 @@ export const CHASERS: Record<ChaserKind, ChaserSpec> = {
   },
   WATCH: {
     kind: 'WATCH',
+    agility: 8,
     burstSeconds: 0,
     tiredSpeed: 1,
     tactic: 'INTERCEPT',
@@ -297,10 +317,13 @@ export const CHASERS: Record<ChaserKind, ChaserSpec> = {
     giveUpDistance: 980,
     searchTime: 4,
     radius: 16,
-    color: '#67e8f9',
+    // Hi-vis vest green. Was cyan, which read as the same colour as the player's
+    // sky blue in a chase — you could lose track of which dot was you.
+    color: '#a3e635',
   },
   SECURITY: {
     kind: 'SECURITY',
+    agility: 7.5,
     burstSeconds: 0,
     tiredSpeed: 1,
     tactic: 'INTERCEPT',
@@ -356,6 +379,36 @@ export const STEERING = {
    * a wall. Sidestepping cannot solve that; the target has to be given up on.
    */
   abandonAfter: 1.1,
+};
+
+/**
+ * Coming out of a door and having a look round before the chase proper starts.
+ *
+ * Patience is meant to measure how long someone will pursue you, but it was
+ * also being burned during this initial look — at up to 3.9x while searching.
+ * A dog only has 4.3s of it, so roughly one second of not immediately seeing
+ * you was enough to send it home: measured, 12 out of 12 kennel dogs gave up
+ * without ever entering a chase. Patience now holds still until they either
+ * lay eyes on you or this runs out.
+ */
+export const ACQUIRE_GRACE = 2.6;
+
+/**
+ * Patrol pressure.
+ *
+ * Patrols used to arrive purely on the event timer — the watch-patrol event is
+ * roughly a fifth of every event roll above Heat 40, and nothing checked whether
+ * one was already out or whether the player had just shaken one off. Escaping
+ * therefore bought nothing: another turned up within the minute. Breaking line
+ * of sight is supposed to be a win, so a patrol leaving now buys real quiet.
+ */
+export const PATROL = {
+  /** Most roaming patrols out at once. */
+  maxOnStreet: 1,
+  /** ...and at CRITICAL Heat, when the street should feel busier. */
+  maxAtCriticalHeat: 2,
+  /** Quiet window after one gives up and leaves. */
+  cooldownAfterLeaving: 30,
 };
 
 export const DECOY = {

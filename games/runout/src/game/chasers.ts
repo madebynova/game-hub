@@ -1,6 +1,6 @@
 import type { Rect, Vec2 } from '../engine/math';
-import { dist, resolveCircleRect, segmentHitsRect } from '../engine/math';
-import { CHASERS, GIVE_UP, LIGHT, STEERING, type ChaserKind, type ChaserSpec } from './config';
+import { damp, dist, resolveCircleRect, segmentHitsRect } from '../engine/math';
+import { ACQUIRE_GRACE, CHASERS, GIVE_UP, LIGHT, STEERING, type ChaserKind, type ChaserSpec } from './config';
 
 export type ChaserState =
   | 'CHASE' // Has eyes on you.
@@ -56,6 +56,8 @@ export interface Chaser {
   /** Detour side currently committed to, and how long that commitment lasts. */
   steerBias: number;
   steerHold: number;
+  /** Time left to look around before patience starts running down. */
+  acquireGrace: number;
   /** Seconds spent going nowhere, and the sidestep committed to to break out. */
   stuckTimer: number;
   /** Suppresses scent tracking briefly after a trail point proved unreachable. */
@@ -103,6 +105,7 @@ export function spawnChaser(
     chaseTime: 0,
     steerBias: 0,
     steerHold: 0,
+    acquireGrace: ACQUIRE_GRACE,
     stuckTimer: 0,
     ignoreTrailUntil: 0,
     sidestep: 0,
@@ -197,11 +200,16 @@ export function updateChaser(chaser: Chaser, ctx: ChaseContext): void {
     }
   }
 
+  if (chaser.acquireGrace > 0) chaser.acquireGrace -= step;
+  const looking = chaser.acquireGrace > 0;
+
   if (sees) {
     if (chaser.state !== 'CHASE') chaser.chaseTime = 0;
     chaser.state = 'CHASE';
     chaser.hasChased = true;
     chaser.chaseTime += step;
+    // Eyes on you: the look-around is over, patience takes it from here.
+    chaser.acquireGrace = 0;
     chaser.lastSeenX = ctx.player.x;
     chaser.lastSeenY = ctx.player.y;
     chaser.patience -= step;
@@ -232,13 +240,17 @@ export function updateChaser(chaser: Chaser, ctx: ChaseContext): void {
   let quitting = false;
 
   if (chaser.state === 'SEARCH') {
-    chaser.searchTimer -= step;
-    chaser.patience -= step * 1.4;
-    // Standing on the spot they last saw you and finding nobody is demoralising.
-    if (dist(chaser.x, chaser.y, chaser.lastSeenX, chaser.lastSeenY) < 44) {
-      chaser.patience -= step * 2.5;
+    // The search clock is held during the look-around too. Letting it run meant
+    // grace only delayed the give-up rather than allowing an actual search.
+    if (!looking) chaser.searchTimer -= step;
+    if (!looking) {
+      chaser.patience -= step * 1.4;
+      // Standing on the spot they last saw you and finding nobody is demoralising.
+      if (dist(chaser.x, chaser.y, chaser.lastSeenX, chaser.lastSeenY) < 44) {
+        chaser.patience -= step * 2.5;
+      }
     }
-    if (chaser.searchTimer <= 0) quitting = true;
+    if (chaser.searchTimer <= 0 && !looking) quitting = true;
   }
 
   if (chaser.patience <= 0) quitting = true;
@@ -325,10 +337,11 @@ export function updateChaser(chaser: Chaser, ctx: ChaseContext): void {
   chaser.steerHold = Math.max(0, chaser.steerHold - step);
   chaser.sidestepTimer = Math.max(0, chaser.sidestepTimer - step);
 
+
   // A target sitting inside a solid is unreachable by construction, and a chaser
   // will lean on the wall forever trying. Nudge it out to somewhere they can
   // actually stand before they set off towards it.
-  if (!returningTo(chaser)) {
+  if (chaser.state !== 'RETURN') {
     const point: Vec2 = { x: targetX, y: targetY };
     let moved = false;
     for (const rect of ctx.obstacles) {
@@ -347,8 +360,16 @@ export function updateChaser(chaser: Chaser, ctx: ChaseContext): void {
   // through it. See GIVE_UP in config for why.
   const returning = chaser.state === 'RETURN';
   const dir = steer(chaser, targetX, targetY, returning ? NO_OBSTACLES : ctx.obstacles);
-  chaser.vx = dir.x * speed;
-  chaser.vy = dir.y * speed;
+
+  // Steer towards the wanted velocity rather than snapping to it. Setting it
+  // directly made every chaser pivot on the spot while the player carried
+  // momentum, so turning a corner only ever cost the runner ground. Now a
+  // corner costs whoever is least agile — and a dog is the least agile thing
+  // out here, which is what gives you somewhere to lose it.
+  const wantX = dir.x * speed;
+  const wantY = dir.y * speed;
+  chaser.vx = damp(chaser.vx, wantX, chaser.spec.agility, step);
+  chaser.vy = damp(chaser.vy, wantY, chaser.spec.agility, step);
   chaser.x += chaser.vx * step;
   chaser.y += chaser.vy * step;
   if (dir.x !== 0 || dir.y !== 0) chaser.facing = Math.atan2(dir.y, dir.x);
@@ -367,7 +388,7 @@ export function updateChaser(chaser: Chaser, ctx: ChaseContext): void {
     // How far did they actually get, versus how far they tried to? Grinding
     // against geometry shows up here as movement far short of intent.
     const moved = dist(beforeX, beforeY, chaser.x, chaser.y);
-    const intended = speed * step;
+    const intended = Math.hypot(chaser.vx, chaser.vy) * step;
     if (intended > 0.01 && moved < intended * STEERING.progressThreshold) {
       chaser.stuckTimer += step;
       if (chaser.stuckTimer > STEERING.abandonAfter) {
@@ -413,9 +434,19 @@ export function lureChaser(chaser: Chaser, x: number, y: number, seconds: number
   chaser.patience = Math.max(chaser.patience, seconds + 1);
 }
 
-/** True if any chaser still has a live interest in the player. */
+/**
+ * True if this chaser still has a live interest in *the player*.
+ *
+ * A roaming patrol that has never actually seen you is just walking its beat.
+ * It used to count as hunting, and since it re-arms its patience indefinitely
+ * that left the player permanently "being hunted": extraction blocked and Heat
+ * unable to cool, for as long as a patrol was anywhere on the street.
+ */
 export function isActivelyHunting(chaser: Chaser): boolean {
-  return chaser.startle > 0 || chaser.state === 'CHASE' || chaser.state === 'SEARCH';
+  if (chaser.startle > 0) return true;
+  if (chaser.state === 'CHASE') return true;
+  if (chaser.state !== 'SEARCH') return false;
+  return !(chaser.roams && !chaser.hasChased);
 }
 
 /**
@@ -423,23 +454,21 @@ export function isActivelyHunting(chaser: Chaser): boolean {
  * have picked up — i.e. one it has not already walked past.
  */
 function freshestTrailPoint(chaser: Chaser, ctx: ChaseContext): Vec2 | null {
-  let best: Vec2 | null = null;
-  let bestDist = Infinity;
-
-  for (const point of ctx.trail) {
+  // Newest last, so walk backwards and take the most recent crumb that isn't
+  // already underfoot. This used to pick the *nearest* point instead, which sent
+  // a dog to the closest scrap of scent — usually a stale one by the door it had
+  // just come out of — and left it with nothing to follow. Tracking means going
+  // where the trail leads, not where it starts.
+  const reach = chaser.spec.sight * 1.6;
+  for (let i = ctx.trail.length - 1; i >= 0; i--) {
+    const point = ctx.trail[i];
+    if (!point) continue;
     const d = dist(chaser.x, chaser.y, point.x, point.y);
-    // Ignore the crumbs right under their feet; head for the next one along.
     if (d < 52) continue;
-    if (d < bestDist) {
-      bestDist = d;
-      best = point;
-    }
+    if (d > reach) continue;
+    return point;
   }
-  return bestDist < chaser.spec.sight * 1.6 ? best : null;
-}
-
-function returningTo(chaser: Chaser): boolean {
-  return chaser.state === 'RETURN';
+  return null;
 }
 
 function pointInside(point: Vec2, rect: Rect): boolean {
