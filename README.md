@@ -10,9 +10,9 @@ This repository is organized so every game can keep all of its files together in
 game-hub/
 ├── README.md
 ├── games/
-│   ├── salt-and-sovereigns/
-│   ├── hunter-adventure/
-│   └── drift-game/
+│   ├── game/
+│   ├── adventure/
+│   └── game/
 ├── assets/
 └── docs/
 ```
