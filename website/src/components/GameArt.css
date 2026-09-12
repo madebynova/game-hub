@@ -1,0 +1,89 @@
+.art {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+  border-radius: var(--r-md);
+  isolation: isolate;
+  container-type: inline-size;
+}
+
+.art--cover {
+  aspect-ratio: 3 / 4;
+}
+
+.art--banner {
+  aspect-ratio: 16 / 9;
+}
+
+.art__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Generated stand-in ---------------------------------------------------- */
+
+.art--generated {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  background:
+    radial-gradient(
+      110% 80% at 18% 0%,
+      hsl(var(--art-hue) 42% 26% / 0.5),
+      transparent 65%
+    ),
+    var(--surface-2);
+}
+
+/* Faint grid, so the plate reads as designed rather than blank. */
+.art--generated::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(200deg, #000 5%, transparent 70%);
+}
+
+.art__tick {
+  position: relative;
+  width: 28px;
+  height: 2px;
+  margin-bottom: var(--s-1);
+  border-radius: 2px;
+  background: hsl(var(--art-hue) 70% 65% / 0.7);
+}
+
+.art__wordmark {
+  position: relative;
+  /* Sized so a one-word title fills the plate without ever breaking mid-word. */
+  font-size: clamp(1.1rem, 9cqi, 3.25rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--text);
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+  user-select: none;
+}
+
+/* Portrait tiles are narrow: back the type off so long titles still fit. */
+.art--cover .art__wordmark {
+  font-size: clamp(1rem, 13cqi, 2.25rem);
+}
+
+.art__sub {
+  position: relative;
+  font-size: clamp(0.5625rem, 3.4cqi, 0.8125rem);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  user-select: none;
+}

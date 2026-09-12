@@ -1,0 +1,21 @@
+.arrow-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-sm);
+  font-weight: 550;
+  color: var(--text-muted);
+  transition: color var(--fast) var(--ease);
+}
+
+.arrow-link:hover {
+  color: var(--accent);
+}
+
+.arrow-link svg {
+  transition: transform var(--fast) var(--ease);
+}
+
+.arrow-link:hover svg {
+  transform: translateX(2px);
+}

@@ -1,0 +1,57 @@
+.sh {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-bottom: var(--s-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.sh--page {
+  padding-bottom: var(--s-5);
+  margin-bottom: var(--s-6);
+}
+
+.sh--section {
+  margin-bottom: var(--s-5);
+}
+
+/* Title and aside share a row: a description below can't drag the aside out
+   of line with the heading it belongs to. */
+.sh__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2) var(--s-4);
+}
+
+.sh__title {
+  font-size: var(--t-lg);
+  letter-spacing: -0.025em;
+}
+
+.sh--page .sh__title {
+  font-size: var(--t-xl);
+  letter-spacing: -0.03em;
+}
+
+.sh__desc {
+  max-width: 58ch;
+  color: var(--text-muted);
+  font-size: var(--t-sm);
+}
+
+.sh__aside {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-4);
+  font-size: var(--t-sm);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 720px) {
+  .sh--page .sh__title {
+    font-size: var(--t-2xl);
+  }
+}

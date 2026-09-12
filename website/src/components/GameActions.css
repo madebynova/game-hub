@@ -1,0 +1,39 @@
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+/* "Coming soon" has nowhere to go, so it reads as a label, not a control. */
+.actions__marker {
+  display: inline-flex;
+  align-items: center;
+  height: 48px;
+  padding-inline: var(--s-5);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-md);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* Explains an absence rather than naming a state — quieter than the badge. */
+.actions__marker--soft {
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 500;
+}
+
+@media (max-width: 479px) {
+  .actions {
+    width: 100%;
+  }
+
+  .actions > * {
+    flex: 1 1 150px;
+    justify-content: center;
+  }
+}

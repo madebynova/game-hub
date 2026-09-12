@@ -1,0 +1,40 @@
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.status--md {
+  font-size: var(--t-sm);
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.status__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+.status--playable .status__dot {
+  background: var(--status-live);
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.14);
+}
+
+.status--in-development .status__dot {
+  background: var(--status-dev);
+  box-shadow: 0 0 0 3px rgba(255, 176, 32, 0.14);
+}
+
+.status--coming-soon .status__dot {
+  background: var(--status-soon);
+  box-shadow: 0 0 0 3px rgba(122, 162, 255, 0.14);
+}
