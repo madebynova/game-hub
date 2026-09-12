@@ -55,6 +55,29 @@ placeholder copy. Fill in a field when the information is real:
 
 The full list with comments is in [`src/types.ts`](src/types.ts).
 
+### Linking a separately hosted game
+
+Games are hosted wherever they like — NOVA only links to them. RUNOUT, for
+example, is its own Vite project in its own repo, deployed to its own Netlify
+site; nothing about it lives here.
+
+`src/data/games.ts` opens with the URL constants for that:
+
+```ts
+const RUNOUT_PLAY_URL = ''     // paste the live Netlify URL here
+const RUNOUT_SOURCE_URL = ''   // paste the public repo URL here
+```
+
+The entry derives `status`, `playable` and `playUrl` from the first of those,
+so the two can never disagree — NOVA will not claim a game is playable while
+pointing at nothing. Filling it in flips the card from "In development" to
+"Playable" and every VIEW PROJECT into PLAY NOW, across the library card, the
+homepage spotlight and the game page at once.
+
+PLAY NOW is a plain external link (`target="_blank"`, `rel="noreferrer
+noopener"`), so the game opens on its own site. Nothing is ever embedded in
+NOVA.
+
 ### Status drives the primary action
 
 `src/lib/gameAction.ts` is the only place that branches on status. Everything
