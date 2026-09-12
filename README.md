@@ -2,44 +2,44 @@
 
 A clean home for browser games, prototypes, experiments, and future projects.
 
-This repository is organized so every game can keep all of its files together instead of everything being mixed into one folder.
+The repository keeps the NOVA website separate from each individual game so projects can be developed, tested, and deployed without mixing their files together.
 
 ## 📁 Structure
 
 ```text
 game-hub/
 ├── README.md
-├── games/
-│   ├── game/
-│   ├── adventure/
-│   └── game/
-├── assets/
-└── docs/
+├── website/
+│   ├── src/
+│   └── public/
+└── games/
+    └── runout/
 ```
+
+### `website/`
+The NOVA game-hub website lives here.
+
+- `src/` — NOVA's React/TypeScript source code.
+- `public/` — static website assets.
 
 ### `games/`
 Each game gets its own folder. If a game has 2 files or 200 files, they stay together inside that game's folder.
 
-### `assets/`
-Shared images, icons, sounds, and other resources that are not tied to one specific game.
-
-### `docs/`
-Notes, development information, plans, and other project documentation.
+- `games/runout/` — the RUNOUT game project.
 
 ## 🎮 Current Games
 
-No games have been added to the hub yet.
+RUNOUT is the first game being prepared for the hub. More games can be added later without mixing their files together.
 
-Games can be added whenever they are ready. Existing projects can also stay in their own repositories when that makes more sense.
+## 🌐 Deployment
 
-## 🌐 Netlify
-
-This repository is designed to work with Netlify when a game is ready to be deployed. A specific game folder can be used as the published site so the repository can continue holding multiple games without mixing their files together.
+The website and games are kept as separate projects so they can be built and deployed independently with Netlify. NOVA can act as the central hub that links players to each playable game.
 
 ## 🧭 Organization Rules
 
-- Keep each game's files inside its own folder.
-- Do not mix files from different games.
+- Keep NOVA website files inside `website/`.
+- Keep each game's files inside its own folder under `games/`.
+- Do not mix files from different games or the website.
 - Keep game-specific assets with that game whenever possible.
 - Use clear, lowercase folder names with hyphens.
 - Keep the root of the repository clean.
