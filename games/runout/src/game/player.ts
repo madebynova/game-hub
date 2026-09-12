@@ -20,6 +20,8 @@ export class Player {
   caughtSecondWind = false;
   /** Hedges this player is allowed to climb. Empty without HOPPERS. */
   climbRects: readonly Rect[] = [];
+  /** True while nobody is hunting, so endurance upgrades can pay off. */
+  resting = false;
   /** Set for one frame when a hedge is vaulted. */
   justVaulted = false;
 
@@ -103,7 +105,8 @@ export class Player {
     } else {
       this.regenCooldown = Math.max(0, this.regenCooldown - step);
       if (this.regenCooldown <= 0) {
-        this.stamina = Math.min(this.loadout.staminaMax, this.stamina + this.loadout.staminaRegen * step);
+        const rate = this.loadout.staminaRegen * (this.resting ? this.loadout.restRegen : 1);
+        this.stamina = Math.min(this.loadout.staminaMax, this.stamina + rate * step);
       }
     }
 

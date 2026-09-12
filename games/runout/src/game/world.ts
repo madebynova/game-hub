@@ -44,7 +44,11 @@ export interface House {
    * the dark, so the escape has to be planned before you press the bell.
    */
   floodlit: boolean;
-  /** RISKY houses keep a dog in the yard. It is visible, and it wakes up angry. */
+  /**
+   * A kennel means this house has a dog, and no house without one can produce
+   * a dog. It is the single source of truth for that, so the threat always
+   * matches the tell the player can see from the street.
+   */
   kennel: Vec2 | null;
 }
 
@@ -74,9 +78,29 @@ export interface World {
 }
 
 const TIER_NAMES = Object.keys(HOUSE_TIERS) as HouseTierName[];
-const TIER_WEIGHTS = TIER_NAMES.map((name) => HOUSE_TIERS[name].weight);
 
-export function generateWorld(): World {
+/**
+ * How likely each tier is to keep a dog.
+ *
+ * These used to be two separate rules that disagreed: the kennel was generated
+ * for RISKY houses only, while the reaction roster rolled a dog for ALERT (22%)
+ * and VALUABLE (55%) at the moment the bell rang. That meant houses with no
+ * kennel — and therefore no dog, as far as the player could see — produced one
+ * out of the front door anyway. The odds are carried over unchanged; they just
+ * decide the kennel now, so what comes out always matches what is in the garden.
+ */
+const KENNEL_CHANCE: Record<HouseTierName, number> = {
+  EASY: 0,
+  ALERT: 0.22,
+  RISKY: 1,
+  VALUABLE: 0.55,
+};
+
+/** Per-tier multipliers on the base spawn weights, from the chosen job. */
+export type TierBias = Partial<Record<HouseTierName, number>>;
+
+export function generateWorld(bias: TierBias = {}): World {
+  const weights = TIER_NAMES.map((name) => HOUSE_TIERS[name].weight * (bias[name] ?? 1));
   const houses: House[] = [];
   const obstacles: Rect[] = [];
   const blockers: Rect[] = [];
@@ -99,7 +123,7 @@ export function generateWorld(): World {
         h: WORLD.lotHeight,
       };
 
-      const house = buildHouse(id++, side, lot);
+      const house = buildHouse(id++, side, lot, weights);
       houses.push(house);
 
       obstacles.push(house.building, house.mailbox);
@@ -148,7 +172,7 @@ export function generateWorld(): World {
   return { houses, obstacles, blockers, lamps, van, road, sidewalks, hedges };
 }
 
-function buildHouse(id: number, side: 'top' | 'bottom', lot: Rect): House {
+function buildHouse(id: number, side: 'top' | 'bottom', lot: Rect, weights: number[]): House {
   const facing: 1 | -1 = side === 'top' ? 1 : -1;
   const buildingW = lot.w - randInt(120, 170);
   const buildingH = randInt(290, 340);
@@ -192,7 +216,7 @@ function buildHouse(id: number, side: 'top' | 'bottom', lot: Rect): House {
       }
     : null;
 
-  const tierName = pickWeighted(TIER_NAMES, TIER_WEIGHTS);
+  const tierName = pickWeighted(TIER_NAMES, weights);
   const tier = HOUSE_TIERS[tierName];
 
   return {
@@ -222,7 +246,7 @@ function buildHouse(id: number, side: 'top' | 'bottom', lot: Rect): House {
     // Off to the side of the lot, not across the walkway: the dog is a threat you
     // can see and route around, not an ambush sitting in the only way out.
     kennel:
-      tierName === 'RISKY'
+      chance(KENNEL_CHANCE[tierName])
         ? {
             x: door.x + (driveOnLeft ? 168 : -168),
             y: side === 'top' ? frontEdgeY + 58 : frontEdgeY - 58,

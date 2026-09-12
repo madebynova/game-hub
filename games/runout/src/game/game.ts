@@ -15,10 +15,11 @@ import { drawHud } from './hud';
 import { Renderer } from './render';
 import { Run, type RunSummary } from './run';
 import { loadSave, writeSave, type SaveData } from './save';
-import { buttonAt, drawShop, drawSummary, drawTitle, type ButtonList } from './screens';
+import { buttonAt, drawJobSelect, drawShop, drawSummary, drawTitle, type ButtonList } from './screens';
 import { UPGRADES, buildLoadout, retentionFor, upgradeCost } from './upgrades';
+import { offerJobs, type Job } from './jobs';
 
-type Screen = 'TITLE' | 'RUN' | 'SUMMARY' | 'SHOP';
+type Screen = 'TITLE' | 'JOBS' | 'RUN' | 'SUMMARY' | 'SHOP';
 
 export class Game {
   private screen: Screen = 'TITLE';
@@ -28,6 +29,8 @@ export class Game {
   private lastSummary: RunSummary | null = null;
   private buttons: ButtonList = [];
   private shopMessage = '';
+  private jobOffers: Job[] = [];
+  private jobMessage = '';
   /** Stops a single click from being consumed by two screens in a row. */
   private inputLock = 0;
 
@@ -46,7 +49,11 @@ export class Game {
 
     switch (this.screen) {
       case 'TITLE':
-        if (this.confirmPressed()) this.startRun();
+        if (this.confirmPressed()) this.openJobBoard();
+        break;
+
+      case 'JOBS':
+        this.updateJobBoard();
         break;
 
       case 'RUN':
@@ -77,6 +84,10 @@ export class Game {
         this.buttons = drawTitle(this.stage, this.save);
         break;
 
+      case 'JOBS':
+        this.buttons = drawJobSelect(this.stage, this.save, this.jobOffers, this.jobMessage);
+        break;
+
       case 'RUN':
         if (this.run) {
           this.renderer.draw(this.stage, this.run);
@@ -95,10 +106,49 @@ export class Game {
     }
   }
 
+  // ------------------------------------------------------------------- jobs
+
+  private openJobBoard(): void {
+    this.jobOffers = offerJobs(this.save.cash);
+    this.jobMessage = '';
+    this.screen = 'JOBS';
+    this.lock();
+  }
+
+  private updateJobBoard(): void {
+    for (let i = 0; i < this.jobOffers.length; i++) {
+      const job = this.jobOffers[i];
+      if (job && this.input.wasPressed(`Digit${i + 1}`)) this.takeJob(job);
+    }
+
+    const clicked = this.clickedButton();
+    if (!clicked || !clicked.id.startsWith('job:')) return;
+
+    const job = this.jobOffers.find((offer) => `job:${offer.id}` === clicked.id);
+    if (job) this.takeJob(job);
+  }
+
+  private takeJob(job: Job): void {
+    if (this.save.cash < job.entryCost) {
+      this.jobMessage = `${job.name} needs $${job.entryCost - this.save.cash} more up front.`;
+      audio.thud();
+      return;
+    }
+
+    // The fence takes their cut whether or not the night goes well, which is
+    // what stops the biggest payout from being the automatic pick when money is
+    // tight.
+    this.save.cash -= job.entryCost;
+    this.persist();
+    if (job.entryCost > 0) audio.cash();
+
+    this.startRun(job);
+  }
+
   // -------------------------------------------------------------------- run
 
-  private startRun(): void {
-    this.run = new Run(buildLoadout(this.save.upgrades));
+  private startRun(job: Job): void {
+    this.run = new Run(buildLoadout(this.save.upgrades), job);
     this.run.camera.snapTo(this.run.player.x, this.run.player.y, this.stage);
     this.screen = 'RUN';
     this.lock();
@@ -187,14 +237,14 @@ export class Game {
     }
 
     if (this.confirmPressed()) {
-      this.startRun();
+      this.openJobBoard();
       return;
     }
 
     const clicked = this.clickedButton();
     if (!clicked) return;
 
-    if (clicked.id === 'primary') this.startRun();
+    if (clicked.id === 'primary') this.openJobBoard();
     else if (clicked.id.startsWith('buy:')) this.buy(clicked.id.slice(4));
   }
 

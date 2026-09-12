@@ -15,6 +15,7 @@ export function drawHud(stage: Stage, run: Run, bankedCash: number): void {
   drawStash(ctx, run, bankedCash);
   drawHeat(ctx, run, width);
   drawClock(ctx, run, width);
+  drawJobBanner(ctx, run);
   drawStamina(stage, run);
   drawChaseBanner(stage, run);
   drawToasts(stage, run);
@@ -92,6 +93,26 @@ function drawStash(ctx: CanvasRenderingContext2D, run: Run, bankedCash: number):
   ctx.font = '600 12px system-ui, sans-serif';
   ctx.fillStyle = '#64748b';
   ctx.fillText(`banked $${bankedCash}`, x + w - 14, 59);
+}
+
+/** Which job you took, and how the quota is going if it has one. */
+function drawJobBanner(ctx: CanvasRenderingContext2D, run: Run): void {
+  ctx.textAlign = 'left';
+  ctx.font = '700 10px system-ui, sans-serif';
+  ctx.fillStyle = '#64748b';
+  ctx.fillText(run.job.name, 32, 92);
+
+  const quota = run.job.quota;
+  if (!quota) return;
+
+  const met = run.clips >= quota.clips;
+  ctx.font = '700 11px system-ui, sans-serif';
+  ctx.fillStyle = met ? '#4ade80' : '#fbbf24';
+  ctx.fillText(
+    met ? `BONUS SECURED  +$${quota.bonus}` : `${run.clips}/${quota.clips} clips for +$${quota.bonus}`,
+    32,
+    108,
+  );
 }
 
 function drawHeat(ctx: CanvasRenderingContext2D, run: Run, width: number): void {

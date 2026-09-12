@@ -575,6 +575,16 @@ export class Renderer {
       ctx.fillStyle = 'rgba(226, 232, 240, 0.72)';
       ctx.fillText(`$${value}`, x, y + house.facing * 20);
 
+      // Scout app: what this house keeps, read from the street rather than by
+      // walking up to it. A kennel is the only thing that produces a dog, so
+      // knowing which houses have one is the useful planning information.
+      if (run.showsHouseTells && (house.kennel || house.floodlit)) {
+        const tell = house.kennel && house.floodlit ? 'DOG · LIT' : house.kennel ? 'DOG' : 'LIT';
+        ctx.font = '800 10px system-ui, sans-serif';
+        ctx.fillStyle = house.kennel ? '#fcd34d' : '#e2e8f0';
+        ctx.fillText(tell, x, y + house.facing * 34);
+      }
+
       ctx.globalAlpha = 1;
     }
     ctx.restore();

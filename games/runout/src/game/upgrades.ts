@@ -8,6 +8,9 @@ import { PLAYER, RUN } from './config';
  * a number. If two upgrades only differ by how big their percentage is, one of
  * them is not pulling its weight.
  */
+/** One-word identity, shown on the shop card so the role reads at a glance. */
+export type UpgradeRole = 'MOBILITY' | 'ENDURANCE' | 'STEALTH' | 'INSURANCE' | 'INFO' | 'TOOLS';
+
 export interface Loadout {
   walkSpeed: number;
   sprintSpeed: number;
@@ -34,12 +37,22 @@ export interface Loadout {
   showSight: boolean;
   /** Outlines chasers you cannot currently see. */
   seeThroughWalls: boolean;
+  /** Marks which houses keep a dog or a floodlight, from scouting range. */
+  showHouseTells: boolean;
+  /**
+   * Multiplies the chance that a hot street sends *extra* bodies to a door on
+   * top of the tier's own roster. Quiet work draws a smaller crowd.
+   */
+  mobChance: number;
+  /** Multiplies stamina recovery while nobody is hunting you. */
+  restRegen: number;
   decoys: number;
 }
 
 export interface Upgrade {
   id: string;
   name: string;
+  role: UpgradeRole;
   tagline: string;
   maxLevel: number;
   baseCost: number;
@@ -54,6 +67,7 @@ export const UPGRADES: readonly Upgrade[] = [
     // Mobility. Turns the gardens into your route and the hedge maze into an
     // advantage only you have, which is a different game from running the road.
     id: 'shoes',
+    role: 'MOBILITY',
     name: 'HOPPERS',
     tagline: 'Vault hedges. Nobody chasing you can.',
     maxLevel: 4,
@@ -76,6 +90,7 @@ export const UPGRADES: readonly Upgrade[] = [
     // Endurance. Lets you commit to a long chase instead of having to break
     // line of sight before the tank runs out.
     id: 'cardio',
+    role: 'ENDURANCE',
     name: 'SECOND WIND',
     tagline: 'Run dry once per chase and get back up.',
     maxLevel: 4,
@@ -83,14 +98,17 @@ export const UPGRADES: readonly Upgrade[] = [
     costGrowth: 1.8,
     describe: (level) => {
       if (level === 0) return 'You get winded on stairs.';
-      if (level === 1) return '+26 stamina, faster recovery.';
-      return `+${level * 26} stamina, and the first time you run dry in a chase you get ${Math.round(
+      if (level === 1) return '+26 stamina, 1.5x recovery between houses.';
+      return `+${level * 26} stamina, ${1 + level * 0.5}x recovery between houses, ${Math.round(
         secondWindFor(level) * 100,
-      )}% straight back`;
+      )}% back when you run dry`;
     },
     apply: (loadout, level) => {
       loadout.staminaMax += level * 26;
-      loadout.staminaRegen += level * 4;
+      // Recovery between houses is the endurance identity: it decides how many
+      // doors you can work in one night, which is a different thing from being
+      // better at any single escape.
+      loadout.restRegen += level * 0.5;
       if (level >= 2) loadout.secondWind = secondWindFor(level);
     },
   },
@@ -98,26 +116,33 @@ export const UPGRADES: readonly Upgrade[] = [
     // Stealth. The direct answer to the scariest thing in the game: at full
     // level a dog has nothing left to follow.
     id: 'socks',
+    role: 'STEALTH',
     name: 'NINJA SOCKS',
     tagline: 'Quiet feet, and barely any scent for a dog to follow.',
     maxLevel: 4,
     baseCost: 300,
     costGrowth: 1.85,
     describe: (level) => {
-      if (level === 0) return 'Your shoes squeak. Loudly.';
+      if (level === 0) return 'Your shoes squeak. Loudly. Whole street hears the bell.';
+      // Kept short: the card gives this three lines before it meets the price.
       const trail = trailSecondsFor(level).toFixed(1);
-      return `-${level * 10}% Heat, -${level * 16}% footstep range, dogs only track ${trail}s of your trail`;
+      const fewer = Math.round((1 - mobChanceFor(level)) * 100);
+      return `-${level * 10}% Heat, -${level * 16}% footsteps, ${fewer}% smaller crowds, ${trail}s scent trail`;
     },
     apply: (loadout, level) => {
       loadout.heatMultiplier *= 1 - level * 0.1;
       loadout.noiseMultiplier *= 1 - level * 0.16;
       loadout.trailSeconds = trailSecondsFor(level);
+      // A hot street piles extra bodies onto every door. Working quietly means
+      // fewer of them turn out — the one part of Heat you can actually see.
+      loadout.mobChance = mobChanceFor(level);
     },
   },
   {
     // Risk policy. Does nothing for your driving; changes how far you dare push
     // before heading for the van, which is the central decision of the game.
     id: 'charm',
+    role: 'INSURANCE',
     name: 'DRAINPIPE STASH',
     tagline: 'Post clips as you run. Keep some of it when you get caught.',
     maxLevel: 4,
@@ -134,6 +159,7 @@ export const UPGRADES: readonly Upgrade[] = [
   {
     // Information. You stop guessing where everyone is and start routing.
     id: 'scout',
+    role: 'INFO',
     name: 'SCOUT APP',
     tagline: 'Read the street, then see through it.',
     maxLevel: 3,
@@ -141,12 +167,15 @@ export const UPGRADES: readonly Upgrade[] = [
     costGrowth: 1.8,
     describe: (level) => {
       if (level === 0) return 'You can read the nearest few doors.';
-      if (level === 1) return 'Read house tiers right down the street';
-      if (level === 2) return 'Full range, plus everyone’s sight range drawn live';
-      return 'Full range, sight ranges, and chasers outlined through walls';
+      if (level === 1) return 'Read tiers down the street, and which houses keep a dog or a floodlight';
+      if (level === 2) return 'Adds everyone’s sight range, drawn live';
+      return 'Adds chasers outlined through walls';
     },
     apply: (loadout, level) => {
       loadout.scoutRange += level * 260;
+      // Which houses have a dog is the single most useful thing to know before
+      // choosing a door, now that a kennel is the only thing that produces one.
+      loadout.showHouseTells = true;
       if (level >= 2) loadout.showSight = true;
       if (level >= 3) loadout.seeThroughWalls = true;
     },
@@ -154,6 +183,7 @@ export const UPGRADES: readonly Upgrade[] = [
   {
     // Tools. The only upgrade that lets you act on a chase rather than react.
     id: 'firecrackers',
+    role: 'TOOLS',
     name: 'FIRECRACKERS',
     tagline: '[Q] Lob one behind you. They all go and look at the noise.',
     maxLevel: 3,
@@ -173,6 +203,10 @@ export function retentionFor(level: number): number {
 
 function secondWindFor(level: number): number {
   return [0, 0, 0.35, 0.45, 0.55][Math.min(level, 4)] ?? 0;
+}
+
+function mobChanceFor(level: number): number {
+  return Math.max(0.25, 1 - level * 0.2);
 }
 
 function trailSecondsFor(level: number): number {
@@ -200,6 +234,9 @@ export function buildLoadout(levels: Readonly<Record<string, number>>): Loadout 
     scoutRange: 560,
     showSight: false,
     seeThroughWalls: false,
+    showHouseTells: false,
+    mobChance: 1,
+    restRegen: 1,
     decoys: 0,
   };
 

@@ -17,6 +17,7 @@ import { EventDirector } from './events';
 import { Player } from './player';
 import type { Loadout } from './upgrades';
 import { generateWorld, houseInReach, type House, type World } from './world';
+import type { Job } from './jobs';
 
 export type RunPhase = 'ACTIVE' | 'CAUGHT' | 'EXTRACTED';
 
@@ -26,6 +27,9 @@ export interface RunSummary {
   stash: number;
   /** Part of the stash salvaged from a bust by DRAINPIPE STASH. */
   recovered: number;
+  jobName: string;
+  /** Bonus paid for meeting the job's clip quota. */
+  quotaBonus: number;
   doorbells: number;
   clips: number;
   maxHeat: number;
@@ -98,6 +102,8 @@ export class Run {
   stash = 0;
   doorbells = 0;
   clips = 0;
+  /** Paid on extraction when the job's clip quota is met. */
+  quotaBonus = 0;
   timeLeft = RUN.nightLength;
   elapsed = 0;
 
@@ -132,8 +138,11 @@ export class Run {
   /** Tracks how many chasers had eyes on you last frame, to detect the moment. */
   private seenByCount = 0;
 
-  constructor(private readonly loadout: Loadout) {
-    this.world = generateWorld();
+  constructor(
+    private readonly loadout: Loadout,
+    readonly job: Job,
+  ) {
+    this.world = generateWorld(job.tierBias);
     this.player = new Player(loadout);
     this.camera = new Camera(WORLD.width, WORLD.height);
 
@@ -145,6 +154,26 @@ export class Run {
 
     // Start beside the van, on the road, facing the neighbourhood.
     this.player.placeAt(this.world.van.x + 120, this.world.van.y);
+
+    // The job decides what kind of night this is, using systems that already
+    // exist: the clock, the Heat you arrive with, who is already outside, and
+    // whether the weather is on your side to begin with.
+    this.timeLeft = job.nightLength;
+    this.heat = job.startHeat;
+    // Some of the Heat you arrive with is baked in — you cannot simply wait out
+    // a job that starts hot.
+    this.heatFloor = job.startHeat * 0.6;
+    this.maxHeat = this.heat;
+
+    if (job.rainSeconds > 0) {
+      this.sightModifier = 0.68;
+      this.sightModifierTimer = job.rainSeconds;
+    }
+
+    for (let i = 0; i < job.patrolsAtStart; i++) {
+      const y = (WORLD.roadTop + WORLD.roadBottom) / 2;
+      this.addChaser('WATCH', i % 2 === 0 ? WORLD.width - 90 : 90, y, null, 0, true);
+    }
   }
 
   get heatTier(): { name: string; color: string } {
@@ -233,6 +262,11 @@ export class Run {
     return this.loadout.seeThroughWalls;
   }
 
+  /** Scout app: mark which houses keep a dog or run a floodlight. */
+  get showsHouseTells(): boolean {
+    return this.loadout.showHouseTells;
+  }
+
   get canVault(): boolean {
     return this.loadout.vaultHedges;
   }
@@ -246,6 +280,8 @@ export class Run {
       outcome: this.phase === 'EXTRACTED' ? 'EXTRACTED' : 'CAUGHT',
       stash: this.stash,
       recovered: 0,
+      jobName: this.job.name,
+      quotaBonus: this.quotaBonus,
       doorbells: this.doorbells,
       clips: this.clips,
       maxHeat: Math.round(this.maxHeat),
@@ -266,6 +302,8 @@ export class Run {
     this.decoyCooldown = Math.max(0, this.decoyCooldown - step);
 
     this.updateClock(step);
+    // Endurance upgrades pay off between houses rather than during a chase.
+    this.player.resting = !this.beingHunted;
     this.player.update(input, this.playerObstacles, step, false);
     if (this.player.justVaulted) audio.vault();
     if (this.player.caughtSecondWind) {
@@ -339,7 +377,7 @@ export class Run {
     const spookSpeedUp = 1 - house.spooked * 0.4;
     house.reactTimer = Math.max(0.22, house.tier.reactionDelay * heatSpeedUp * spookSpeedUp);
 
-    const gained = house.tier.heat * this.loadout.heatMultiplier;
+    const gained = house.tier.heat * this.loadout.heatMultiplier * this.job.heatMultiplier;
     this.heat = Math.min(HEAT.max, this.heat + gained);
     // Half of it sticks for the rest of the night. This is the ratchet that
     // eventually makes staying out the wrong answer.
@@ -423,25 +461,18 @@ export class Run {
         break;
       case 'ALERT':
         roster.push('ANGRY');
-        if (chance(0.22)) roster.push('DOG');
         break;
       case 'RISKY':
-        // The kennel dog is already outside, so it doesn't need to come through
-        // a door. You can see it before you ring — that is the whole point.
         roster.push('ANGRY');
         break;
       case 'VALUABLE':
         roster.push('SECURITY', 'ANGRY');
-        // The dog is the single most dangerous thing that can come out of a
-        // door, so the top tier usually has one — that is what keeps VALUABLE
-        // harder than RISKY rather than merely more crowded.
-        if (chance(0.55)) roster.push('DOG');
         break;
     }
 
-    // A hot neighbourhood answers the door mob-handed.
-    if (this.heat > 58 && chance(0.4)) roster.push('RESIDENT');
-    if (this.heat > 84) roster.push('ANGRY');
+    // A hot neighbourhood answers the door mob-handed — unless you work quietly.
+    if (this.heat > 58 && chance(0.4 * this.loadout.mobChance)) roster.push('RESIDENT');
+    if (this.heat > 84 && chance(this.loadout.mobChance)) roster.push('ANGRY');
 
     // A hot street reacts quicker, but never instantly — you always get a beat.
     const startle = 0.64 - this.heatFraction * 0.24;
@@ -460,9 +491,8 @@ export class Run {
       );
     }
 
-    // A house with a kennel lets its dog off the moment the bell goes, from the
-    // yard rather than the doorway — which is why RISKY houses are dangerous in
-    // a way you can read off the street instead of off a number.
+    // Dogs only ever come from a kennel, never out of a door. If you can see a
+    // kennel in the garden this house has a dog; if you cannot, it does not.
     if (house.kennel) {
       // It was asleep, and it starts closer to you than anyone coming through a
       // door, so rousing it takes noticeably longer. That wake-up is the window
@@ -472,7 +502,6 @@ export class Run {
       return roster.length + 1;
     }
 
-    if (roster.includes('DOG')) audio.bark();
     return roster.length;
   }
 
@@ -619,7 +648,8 @@ export class Run {
   private payOut(house: House, closeCall: boolean): void {
     house.state = 'PAID';
 
-    const base = house.reward * house.bonusMultiplier * this.loadout.payoutMultiplier;
+    const base =
+      house.reward * house.bonusMultiplier * this.loadout.payoutMultiplier * this.job.payMultiplier;
     const amount = Math.round(base * (closeCall ? 1 + RUN.closeCallBonus : 1));
 
     this.stash += amount;
@@ -642,6 +672,14 @@ export class Run {
 
   private extract(): void {
     this.phase = 'EXTRACTED';
+
+    const quota = this.job.quota;
+    if (quota && this.clips >= quota.clips) {
+      this.quotaBonus = quota.bonus;
+      this.stash += quota.bonus;
+      this.toast(`JOB BONUS  +$${quota.bonus}`, '#fbbf24');
+    }
+
     audio.extract();
     this.toast('EXTRACTED', '#4ade80');
   }
