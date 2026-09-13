@@ -152,7 +152,7 @@ appear in the Latest updates timeline on that game's page. The newest from each
 game also shows under Recently updated on the homepage.
 
 Only write up what actually shipped. The current entries come from RUNOUT's
-commit history, Tides of Fortune's in-game change log, and Deep Dive's commit
+commit history, Tides of Fortune's in-game change log, and ABYSSBOUND's commit
 history and README.
 
 ## Site configuration

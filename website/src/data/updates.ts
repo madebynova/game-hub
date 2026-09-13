@@ -9,7 +9,7 @@ import type { UpdateEntry } from '../types'
  *
  * Only write up what actually shipped. The entries below come from each game's
  * own history — RUNOUT's commit log in games/runout, the in-game change log
- * in games/salt-and-sovereigns/src/game.js, and Deep Dive's commit history and
+ * in games/salt-and-sovereigns/src/game.js, and ABYSSBOUND's commit history and
  * README in games/deep-dive.
  *
  * Newest first is handled by `sortedUpdates` below. Entries on the same date
@@ -29,14 +29,22 @@ import type { UpdateEntry } from '../types'
  *   }
  */
 export const updates: UpdateEntry[] = [
-  // Deep Dive (games/deep-dive) ------------------------------------------
+  // ABYSSBOUND (games/deep-dive — the folder keeps its earlier name) ------
 
+  {
+    id: 'deep-dive-abyssbound',
+    gameSlug: 'deep-dive',
+    title: 'Deep Dive is now ABYSSBOUND',
+    date: '2026-09-13',
+    summary:
+      'A new name and a new question on the title screen: how deep will you go before you turn back? Gameplay and saves are unchanged.',
+  },
   {
     id: 'deep-dive-polish',
     gameSlug: 'deep-dive',
     title: 'Trading deck polish and fixes',
     date: '2026-09-13',
-    summary: 'A final pass on the trading deck and HUD before Deep Dive goes live.',
+    summary: 'A final pass on the trading deck and HUD before ABYSSBOUND goes live.',
     changes: [
       {
         label: 'Fixed',

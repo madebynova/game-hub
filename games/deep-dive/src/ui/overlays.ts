@@ -22,8 +22,8 @@ export class Overlays {
   showTitle(onStart: () => void, returning: { cash: number; dives: number } | null) {
     this.title.innerHTML = `
       <div class="title-inner">
-        <div class="logo"><span class="logo-deep">Deep</span><span class="logo-dive">Dive</span></div>
-        <p class="tagline">Every meter deeper is worth more. Every breath counts.</p>
+        <h1 class="logo" aria-label="ABYSSBOUND"><span class="logo-abyss" aria-hidden="true">Abyss</span><span class="logo-bound" aria-hidden="true">bound</span></h1>
+        <p class="tagline">How deep will you go before you turn back?</p>
         <button class="btn btn-start">${returning ? 'Continue diving' : 'Start diving'}</button>
         ${returning ? `<p class="returning">Welcome back — ${formatMoney(returning.cash)} banked after ${returning.dives} dive${returning.dives === 1 ? '' : 's'}.</p>` : ''}
         <div class="controls">

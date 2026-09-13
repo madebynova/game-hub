@@ -108,6 +108,10 @@ describe('progression balance', () => {
 });
 
 describe('save data', () => {
+  it('keeps the original save key, so renaming the game never orphans saves', () => {
+    expect(SAVE_KEY).toBe('deepdive.save.v1');
+  });
+
   it('round-trips through storage', () => {
     const storage = new MemoryStorage();
     const save = defaultSave();

@@ -2,7 +2,7 @@
   "name": "deep-dive",
   "private": true,
   "version": "0.1.0",
-  "description": "Deep Dive — a risk-vs-reward treasure diving game. Vite + TypeScript + Canvas, deployed as a static site.",
+  "description": "ABYSSBOUND — a risk-vs-reward treasure diving game. Vite + TypeScript + Canvas, deployed as a static site.",
   "type": "module",
   "scripts": {
     "dev": "vite",

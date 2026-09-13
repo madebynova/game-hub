@@ -387,25 +387,30 @@ kbd {
 }
 .title-screen.out { opacity: 0; pointer-events: none; }
 .title-inner { text-align: center; margin-top: 18vh; }
-.logo { display: flex; flex-direction: column; line-height: 0.82; text-transform: uppercase; }
-.logo-deep {
-  font-size: clamp(64px, 11vw, 150px);
+/* ABYSSBOUND on one line: the abyss in the water gradient, "bound" in the warm title cream. */
+.logo {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  font-size: clamp(34px, 9.4vw, 124px);
   font-weight: 900;
-  letter-spacing: 0.12em;
-  color: #fff4dd;
-  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.2), 0 0 40px rgba(255, 190, 120, 0.35);
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
-.logo-dive {
-  font-size: clamp(64px, 11vw, 150px);
-  font-weight: 900;
-  letter-spacing: 0.12em;
+.logo-abyss {
   background: linear-gradient(180deg, #7fe7ff 0%, #1f7ea1 70%, #0b3a5c 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   filter: drop-shadow(0 6px 20px rgba(95, 216, 255, 0.35));
 }
-.tagline { font-size: 18px; color: #d7e9f1; margin: 18px 0 26px; }
+.logo-bound {
+  margin-right: -0.08em;
+  color: #fff4dd;
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.2), 0 0 40px rgba(255, 190, 120, 0.35);
+}
+.tagline { font-size: clamp(15px, 1.7vw, 20px); color: #d7e9f1; margin: 16px 0 26px; letter-spacing: 0.02em; }
 .btn-start { font-size: 20px; padding: 14px 34px; }
 .returning { color: var(--good); margin: 14px 0 0; font-size: 14px; }
 .controls {

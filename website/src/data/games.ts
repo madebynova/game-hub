@@ -58,14 +58,15 @@ const TIDES_OF_FORTUNE_SOURCE_URL =
 
 /**
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ DEEP DIVE'S LIVE URL GOES HERE.                                          │
+ * │ ABYSSBOUND'S LIVE URL GOES HERE.                                         │
  * │                                                                          │
- * │ Deep Dive lives in this same monorepo (games/deep-dive/) as its own Vite │
- * │ project. Import the repo into Netlify with the base directory set to     │
+ * │ ABYSSBOUND lives in this same monorepo (games/deep-dive/ — the folder    │
+ * │ keeps the game's earlier name, Deep Dive) as its own Vite project.       │
+ * │ Import the repo into Netlify with the base directory set to              │
  * │ games/deep-dive — its netlify.toml supplies the build command and the    │
  * │ dist publish directory — then paste the site's URL below:                │
  * │                                                                          │
- * │   DEEP_DIVE_PLAY_URL = 'https://your-deep-dive-site.netlify.app'         │
+ * │   ABYSSBOUND_PLAY_URL = 'https://your-abyssbound-site.netlify.app'       │
  * │                                                                          │
  * │ That one edit flips the card from "In development" to "Playable" and     │
  * │ turns every VIEW PROJECT button into PLAY NOW — on the library card and  │
@@ -75,10 +76,10 @@ const TIDES_OF_FORTUNE_SOURCE_URL =
  * │ NOVA advertises no play link at all, which is the honest state.          │
  * └──────────────────────────────────────────────────────────────────────────┘
  */
-const DEEP_DIVE_PLAY_URL = ''
+const ABYSSBOUND_PLAY_URL = ''
 
-/** Deep Dive's source, in the public game-hub monorepo. '' hides Source. */
-const DEEP_DIVE_SOURCE_URL = 'https://github.com/madebynova/game-hub/tree/main/games/deep-dive'
+/** ABYSSBOUND's source, in the public game-hub monorepo. '' hides Source. */
+const ABYSSBOUND_SOURCE_URL = 'https://github.com/madebynova/game-hub/tree/main/games/deep-dive'
 
 /**
  * The NOVA library.
@@ -235,17 +236,19 @@ export const games: Game[] = [
   },
   {
     id: 'deep-dive',
-    title: 'Deep Dive',
+    // The id, slug, folder and asset paths keep the game's earlier name, Deep
+    // Dive, so links and files stay put. Players only ever see the title.
+    title: 'ABYSSBOUND',
     subtitle: 'The Deep Opens',
     slug: 'deep-dive',
     order: 80,
 
     // Derived from the URL above so the two can never disagree: NOVA will not
     // claim a game is playable while pointing at nothing.
-    status: DEEP_DIVE_PLAY_URL ? 'playable' : 'in-development',
-    playable: Boolean(DEEP_DIVE_PLAY_URL),
-    playUrl: DEEP_DIVE_PLAY_URL || undefined,
-    githubUrl: DEEP_DIVE_SOURCE_URL || undefined,
+    status: ABYSSBOUND_PLAY_URL ? 'playable' : 'in-development',
+    playable: Boolean(ABYSSBOUND_PLAY_URL),
+    playUrl: ABYSSBOUND_PLAY_URL || undefined,
+    githubUrl: ABYSSBOUND_SOURCE_URL || undefined,
 
     artwork: '/games/deep-dive/cover.svg',
     banner: '/games/deep-dive/banner.svg',
@@ -253,7 +256,7 @@ export const games: Game[] = [
       'A dive boat on a sunset sea above a diver sweeping a flashlight towards a sunken shipwreck, with a relic glowing in the dark water far below.',
 
     // Everything below is taken from the game's own README — no invented copy.
-    tagline: 'Dive for sunken treasure, watch your air, and decide how deep you dare to go.',
+    tagline: 'How deep will you go before you turn back?',
 
     description:
       'A risk-vs-reward treasure diving game. Dive from the boat, collect treasure while your oxygen drains, and decide whether to surface with what you have or push deeper for something better.',

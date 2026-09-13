@@ -1,6 +1,10 @@
-# Deep Dive
+# ABYSSBOUND
+
+*How deep will you go before you turn back?*
 
 A browser treasure-diving game about one question: **go back up with what you have, or risk going deeper?**
+
+> ABYSSBOUND was previously called Deep Dive. The folder (`games/deep-dive`), the npm package name and the save key (`deepdive.save.v1`) keep that name, so links, deployments and existing saves keep working.
 
 Built with Vite + TypeScript + Canvas 2D. No backend. Progress is saved in `localStorage`.
 
