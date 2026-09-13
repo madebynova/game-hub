@@ -31,10 +31,10 @@ export function GameActions({ game, context = 'listing', size = 'lg' }: GameActi
   return (
     <div className={`actions actions--${size}`}>
       {action.kind === 'play' && (
-        <Button href={action.href} size={size}>
+        <Button href={action.href} size={size} className="actions__play">
           <PlayIcon />
           {action.label}
-          <span className="visually-hidden"> (opens in a new tab)</span>
+          <span className="visually-hidden"> {game.title} (opens in a new tab)</span>
         </Button>
       )}
 
@@ -62,7 +62,7 @@ export function GameActions({ game, context = 'listing', size = 'lg' }: GameActi
         <Button href={game.githubUrl} variant="secondary" size={size}>
           <GitHubIcon />
           Source
-          <span className="visually-hidden"> (opens in a new tab)</span>
+          <span className="visually-hidden"> code for {game.title} (opens in a new tab)</span>
         </Button>
       )}
     </div>

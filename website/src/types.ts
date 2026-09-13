@@ -17,7 +17,9 @@ export type GameStatus = 'playable' | 'in-development' | 'coming-soon'
  */
 export interface Game {
   id: string
+  /** The name players see. */
   title: string
+  /** URL segment, and the folder name under public/games. Never shown. */
   slug: string
   /** Optional second line under the title, e.g. a subtitle on the box art. */
   subtitle?: string
@@ -36,6 +38,8 @@ export interface Game {
   artworkAlt?: string
   /** Real screenshots only. Leave empty until they exist. */
   screenshots?: { src: string; alt: string }[]
+  /** One short line for library cards. Falls back to `description`. */
+  tagline?: string
   /** One or two sentences. Omit entirely rather than writing a placeholder. */
   description?: string
   /** Longer body copy, rendered as paragraphs. */

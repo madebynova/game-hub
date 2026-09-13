@@ -99,7 +99,7 @@ export const updates: UpdateEntry[] = [
     ],
   },
 
-  // Salt & Sovereigns ----------------------------------------------------
+  // Tides of Fortune (games/salt-and-sovereigns) -------------------------
 
   {
     id: 'salt-and-sovereigns-v2-7',

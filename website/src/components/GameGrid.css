@@ -1,25 +1,31 @@
+/* One wide column on phones, two on tablets, three from laptop up — so a
+   small library fills a row instead of trailing off into empty tracks. */
 .grid {
   display: grid;
-  gap: var(--s-4);
+  gap: var(--s-5);
   grid-template-columns: minmax(0, 1fr);
 }
 
-@media (min-width: 480px) {
+@media (min-width: 600px) {
   .grid {
-    gap: var(--s-5);
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-}
 
-@media (min-width: 760px) {
-  .grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* In two columns an open slot left alone on its row spans it. */
+  .grid__slot:nth-child(odd) {
+    grid-column: 1 / -1;
+    min-height: 140px;
   }
 }
 
-@media (min-width: 1080px) {
+@media (min-width: 960px) {
   .grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--s-6);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .grid__slot:nth-child(odd) {
+    grid-column: auto;
   }
 }
 
@@ -51,13 +57,13 @@
 }
 
 .grid__slot-title {
-  font-size: var(--t-sm);
+  font-size: var(--t-base);
   font-weight: 650;
   color: var(--text-muted);
 }
 
 .grid__slot-desc {
-  max-width: 24ch;
-  font-size: var(--t-xs);
+  max-width: 26ch;
+  font-size: var(--t-sm);
   color: var(--text-faint);
 }

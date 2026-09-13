@@ -8,16 +8,17 @@ export const site = {
   name: 'NOVA',
   tagline: 'A home for my games.',
   description:
-    'Every game I build lands here. Play the ones that are ready, and follow the ones still being made.',
+    'NOVA is where I build, test and share my games. Play the ones that are ready, and follow the ones still being made.',
 
   /**
-   * Where the GitHub button in the nav and the footer link point. Leave it
-   * empty to hide both.
-   *
-   * Note this repo is currently private, so the link 404s for anyone who is
-   * not signed in with access. Make it public, or point this at
-   * https://github.com/madebynova instead, before sharing the site.
+   * The deployed address, without a trailing slash — used for canonical URLs
+   * and share tags. It is filled in at build time from Netlify's `URL`
+   * environment variable (see vite.config.ts), so it is empty in local dev and
+   * never has to be typed by hand.
    */
+  url: __SITE_URL__,
+
+  /** The public game-hub repository. Leave empty to hide the GitHub links. */
   githubUrl: 'https://github.com/madebynova/game-hub',
 
   /** Contact address, or empty to hide the footer contact link. */

@@ -15,6 +15,11 @@
   --marker-h: 50px;
 }
 
+/* Play is the one action that should never be missed. */
+.actions__play.btn--lg {
+  --btn-pad-x: var(--s-7);
+}
+
 /* "Coming soon" has nowhere to go, so it reads as a label, not a control. */
 .actions__marker {
   display: inline-flex;
@@ -46,5 +51,9 @@
 
   .actions > * {
     flex: 1 1 140px;
+  }
+
+  .actions__play.btn--lg {
+    flex-basis: 100%;
   }
 }

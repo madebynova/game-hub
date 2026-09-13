@@ -6,7 +6,18 @@
   border: 1px solid var(--line);
   border-radius: var(--r-xl);
   background: var(--surface-1);
-  box-shadow: var(--shadow-1);
+  box-shadow: var(--shadow-2);
+}
+
+/* A hairline of light along the top edge, like a lit shelf. */
+.featured::before {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 176, 32, 0.45), transparent 70%);
+  pointer-events: none;
 }
 
 .featured__art {
@@ -19,7 +30,7 @@
 }
 
 .featured__art .art__img {
-  transition: transform 900ms var(--ease-out);
+  transition: transform 1200ms var(--ease-out);
 }
 
 .featured:hover .featured__art .art__img {
@@ -31,7 +42,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, var(--surface-1), transparent 45%);
+  background: linear-gradient(to top, var(--surface-1), transparent 50%);
   pointer-events: none;
 }
 
@@ -40,8 +51,9 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--s-3);
-  padding: 0 var(--s-5) var(--s-5);
+  gap: var(--s-4);
+  margin-top: calc(var(--s-6) * -1);
+  padding: 0 var(--s-5) var(--s-6);
 }
 
 .featured__eyebrow {
@@ -55,11 +67,17 @@
   color: var(--accent);
 }
 
+.featured__heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
 .featured__title {
-  font-size: var(--t-2xl);
+  font-size: var(--t-3xl);
   font-weight: 750;
-  letter-spacing: -0.035em;
-  line-height: 1.05;
+  letter-spacing: -0.045em;
+  line-height: 1;
 }
 
 .featured__title-link {
@@ -67,31 +85,53 @@
 }
 
 .featured__title-link:hover {
-  color: var(--accent);
+  color: var(--accent-hover);
 }
 
 .featured__subtitle {
-  margin-top: calc(var(--s-2) * -1);
   font-size: var(--t-sm);
   font-weight: 600;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
 
+.featured__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.featured__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  height: 28px;
+  padding-inline: var(--s-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: rgba(8, 9, 11, 0.55);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 .featured__desc {
-  max-width: 52ch;
+  max-width: 50ch;
+  font-size: var(--t-md);
   color: var(--text-muted);
 }
 
 .featured__body .actions {
-  margin-top: var(--s-2);
+  margin-top: var(--s-1);
 }
 
 /* Wide screens: the banner fills the panel and the text sits over it. */
 @media (min-width: 900px) {
   .featured {
-    min-height: clamp(440px, 42vw, 540px);
+    min-height: clamp(500px, 46vw, 620px);
     align-items: end;
   }
 
@@ -107,12 +147,13 @@
 
   .featured__art::after {
     background:
-      linear-gradient(90deg, rgba(8, 9, 11, 0.94) 0%, rgba(8, 9, 11, 0.72) 34%, rgba(8, 9, 11, 0) 68%),
-      linear-gradient(0deg, rgba(8, 9, 11, 0.6), transparent 50%);
+      linear-gradient(90deg, rgba(8, 9, 11, 0.95) 0%, rgba(8, 9, 11, 0.75) 32%, rgba(8, 9, 11, 0) 66%),
+      linear-gradient(0deg, rgba(8, 9, 11, 0.7), transparent 45%);
   }
 
   .featured__body {
-    max-width: 600px;
+    max-width: 640px;
+    margin-top: 0;
     padding: var(--s-8) var(--s-7) var(--s-7);
   }
 

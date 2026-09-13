@@ -9,8 +9,17 @@ interface GameArtProps {
   lazy?: boolean
   /** Empty alt, for art beside text that already names the game. */
   decorative?: boolean
+  /**
+   * On narrow screens, swap a cover for the game's banner. Used where a card
+   * turns wide on phones, so the existing art is shown whole rather than
+   * cropped to a sliver.
+   */
+  bannerOnNarrow?: boolean
   className?: string
 }
+
+/** Below this width, `bannerOnNarrow` shows the banner. Matches GameCard.css. */
+const NARROW = '(max-width: 599px)'
 
 /** Stable 0–359 hue from a string, so each game's fallback plate is its own. */
 function hueFor(seed: string): number {
@@ -33,21 +42,34 @@ export function GameArt({
   variant = 'cover',
   lazy = true,
   decorative = false,
+  bannerOnNarrow = false,
   className,
 }: GameArtProps) {
   const src = variant === 'banner' ? (game.banner ?? game.artwork) : game.artwork
   const wrapper = ['art', `art--${variant}`, className].filter(Boolean).join(' ')
 
   if (src) {
+    const img = (
+      <img
+        className="art__img"
+        src={src}
+        alt={decorative ? '' : (game.artworkAlt ?? `${game.title} artwork`)}
+        loading={lazy ? 'lazy' : 'eager'}
+        decoding="async"
+      />
+    )
+    const swap = bannerOnNarrow && variant === 'cover' && game.banner
+
     return (
       <div className={wrapper}>
-        <img
-          className="art__img"
-          src={src}
-          alt={decorative ? '' : (game.artworkAlt ?? `${game.title} artwork`)}
-          loading={lazy ? 'lazy' : 'eager'}
-          decoding="async"
-        />
+        {swap ? (
+          <picture style={{ display: 'contents' }}>
+            <source media={NARROW} srcSet={game.banner} />
+            {img}
+          </picture>
+        ) : (
+          img
+        )}
       </div>
     )
   }

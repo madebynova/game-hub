@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import type { ReactNode } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { getGame } from '../data/games'
 import { updatesForGame } from '../data/updates'
@@ -8,12 +9,36 @@ import { GameActions } from '../components/GameActions'
 import { Gallery } from '../components/Gallery'
 import { UpdateLog } from '../components/UpdateLog'
 import { EmptyPanel } from '../components/EmptyPanel'
+import { Button } from '../components/Button'
 import { ArrowIcon } from '../components/icons'
+import { gameAction } from '../lib/gameAction'
 import { countLabel } from '../lib/plural'
 import { formatDate } from '../lib/formatDate'
 import { usePageTitle } from '../lib/usePageTitle'
 import NotFound from './NotFound'
 import './GameDetails.css'
+
+interface SectionProps {
+  id: string
+  title: string
+  meta?: ReactNode
+  children: ReactNode
+}
+
+/** One titled section of a game page. */
+function Section({ id, title, meta, children }: SectionProps) {
+  return (
+    <section id={id} className="game__section" aria-labelledby={`${id}-heading`}>
+      <div className="game__section-head">
+        <h2 id={`${id}-heading`} className="game__section-title">
+          {title}
+        </h2>
+        {meta ? <span className="game__section-meta">{meta}</span> : null}
+      </div>
+      {children}
+    </section>
+  )
+}
 
 export default function GameDetails() {
   const { slug } = useParams<{ slug: string }>()
@@ -31,6 +56,7 @@ export default function GameDetails() {
 
   if (!game) return <NotFound />
 
+  const action = gameAction(game)
   const body = game.body ?? []
   const features = game.features ?? []
   const controls = game.controls ?? []
@@ -46,6 +72,7 @@ export default function GameDetails() {
     { id: 'controls', label: 'Controls', show: controls.length > 0 },
     { id: 'screenshots', label: 'Screenshots', show: screenshots.length > 0 },
     { id: 'updates', label: 'Updates', show: true },
+    { id: 'info', label: 'Project info', show: true },
   ].filter((item) => item.show)
 
   return (
@@ -67,17 +94,33 @@ export default function GameDetails() {
             </div>
 
             <div className="game__intro">
-              {game.subtitle ? <p className="game__subtitle">{game.subtitle}</p> : null}
-              <h1 className="game__title">{game.title}</h1>
+              <div className="game__heading">
+                <h1 className="game__title">{game.title}</h1>
+                {game.subtitle ? <p className="game__subtitle">{game.subtitle}</p> : null}
+              </div>
 
               <div className="game__badges">
                 <StatusBadge status={game.status} size="md" />
                 {game.platform ? <span className="game__chip">{game.platform}</span> : null}
+                {latest ? (
+                  <span className="game__chip">
+                    Updated <time dateTime={latest.date}>{formatDate(latest.date, 'short')}</time>
+                  </span>
+                ) : null}
               </div>
 
               {game.description ? <p className="game__desc">{game.description}</p> : null}
 
               <GameActions game={game} context="detail" />
+
+              {action.kind === 'view' ? (
+                <p className="game__note">
+                  Still in development.{' '}
+                  <a href="#updates" className="game__note-link">
+                    Follow along in the latest updates
+                  </a>
+                </p>
+              ) : null}
             </div>
           </div>
 
@@ -94,36 +137,27 @@ export default function GameDetails() {
       <div className="container game__layout">
         <div className="game__main">
           {body.length > 0 ? (
-            <section id="about" className="game__section" aria-labelledby="about-heading">
-              <h2 id="about-heading" className="game__section-title">
-                About
-              </h2>
+            <Section id="about" title="About">
               <div className="game__prose">
                 {body.map((paragraph) => (
                   <p key={paragraph}>{paragraph}</p>
                 ))}
               </div>
-            </section>
+            </Section>
           ) : null}
 
           {features.length > 0 ? (
-            <section id="features" className="game__section" aria-labelledby="features-heading">
-              <h2 id="features-heading" className="game__section-title">
-                Features
-              </h2>
+            <Section id="features" title="Features">
               <ul className="game__features">
                 {features.map((feature) => (
                   <li key={feature}>{feature}</li>
                 ))}
               </ul>
-            </section>
+            </Section>
           ) : null}
 
           {controls.length > 0 ? (
-            <section id="controls" className="game__section" aria-labelledby="controls-heading">
-              <h2 id="controls-heading" className="game__section-title">
-                Controls
-              </h2>
+            <Section id="controls" title="Controls">
               <dl className="game__controls">
                 {controls.map((control) => (
                   <div className="game__control" key={control.keys}>
@@ -134,28 +168,20 @@ export default function GameDetails() {
                   </div>
                 ))}
               </dl>
-            </section>
+            </Section>
           ) : null}
 
           {screenshots.length > 0 ? (
-            <section id="screenshots" className="game__section" aria-labelledby="shots-heading">
-              <h2 id="shots-heading" className="game__section-title">
-                Screenshots
-              </h2>
+            <Section id="screenshots" title="Screenshots">
               <Gallery shots={screenshots} />
-            </section>
+            </Section>
           ) : null}
 
-          <section id="updates" className="game__section" aria-labelledby="updates-heading">
-            <div className="game__section-head">
-              <h2 id="updates-heading" className="game__section-title">
-                Latest updates
-              </h2>
-              {updates.length > 0 ? (
-                <span className="game__section-meta">{countLabel(updates.length, 'update')}</span>
-              ) : null}
-            </div>
-
+          <Section
+            id="updates"
+            title="Latest updates"
+            meta={updates.length > 0 ? countLabel(updates.length, 'update') : undefined}
+          >
             {updates.length > 0 ? (
               <UpdateLog updates={updates} />
             ) : (
@@ -167,10 +193,10 @@ export default function GameDetails() {
                 description={`Release notes for ${game.title} will be listed here as updates ship.`}
               />
             )}
-          </section>
+          </Section>
         </div>
 
-        <aside className="game__aside" aria-labelledby="info-heading">
+        <aside id="info" className="game__aside" aria-labelledby="info-heading">
           <div className="info">
             <h2 id="info-heading" className="info__title">
               Project information
@@ -209,6 +235,12 @@ export default function GameDetails() {
                   </dd>
                 </div>
               ) : null}
+              {updates.length > 0 ? (
+                <div className="info__row">
+                  <dt>Updates</dt>
+                  <dd>{countLabel(updates.length, 'update')} posted</dd>
+                </div>
+              ) : null}
             </dl>
 
             <div className="info__actions">
@@ -216,6 +248,13 @@ export default function GameDetails() {
             </div>
           </div>
         </aside>
+      </div>
+
+      <div className="container game__end">
+        <Button to="/games" variant="secondary">
+          <ArrowIcon className="game__end-icon" />
+          Back to all games
+        </Button>
       </div>
     </div>
   )

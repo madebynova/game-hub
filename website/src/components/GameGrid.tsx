@@ -16,7 +16,7 @@ interface GameGridProps {
 }
 
 /** The library grid. Renders whatever it is given; empty states live outside. */
-export function GameGrid({ games, eagerCount = 4, showOpenSlot = false, ...rest }: GameGridProps) {
+export function GameGrid({ games, eagerCount = 3, showOpenSlot = false, ...rest }: GameGridProps) {
   return (
     <ul className="grid" aria-label={rest['aria-label']}>
       {games.map((game, index) => (
@@ -27,7 +27,7 @@ export function GameGrid({ games, eagerCount = 4, showOpenSlot = false, ...rest 
 
       {showOpenSlot ? (
         <li className="grid__slot" style={{ ['--i' as string]: games.length }}>
-          <NovaMark size={18} className="grid__slot-mark" />
+          <NovaMark size={20} className="grid__slot-mark" />
           <p className="grid__slot-title">More games on the way</p>
           <p className="grid__slot-desc">New games join the library as they're built.</p>
         </li>

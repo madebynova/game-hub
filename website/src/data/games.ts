@@ -21,26 +21,26 @@ import type { Game } from '../types'
 const RUNOUT_PLAY_URL = 'https://runout-game.netlify.app'
 
 /**
- * RUNOUT's source. It lives in the same monorepo as this website:
+ * RUNOUT's source, in the public game-hub monorepo alongside this website:
  *
  *   madebynova/game-hub
  *     games/runout/   the game  — its own Vite project, its own Netlify site
  *     website/        this site — its own Vite project, its own Netlify site
  *
- * Note the repo is currently private, so this link 404s for anyone without
- * access. Set it to '' to hide the Source buttons until the repo is public.
+ * Set it to '' to hide the Source buttons.
  */
 const RUNOUT_SOURCE_URL = 'https://github.com/madebynova/game-hub/tree/main/games/runout'
 
 /**
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ SALT & SOVEREIGNS' LIVE URL GOES HERE.                                   │
+ * │ TIDES OF FORTUNE'S LIVE URL GOES HERE.                                   │
  * │                                                                          │
- * │ The game lives in this same monorepo (games/salt-and-sovereigns/) as a   │
- * │ static HTML/CSS/JS site — no build step. Deploy that folder as its own   │
- * │ Netlify site, then paste the URL below and nothing else needs changing:  │
+ * │ The game lives in this same monorepo (games/salt-and-sovereigns/ — the   │
+ * │ folder keeps the game's earlier name) as a static HTML/CSS/JS site with  │
+ * │ no build step. Deploy that folder as its own Netlify site, then paste    │
+ * │ the URL below and nothing else needs changing:                           │
  * │                                                                          │
- * │   SALT_AND_SOVEREIGNS_PLAY_URL = 'https://your-site.netlify.app'         │
+ * │   TIDES_OF_FORTUNE_PLAY_URL = 'https://your-site.netlify.app'            │
  * │                                                                          │
  * │ That one edit flips the card from "In development" to "Playable" and     │
  * │ turns every VIEW PROJECT button into PLAY NOW — on the library card, the │
@@ -50,19 +50,10 @@ const RUNOUT_SOURCE_URL = 'https://github.com/madebynova/game-hub/tree/main/game
  * │ NOVA advertises no play link at all, which is the honest state.          │
  * └──────────────────────────────────────────────────────────────────────────┘
  */
-const SALT_AND_SOVEREIGNS_PLAY_URL = ''
+const TIDES_OF_FORTUNE_PLAY_URL = ''
 
-/**
- * Salt & Sovereigns' source. It lives in the same monorepo as this website:
- *
- *   madebynova/game-hub
- *     games/salt-and-sovereigns/   the game — static HTML/CSS/JS, no build
- *     website/                    this site — its own Vite project
- *
- * Note the repo is currently private, so this link 404s for anyone without
- * access. Set it to '' to hide the Source button until the repo is public.
- */
-const SALT_AND_SOVEREIGNS_SOURCE_URL =
+/** Tides of Fortune's source, in the public game-hub monorepo. '' hides Source. */
+const TIDES_OF_FORTUNE_SOURCE_URL =
   'https://github.com/madebynova/game-hub/tree/main/games/salt-and-sovereigns'
 
 /**
@@ -91,6 +82,7 @@ const SALT_AND_SOVEREIGNS_SOURCE_URL =
  *     artwork: '/games/my-game/cover.svg',     // 3:4, in public/
  *     banner: '/games/my-game/banner.svg',     // 16:9, in public/
  *     artworkAlt: 'What the art shows',
+ *     tagline: 'One short line for the library card.',
  *     description: 'One or two sentences.',
  *     body: ['A paragraph.', 'Another.'],
  *     features: ['Something the game actually does'],
@@ -126,6 +118,8 @@ export const games: Game[] = [
       'A suburban street at night: a porch light on, someone at the door with a torch, and a figure sprinting along the pavement towards a parked van.',
 
     // Everything below is taken from RUNOUT's own README — no invented copy.
+    tagline: 'Ring the bell, get seen, lose them — then risk one more house, or run for the van.',
+
     description:
       'A solo ding-dong-and-run extraction game. Ring the bell, get seen legging it, lose them, and decide whether to risk one more house before you run for the van.',
 
@@ -159,26 +153,28 @@ export const games: Game[] = [
   },
   {
     id: 'salt-and-sovereigns',
-    title: 'Salt & Sovereigns',
+    // The slug, folder and asset paths keep the game's earlier name, Salt &
+    // Sovereigns, so links and files stay put. Players only ever see the title.
+    title: 'Tides of Fortune',
     subtitle: 'Open Waters',
     slug: 'salt-and-sovereigns',
     order: 90,
 
     // Derived from the URL above so the two can never disagree: NOVA will not
     // claim a game is playable while pointing at nothing.
-    status: SALT_AND_SOVEREIGNS_PLAY_URL ? 'playable' : 'in-development',
-    playable: Boolean(SALT_AND_SOVEREIGNS_PLAY_URL),
-    playUrl: SALT_AND_SOVEREIGNS_PLAY_URL || undefined,
-    githubUrl: SALT_AND_SOVEREIGNS_SOURCE_URL || undefined,
+    status: TIDES_OF_FORTUNE_PLAY_URL ? 'playable' : 'in-development',
+    playable: Boolean(TIDES_OF_FORTUNE_PLAY_URL),
+    playUrl: TIDES_OF_FORTUNE_PLAY_URL || undefined,
+    githubUrl: TIDES_OF_FORTUNE_SOURCE_URL || undefined,
 
-    // Original cover art, not a screenshot. Real screenshots belong in
-    // `screenshots` below once there are good ones.
     artwork: '/games/salt-and-sovereigns/cover.svg',
     banner: '/games/salt-and-sovereigns/banner.svg',
     artworkAlt:
       'A pirate ship under full sail at sunset, crossing open water with islands on the horizon.',
 
     // Everything below is taken from the game's own README and in-game manual.
+    tagline: 'Sail, trade and smuggle your way to a fortune across the open waters.',
+
     description:
       'A pirate trading adventure where you sail, trade, take contracts, evade the Navy, build businesses, collect ships, and grow your fortune across the open waters.',
 
