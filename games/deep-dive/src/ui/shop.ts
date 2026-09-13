@@ -24,6 +24,8 @@ export interface ShopHandlers {
   onDive(): void;
   onClose(): void;
   onReset(): void;
+  /** Clicked an upgrade the player can't afford yet. */
+  onDenied(id: UpgradeId): void;
 }
 
 /** Trading deck overlay: sell the haul, buy gear, check objectives, dive again. */
@@ -75,8 +77,15 @@ export class Shop {
     parent.appendChild(this.root);
 
     this.root.addEventListener('click', (e) => {
-      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-action]');
-      if (!btn || btn.disabled) return;
+      const target = e.target as HTMLElement;
+      const btn = target.closest<HTMLButtonElement>('[data-action]');
+      if (!btn) {
+        // Disabled buy buttons let the pointer through, so the click lands on their wrapper.
+        const blocked = target.closest('.upg.short')?.querySelector<HTMLButtonElement>('.btn-buy:disabled');
+        if (blocked && target.closest('.upg-buy')) handlers.onDenied(blocked.dataset.id as UpgradeId);
+        return;
+      }
+      if (btn.disabled) return;
       // Mouse clicks drop focus so Space goes back to the game; keyboard presses (detail 0) keep it.
       if (e.detail > 0) btn.blur();
       switch (btn.dataset.action) {
@@ -206,8 +215,8 @@ export class Shop {
           <div class="upg-desc">${def.description}</div>
           <div class="upg-stat">${stat}</div>
         </div>
-        <div class="upg-buy">
-          <button class="btn btn-buy" data-action="buy" data-id="${id}" ${afford ? '' : 'disabled'} aria-label="${label}" title="${label}">
+        <div class="upg-buy" title="${label}">
+          <button class="btn btn-buy" data-action="buy" data-id="${id}" ${afford ? '' : 'disabled'} aria-label="${label}">
             ${maxed ? 'Maxed' : formatMoney(cost)}
           </button>
           ${short ? `<span class="upg-short">Need ${formatMoney(short)} more</span>` : ''}

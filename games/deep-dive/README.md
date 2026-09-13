@@ -108,6 +108,19 @@ Maxing everything costs about $50,000 — more than 10× Phase 1's $4,420. The z
 - A bigger bag matters more once the loot is valuable and heavy.
 - The wreck interior is dark and the abyss swallows light, so the flashlight decides how much you can actually see.
 
+## Audio
+
+All sound is synthesized in the browser with the Web Audio API — there are no audio files. Audio starts on your first click or key press on the title screen (browsers block sound before that), and `M` mutes.
+
+- **A soundscape that follows you down.** On the boat you hear waves lapping at the hull. Underwater, a muffled, slowly swelling water bed takes over and every gameplay sound is low-passed, as if heard through water. Going deeper darkens the bed and brings in a low drone, so the Reef feels calm, the Wreck heavier and the Abyss tense. Everything glides with depth rather than switching at zone lines.
+- **Sparse environmental sounds:** bubbles in the shallows, creaks around the wreck (with a hollow, enclosed resonance inside the hull), and rare distant low calls in the abyss.
+- **Diving:** fin strokes that follow how hard you swim, a splash and a submerge whoosh going in, a breach and a breath coming up, and clunks on the ladder climbing aboard.
+- **Treasure:** a soft clink for ordinary finds. Rare finds add a shimmer, very rare finds a struck bell over a low swell, and legendary finds a deep boom, a slow chord and a run of bells, while the ambience dips underneath.
+- **Oxygen:** silent while you're fine, a soft two-note cue every few seconds when low, and a firmer pulse that quickens as the air runs out when critical. At zero a heartbeat takes over and your hearing closes in.
+- **Mix:** warnings > discoveries > gameplay > ambience > UI. Upgrades, objectives, new treasure-log entries, zone transitions and the trading deck have their own quiet cues, and clicking an upgrade you can't afford gives a soft thud.
+
+The mixing decisions (depth curves, event rates, warning pacing, bus levels) are pure functions in `src/core/audioMix.ts`, covered by tests. `src/core/ambience.ts` holds the few looping layers, built once, and `src/core/audio.ts` the short one-shot sounds.
+
 ## Saves
 
 Saves live under `deepdive.save.v1` in `localStorage`. Phase 1 saves load without losing anything: cash, upgrades, stats, hints and any lost satchel are kept, and new fields (fins, objectives, zones visited, treasure log) start fresh. A Phase 1 satchel that would now be buried inside the new terrain is moved to the nearest open water above it.
@@ -118,7 +131,7 @@ Saves live under `deepdive.save.v1` in `localStorage`. Phase 1 saves load withou
 src/
   config.ts            tuning constants (speeds, pressure curve, boat)
   game.ts              game state machine: title → boat → dive → blackout
-  core/                input, audio (WebAudio synth), save/load + migration, math helpers
+  core/                input, audio (synthesized sounds, underwater ambience, mix), save/load + migration, math helpers
   data/                treasures + loot tables, upgrades, objective pool
   systems/             pure game logic: haul (slots), economy, oxygen/pressure,
                        hazards (currents, collapses, air pockets), objectives, progression log

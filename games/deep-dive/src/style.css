@@ -370,6 +370,10 @@ kbd {
 .upg-stat .arrow { color: var(--ink-dim); }
 .btn-buy { min-width: 86px; }
 .upg-buy { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+/* Unaffordable: the click falls through to the wrapper, which answers with a soft "no". */
+/* #ui scope: must outrank `#ui button { pointer-events: auto }`. */
+#ui .btn-buy:disabled { pointer-events: none; }
+.upg.short .upg-buy { cursor: not-allowed; }
 .upg-short { font-size: 11px; color: var(--ink-dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 .shop-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 24px; border-top: 1px solid var(--line); flex-wrap: wrap; }
@@ -385,7 +389,8 @@ kbd {
   background: linear-gradient(180deg, rgba(8, 10, 30, 0.2) 0%, rgba(3, 10, 26, 0.15) 40%, rgba(3, 10, 26, 0.85) 100%);
   transition: opacity 0.5s;
 }
-.title-screen.out { opacity: 0; pointer-events: none; }
+/* #ui scope: must outrank `#ui .overlay { pointer-events: auto }` so the fading title never swallows clicks. */
+#ui .title-screen.out { opacity: 0; pointer-events: none; }
 .title-inner { text-align: center; margin-top: 18vh; }
 /* ABYSSBOUND on one line: the abyss in the water gradient, "bound" in the warm title cream. */
 .logo {

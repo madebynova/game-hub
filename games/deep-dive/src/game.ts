@@ -59,7 +59,6 @@ export class Game {
   private drowning = 0;
   private underwaterTime = 0;
   private diveMaxDepth = 0;
-  private warnTimer = 0;
   private bubbleTimer = 0;
   private heartbeatTimer = 0;
   private pryTimer = 0;
@@ -96,6 +95,10 @@ export class Game {
       onDive: () => this.startDive(true),
       onClose: () => this.closeShop(),
       onReset: () => this.resetSave(),
+      onDenied: (id) => {
+        this.sfx.deny();
+        this.shop.shake(id);
+      },
     });
     this.overlays = new Overlays(uiRoot);
     this.announcer = new Announcer(uiRoot);
@@ -180,9 +183,24 @@ export class Game {
 
     this.effects.update(dt);
     this.updateCamera(dt);
-    const p = this.player;
-    this.sfx.setUnderwater(p.mode === 'swim' && !p.atSurface ? clamp(p.depth / 2500, 0.35, 1) : 0);
+    this.updateAudio(dt);
     this.updateHud(dt);
+  }
+
+  /** Tell the soundscape where the diver is; it handles ambience, strokes and oxygen warnings. */
+  private updateAudio(dt: number) {
+    const p = this.player;
+    const underwater = this.state !== 'title' && p.mode === 'swim' && !p.atSurface;
+    this.sfx.update(dt, {
+      submerged: underwater ? 1 : 0,
+      depth: p.mode === 'swim' ? p.depth : 0,
+      insideWreck: underwater && this.world.insideWreck(p.x, p.y),
+      swim: underwater ? clamp(Math.hypot(p.vx, p.vy) / this.swimSpeed, 0, 1) : 0,
+      oxygenStatus: this.state === 'dive' && underwater ? this.status : 'ok',
+      oxygenFrac: this.oxygen / this.maxOxygen,
+      drowning: clamp(this.drowning / OXYGEN.graceSeconds, 0, 1),
+      fade: this.state === 'blackout' ? clamp(this.blackoutTimer / 1.2, 0, 1) : 0,
+    });
   }
 
   private draw(dt: number) {
@@ -254,7 +272,8 @@ export class Game {
 
   private begin() {
     if (this.state !== 'title') return;
-    this.sfx.unlock();
+    this.sfx.unlock(); // first user gesture — the browser now allows audio
+    this.sfx.panel(true);
     this.overlays.hideTitle();
     this.state = 'boat';
     this.hint('start', 'Welcome aboard! Walk off the stern or press <kbd>Space</kbd> to dive in.', 6);
@@ -283,12 +302,12 @@ export class Game {
 
   private openShop() {
     this.shop.open(this.shopData());
-    this.sfx.click();
+    this.sfx.panel(true);
   }
 
   private closeShop() {
     this.shop.close();
-    this.sfx.click();
+    this.sfx.panel(false);
   }
 
   private shopData(): ShopData {
@@ -391,7 +410,10 @@ export class Game {
       this.zone = null;
       this.oxygen = Math.min(this.maxOxygen, this.oxygen + OXYGEN.refillRate * dt);
     } else {
-      if (wasSurface) for (let i = 0; i < 6; i++) this.effects.bubble(p.x + rand(-12, 12), p.y + rand(0, 16));
+      if (wasSurface) {
+        this.sfx.submerge();
+        for (let i = 0; i < 6; i++) this.effects.bubble(p.x + rand(-12, 12), p.y + rand(0, 16));
+      }
       this.underwaterTime += dt;
       this.oxygen = Math.max(0, this.oxygen - drainRate(p.depth) * dt);
       if (this.oxygen <= 0) {
@@ -409,14 +431,14 @@ export class Game {
     this.updateAirPocket(dt);
     this.updateCollapses(dt);
     this.updateZones(dt);
-    this.updateOxygenWarnings(dt);
+    this.updateOxygenWarnings();
     this.updateBubbles(dt);
     this.updateInteraction(dt);
   }
 
   private onSurfaced() {
     const p = this.player;
-    this.sfx.breathe();
+    this.sfx.surface();
     this.effects.splash(p.x, 0, 0.5);
     const close = this.drowning > 0 || this.status === 'critical';
     this.effects.text(p.x, p.y - 40, close ? 'Gasp! That was close.' : 'Fresh air', close ? '#ffd27a' : '#bdf3ff');
@@ -517,20 +539,16 @@ export class Game {
     }
   }
 
-  private updateOxygenWarnings(dt: number) {
+  private updateOxygenWarnings() {
     const p = this.player;
     this.status = p.atSurface ? 'ok' : oxygenStatus(this.oxygen, this.maxOxygen, p.depth, this.swimSpeed);
     if (p.atSurface) return;
     if (this.oxygen / this.maxOxygen < 0.65) {
       this.hint('oxygen', 'Air drains faster the deeper you go. Surface <b>anywhere</b> to breathe.', 6);
     }
+    // The warning sounds themselves are paced by the audio system.
     if (this.status === 'low' || this.status === 'critical') {
       const critical = this.status === 'critical';
-      this.warnTimer -= dt;
-      if (this.warnTimer <= 0) {
-        this.sfx.warn(critical);
-        this.warnTimer = critical ? 1.1 : 2.4;
-      }
       if (!critical && !this.warnedLow) {
         this.warnedLow = true;
         this.hud.toast('Oxygen low', 'warn', 2.5);
@@ -676,7 +694,7 @@ export class Game {
     this.save.lostSatchel = leftover.length ? { ...sat, items: leftover } : null;
     this.effects.burst(sat.x, sat.y, '#ffb547', 36, 220);
     this.effects.text(sat.x, sat.y - 30, `Recovered ${got} item${got === 1 ? '' : 's'}`, '#ffcf7a', { sub: formatMoney(value), big: true });
-    this.sfx.pickup('epic');
+    this.sfx.satchelRecovered();
     this.hud.bumpHaul();
     this.setTarget(null);
     this.persist();
@@ -692,7 +710,7 @@ export class Game {
     this.status = 'ok';
     this.zone = null;
     this.effects.splash(p.x, 0, 0.4);
-    this.sfx.breathe();
+    this.sfx.boardBoat();
     this.hud.setPrompt(null);
 
     this.tracker.evaluateBoarding(this.haul.total);
@@ -766,7 +784,7 @@ export class Game {
     this.status = 'ok';
     this.state = 'boat';
     this.renderer.cam.y = 0;
-    this.sfx.breathe();
+    this.sfx.gasp();
     if (this.save.lostSatchel) {
       this.hint('satchel', 'Your lost satchel glows where you blacked out. Recover it to get your treasure back.', 6);
     }
