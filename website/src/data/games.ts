@@ -4,7 +4,7 @@ import type { Game } from '../types'
  * ┌──────────────────────────────────────────────────────────────────────────┐
  * │ RUNOUT'S LIVE URL GOES HERE.                                             │
  * │                                                                          │
- * │ RUNOUT is deployed as its own separate Netlify site, from its own repo.  │
+ * │ RUNOUT is deployed as its own separate Netlify site, from games/runout.  │
  * │ NOVA only links to it. Once that site is live, paste its URL below and   │
  * │ nothing else needs changing:                                             │
  * │                                                                          │
@@ -70,7 +70,7 @@ const SALT_AND_SOVEREIGNS_SOURCE_URL =
  *
  * Adding a game means adding an object to this array — no component needs
  * touching. It then appears in the library grid and gets its own page at
- * `/games/<slug>`.
+ * `/games/<slug>`. Its changelog lives in `updates.ts`.
  *
  * Only `id`, `title`, `slug` and `status` are required. Every other field is
  * optional and the UI renders only what exists, so a game can be listed the
@@ -88,14 +88,16 @@ const SALT_AND_SOVEREIGNS_SOURCE_URL =
  *     playable: true,                  // with playUrl, turns on PLAY NOW
  *     playUrl: 'https://…',            // the game's own site — opens in a new tab
  *     githubUrl: 'https://github.com/…',
- *     artwork: '/games/my-game/cover.png',     // 3:4, in public/
- *     banner: '/games/my-game/banner.png',     // 16:9, in public/
+ *     artwork: '/games/my-game/cover.svg',     // 3:4, in public/
+ *     banner: '/games/my-game/banner.svg',     // 16:9, in public/
  *     artworkAlt: 'What the art shows',
  *     description: 'One or two sentences.',
  *     body: ['A paragraph.', 'Another.'],
  *     features: ['Something the game actually does'],
  *     controls: [{ keys: 'WASD', action: 'Move' }],
  *     screenshots: [{ src: '/games/my-game/1.png', alt: '…' }],
+ *     platform: 'Browser',
+ *     tech: ['TypeScript', 'Vite'],
  *     featured: true,                  // homepage spotlight; at most one
  *     order: 100,                      // library sort, higher first
  *   }
@@ -149,6 +151,9 @@ export const games: Game[] = [
       { keys: 'M', action: 'Mute' },
     ],
 
+    platform: 'Browser',
+    tech: ['TypeScript', 'Vite', 'HTML5 Canvas'],
+
     // Real screenshots only — add them to public/ and list them here when they
     // exist. The gallery section hides itself until then.
   },
@@ -166,10 +171,14 @@ export const games: Game[] = [
     playUrl: SALT_AND_SOVEREIGNS_PLAY_URL || undefined,
     githubUrl: SALT_AND_SOVEREIGNS_SOURCE_URL || undefined,
 
-    artwork: '/games/salt-and-sovereigns/cover.png',
-    banner: '/games/salt-and-sovereigns/banner.png',
-    artworkAlt: 'A pirate ship easing toward Tortuga, a lantern-lit pirate haven, across open water.',
+    // Original cover art, not a screenshot. Real screenshots belong in
+    // `screenshots` below once there are good ones.
+    artwork: '/games/salt-and-sovereigns/cover.svg',
+    banner: '/games/salt-and-sovereigns/banner.svg',
+    artworkAlt:
+      'A pirate ship under full sail at sunset, crossing open water with islands on the horizon.',
 
+    // Everything below is taken from the game's own README and in-game manual.
     description:
       'A pirate trading adventure where you sail, trade, take contracts, evade the Navy, build businesses, collect ships, and grow your fortune across the open waters.',
 
@@ -198,6 +207,9 @@ export const games: Game[] = [
       { keys: 'Esc', action: 'Pause, or close the current menu' },
     ],
 
+    platform: 'Browser',
+    tech: ['JavaScript', 'HTML5 Canvas', 'No build step'],
+
     // Real screenshots only — add them to public/ and list them here when they
     // exist. The gallery section hides itself until then.
   },
@@ -218,6 +230,3 @@ export function getFeaturedGame(): Game | undefined {
 }
 
 export { isPlayable } from '../lib/gameAction'
-
-
-

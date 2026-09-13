@@ -1,6 +1,6 @@
 .btn {
   --btn-pad-x: var(--s-5);
-  --btn-h: 40px;
+  --btn-h: 42px;
 
   display: inline-flex;
   align-items: center;
@@ -11,14 +11,16 @@
   border: 1px solid transparent;
   border-radius: var(--r-md);
   font-size: var(--t-sm);
-  font-weight: 600;
+  font-weight: 650;
   letter-spacing: 0.01em;
   white-space: nowrap;
   cursor: pointer;
+  user-select: none;
   transition:
     background-color var(--fast) var(--ease),
     border-color var(--fast) var(--ease),
     color var(--fast) var(--ease),
+    box-shadow var(--base) var(--ease),
     transform var(--fast) var(--ease);
 }
 
@@ -27,13 +29,13 @@
 }
 
 .btn--sm {
-  --btn-h: 32px;
+  --btn-h: 34px;
   --btn-pad-x: var(--s-3);
   font-size: var(--t-xs);
 }
 
 .btn--lg {
-  --btn-h: 48px;
+  --btn-h: 50px;
   --btn-pad-x: var(--s-6);
   font-size: var(--t-base);
 }
@@ -41,21 +43,34 @@
 .btn--primary {
   background: var(--accent);
   color: var(--accent-ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 8px 24px -14px var(--accent-glow);
 }
 
 .btn--primary:hover {
   background: var(--accent-hover);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 12px 32px -12px var(--accent-glow);
+  transform: translateY(-1px);
 }
 
+.btn--primary:active {
+  transform: translateY(0);
+}
+
+/* Translucent, so it sits as well on artwork as on a flat surface. */
 .btn--secondary {
-  background: var(--surface-2);
-  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--line-strong);
   color: var(--text);
+  backdrop-filter: blur(8px);
 }
 
 .btn--secondary:hover {
-  background: var(--surface-3);
-  border-color: var(--line-strong);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .btn--ghost {
@@ -75,4 +90,13 @@
 
 .btn svg {
   flex: none;
+}
+
+/* A trailing arrow nudges toward where the button goes. */
+.btn .btn__arrow {
+  transition: transform var(--fast) var(--ease);
+}
+
+.btn:hover .btn__arrow {
+  transform: translateX(2px);
 }

@@ -1,0 +1,229 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900">
+  <!-- Salt & Sovereigns banner (16:9). Original artwork: the same ship and
+       sunset as the cover, set wide — headland on the left, ship on the right,
+       open sky and water between them for page text to sit over. -->
+  <defs>
+    <linearGradient id="sky" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="560">
+      <stop offset="0" stop-color="#060f24"/>
+      <stop offset="0.32" stop-color="#172246"/>
+      <stop offset="0.6" stop-color="#4f3056"/>
+      <stop offset="0.82" stop-color="#b85a4c"/>
+      <stop offset="1" stop-color="#f3a45c"/>
+    </linearGradient>
+    <linearGradient id="sea" gradientUnits="userSpaceOnUse" x1="0" y1="560" x2="0" y2="900">
+      <stop offset="0" stop-color="#b3604f"/>
+      <stop offset="0.07" stop-color="#6b3a4f"/>
+      <stop offset="0.3" stop-color="#24304c"/>
+      <stop offset="0.65" stop-color="#101f38"/>
+      <stop offset="1" stop-color="#060f1e"/>
+    </linearGradient>
+    <radialGradient id="sunDisc">
+      <stop offset="0" stop-color="#fff7e0"/>
+      <stop offset="0.6" stop-color="#ffdb8c"/>
+      <stop offset="1" stop-color="#ffb45a"/>
+    </radialGradient>
+    <radialGradient id="sunGlow">
+      <stop offset="0" stop-color="#ffc56e" stop-opacity="0.75"/>
+      <stop offset="0.35" stop-color="#ff9a52" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#ff9a52" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sailLit" x1="0" y1="0" x2="1" y2="0.35">
+      <stop offset="0" stop-color="#ffe6b8"/>
+      <stop offset="0.5" stop-color="#e9ae78"/>
+      <stop offset="1" stop-color="#8e5048"/>
+    </linearGradient>
+    <linearGradient id="sailShade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a1c22" stop-opacity="0"/>
+      <stop offset="1" stop-color="#3a1c22" stop-opacity="0.45"/>
+    </linearGradient>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff"/>
+      <stop offset="1" stop-color="#000"/>
+    </linearGradient>
+    <mask id="reflectMask" maskUnits="userSpaceOnUse" x="0" y="724" width="1600" height="176">
+      <rect x="0" y="724" width="1600" height="176" fill="url(#fade)"/>
+    </mask>
+    <radialGradient id="vignette" cx="0.5" cy="0.45" r="0.75">
+      <stop offset="0.6" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.6"/>
+    </radialGradient>
+
+    <g id="sails">
+      <path d="M106 -296 L284 -118 L184 -82 Q156 -196 106 -296 Z"/>
+      <path d="M-114 -250 L-114 -94 L-192 -98 Q-172 -180 -114 -250 Z"/>
+      <path d="M-86 -138 L70 -138 Q80 -104 66 -70 Q-8 -54 -82 -70 Q-96 -104 -86 -138 Z"/>
+      <path d="M-72 -230 L56 -230 Q66 -192 54 -156 Q-8 -142 -70 -156 Q-82 -192 -72 -230 Z"/>
+      <path d="M-54 -306 L40 -306 Q48 -276 38 -248 Q-8 -238 -52 -248 Q-62 -276 -54 -306 Z"/>
+      <path d="M48 -128 L166 -128 Q174 -98 164 -70 Q106 -56 50 -70 Q40 -98 48 -128 Z"/>
+      <path d="M58 -212 L154 -212 Q162 -178 152 -146 Q106 -134 60 -146 Q50 -178 58 -212 Z"/>
+      <path d="M70 -280 L140 -280 Q146 -252 138 -228 Q106 -220 72 -228 Q64 -252 70 -280 Z"/>
+    </g>
+
+    <g id="ship">
+      <g fill="#1a0f14">
+        <rect x="-10" y="-372" width="8" height="322"/>
+        <rect x="100" y="-318" width="7" height="268"/>
+        <rect x="-119" y="-282" width="6" height="204"/>
+        <rect x="-22" y="-302" width="32" height="6" rx="2"/>
+      </g>
+      <use href="#sails" fill="url(#sailLit)"/>
+      <use href="#sails" fill="url(#sailShade)"/>
+      <g stroke="#1a0f14" stroke-width="4" stroke-linecap="round">
+        <line x1="-92" y1="-138" x2="76" y2="-138"/>
+        <line x1="-78" y1="-230" x2="62" y2="-230"/>
+        <line x1="-60" y1="-306" x2="46" y2="-306"/>
+        <line x1="42" y1="-128" x2="172" y2="-128"/>
+        <line x1="52" y1="-212" x2="160" y2="-212"/>
+        <line x1="64" y1="-280" x2="146" y2="-280"/>
+        <line x1="-196" y1="-98" x2="-110" y2="-94" stroke-width="3"/>
+        <line x1="186" y1="-70" x2="290" y2="-118" stroke-width="6"/>
+      </g>
+      <g fill="none" stroke="#1a0f14" stroke-width="1.3" stroke-opacity="0.7">
+        <path d="M-6 -372 L-182 -84"/>
+        <path d="M-6 -372 L104 -318"/>
+        <path d="M104 -318 L290 -118"/>
+        <path d="M-116 -282 L-6 -300"/>
+        <path d="M-6 -300 L-60 -54 M-6 -300 L40 -52"/>
+        <path d="M104 -250 L70 -52 M104 -250 L140 -56"/>
+        <path d="M-116 -230 L-150 -80"/>
+      </g>
+      <path d="M-182 -78 L-128 -82 Q-96 -56 -40 -52 L74 -50 Q118 -54 150 -66 L196 -76 Q184 -40 150 -4 Q112 12 10 14 L-118 12 Q-162 6 -172 -26 Z" fill="#1a0f14"/>
+      <path d="M-182 -78 L-128 -82 Q-96 -56 -40 -52" fill="none" stroke="#ff9e5e" stroke-width="2" stroke-opacity="0.55"/>
+      <path d="M-176 -44 Q-60 -30 164 -36" fill="none" stroke="#6b3a2c" stroke-width="3"/>
+      <path d="M-166 -18 Q-40 -4 150 -12" fill="none" stroke="#3f241e" stroke-width="2"/>
+      <g fill="#0a0608">
+        <rect x="-130" y="-30" width="9" height="6" rx="1"/>
+        <rect x="-94" y="-28" width="9" height="6" rx="1"/>
+        <rect x="-58" y="-26" width="9" height="6" rx="1"/>
+        <rect x="-22" y="-25" width="9" height="6" rx="1"/>
+        <rect x="14" y="-25" width="9" height="6" rx="1"/>
+        <rect x="50" y="-26" width="9" height="6" rx="1"/>
+        <rect x="86" y="-28" width="9" height="6" rx="1"/>
+      </g>
+      <g fill="#ffbf6a">
+        <rect x="-170" y="-68" width="6" height="7" rx="1"/>
+        <rect x="-160" y="-68" width="6" height="7" rx="1"/>
+        <rect x="-150" y="-67" width="6" height="7" rx="1"/>
+      </g>
+      <circle cx="-186" cy="-92" r="14" fill="#ffc56e" opacity="0.35"/>
+      <circle cx="-186" cy="-92" r="4" fill="#ffe2a0"/>
+      <path d="M-2 -372 L44 -366 Q36 -356 48 -346 L-2 -350 Z" fill="#0b0709"/>
+      <circle cx="18" cy="-361" r="3.2" fill="#e8dcc8"/>
+      <path d="M11 -355 L25 -350 M25 -355 L11 -350" stroke="#e8dcc8" stroke-width="1.4" stroke-linecap="round"/>
+      <path d="M104 -318 L132 -314 L104 -310 Z" fill="#b33a2e"/>
+    </g>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="1600" height="580" fill="url(#sky)"/>
+  <g fill="#f2e8ff">
+    <circle cx="60" cy="50" r="1.4" opacity="0.7"/>
+    <circle cx="190" cy="120" r="1" opacity="0.5"/>
+    <circle cx="330" cy="40" r="1.6" opacity="0.6"/>
+    <circle cx="470" cy="150" r="1" opacity="0.4"/>
+    <circle cx="610" cy="70" r="1.4" opacity="0.6"/>
+    <circle cx="760" cy="30" r="1.1" opacity="0.5"/>
+    <circle cx="905" cy="110" r="1.5" opacity="0.6"/>
+    <circle cx="1040" cy="44" r="1.2" opacity="0.5"/>
+    <circle cx="1190" cy="140" r="1" opacity="0.4"/>
+    <circle cx="1330" cy="60" r="1.6" opacity="0.65"/>
+    <circle cx="1470" cy="120" r="1.1" opacity="0.45"/>
+    <circle cx="1560" cy="36" r="1.3" opacity="0.6"/>
+    <circle cx="120" cy="230" r="0.9" opacity="0.3"/>
+    <circle cx="1500" cy="240" r="1" opacity="0.3"/>
+  </g>
+  <circle cx="760" cy="552" r="620" fill="url(#sunGlow)"/>
+
+  <!-- Clouds, lit from below -->
+  <path d="M880 196 Q1000 176 1140 188 Q1280 176 1420 190 Q1520 184 1620 196 L1620 214 Q1500 208 1400 216 Q1260 224 1120 214 Q990 222 880 212 Q840 204 880 196 Z" fill="#26264a" opacity="0.9"/>
+  <path d="M900 212 Q1000 218 1120 212 Q1260 222 1400 214 Q1500 206 1620 212 L1620 220 Q1500 216 1400 224 Q1260 230 1120 220 Q1000 226 900 216 Z" fill="#9a5064" opacity="0.45"/>
+  <path d="M-20 330 Q200 306 440 320 Q700 300 960 322 Q1200 308 1420 326 Q1520 320 1620 332 L1620 350 Q1500 344 1400 352 Q1180 362 950 348 Q700 360 430 346 Q200 358 -20 348 Z" fill="#3a2a4e" opacity="0.85"/>
+  <path d="M-20 348 Q200 358 430 346 Q700 360 950 348 Q1180 362 1400 352 Q1500 344 1620 350 L1620 360 Q1500 356 1400 362 Q1180 372 950 358 Q700 370 430 356 Q200 368 -20 358 Z" fill="#e0805e" opacity="0.4"/>
+  <path d="M-20 440 Q240 420 520 432 Q820 414 1120 434 Q1360 424 1620 444 L1620 456 Q1360 450 1110 458 Q820 466 510 452 Q240 462 -20 456 Z" fill="#6a3a55" opacity="0.7"/>
+  <path d="M-20 456 Q240 462 510 452 Q820 466 1110 458 Q1360 450 1620 456 L1620 462 Q1360 458 1110 466 Q820 474 510 460 Q240 470 -20 462 Z" fill="#ffae6e" opacity="0.35"/>
+
+  <!-- Sun, setting -->
+  <ellipse cx="760" cy="560" rx="1000" ry="150" fill="url(#sunGlow)" opacity="0.6"/>
+  <circle cx="760" cy="552" r="72" fill="url(#sunDisc)"/>
+  <path d="M520 526 Q680 514 860 520 Q980 516 1060 526 L1060 533 Q960 529 860 533 Q680 536 520 533 Z" fill="#9a4a50" opacity="0.55"/>
+
+  <!-- Horizon: a far coastline, a distant sail, islands -->
+  <path d="M880 561 Q960 553 1040 556 Q1100 557 1140 561 Z" fill="#5a3450" opacity="0.55"/>
+  <g transform="translate(600 557)" fill="#3a2436" opacity="0.85">
+    <path d="M-14 0 L14 0 L10 4 L-10 4 Z"/>
+    <path d="M-2 -2 L-2 -26 L-12 -4 Z"/>
+    <path d="M2 -2 L2 -22 L12 -4 Z"/>
+  </g>
+  <path d="M1300 561 Q1330 544 1370 546 Q1410 522 1460 532 Q1510 522 1550 540 Q1590 546 1620 561 Z" fill="#4a2b46" opacity="0.85"/>
+  <g stroke="#3d233c" stroke-linecap="round" fill="none">
+    <path d="M1490 530 Q1488 512 1494 496" stroke-width="2.4"/>
+    <path d="M1494 496 Q1482 490 1470 494 M1494 496 Q1506 488 1518 494 M1494 496 Q1490 484 1480 482 M1494 496 Q1500 482 1510 480" stroke-width="1.8"/>
+  </g>
+  <path d="M-10 561 L-10 470 Q40 440 90 452 Q140 400 200 418 Q240 392 290 420 Q340 430 380 470 Q420 500 470 530 Q500 548 540 561 Z" fill="#2c1c34"/>
+  <g stroke="#221529" stroke-linecap="round" fill="none">
+    <path d="M150 412 Q148 392 154 376" stroke-width="2.4"/>
+    <path d="M154 376 Q142 370 130 374 M154 376 Q166 368 178 374 M154 376 Q150 364 140 362 M154 376 Q160 362 170 360" stroke-width="1.8"/>
+    <path d="M244 404 Q243 388 248 376" stroke-width="2"/>
+    <path d="M248 376 Q238 371 228 374 M248 376 Q258 369 268 374 M248 376 Q245 366 237 364" stroke-width="1.6"/>
+  </g>
+  <path d="M-10 561 L-10 508 Q80 492 170 504 Q260 498 340 528 L400 561 Z" fill="#22162a"/>
+
+  <!-- Sea -->
+  <rect y="560" width="1600" height="340" fill="url(#sea)"/>
+  <ellipse cx="770" cy="561" rx="520" ry="2.6" fill="#ffe3b0" opacity="0.75"/>
+  <g fill="#ffd9a0">
+    <rect x="650" y="566" width="220" height="4" rx="2" opacity="0.85"/>
+    <rect x="700" y="576" width="130" height="4" rx="2" opacity="0.7"/>
+    <rect x="620" y="588" width="120" height="4" rx="2" opacity="0.6"/>
+    <rect x="756" y="588" width="126" height="4" rx="2" opacity="0.55"/>
+    <rect x="712" y="602" width="120" height="5" rx="2.5" opacity="0.55"/>
+    <rect x="600" y="618" width="130" height="5" rx="2.5" opacity="0.45"/>
+    <rect x="748" y="618" width="152" height="5" rx="2.5" opacity="0.42"/>
+    <rect x="690" y="636" width="170" height="5" rx="2.5" opacity="0.4"/>
+    <rect x="580" y="658" width="340" height="6" rx="3" opacity="0.32"/>
+    <rect x="672" y="684" width="200" height="6" rx="3" opacity="0.27"/>
+    <rect x="560" y="714" width="170" height="7" rx="3.5" opacity="0.22"/>
+    <rect x="750" y="714" width="190" height="7" rx="3.5" opacity="0.2"/>
+    <rect x="660" y="748" width="230" height="7" rx="3.5" opacity="0.17"/>
+    <rect x="540" y="790" width="420" height="8" rx="4" opacity="0.13"/>
+    <rect x="640" y="836" width="260" height="8" rx="4" opacity="0.1"/>
+    <rect x="520" y="880" width="200" height="9" rx="4.5" opacity="0.07"/>
+    <rect x="750" y="880" width="230" height="9" rx="4.5" opacity="0.07"/>
+  </g>
+
+  <!-- Reflection -->
+  <g mask="url(#reflectMask)" opacity="0.2">
+    <use href="#ship" transform="translate(1150 726) scale(1.02 -0.6)"/>
+  </g>
+
+  <!-- Waves -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M980 584 Q1160 578 1340 584 T1700 583" stroke="#e8a070" stroke-opacity="0.25" stroke-width="1.6" stroke-dasharray="36 22 10 26"/>
+    <path d="M-10 590 Q220 582 460 590" stroke="#e8a070" stroke-opacity="0.2" stroke-width="1.6" stroke-dasharray="30 24"/>
+    <path d="M920 630 Q1120 620 1320 630 T1720 630" stroke="#9a6a78" stroke-opacity="0.3" stroke-width="2.2" stroke-dasharray="54 30 16 34"/>
+    <path d="M-20 650 Q180 638 380 650 T780 650" stroke="#6a5a7a" stroke-opacity="0.3" stroke-width="2.2" stroke-dasharray="60 34"/>
+    <path d="M-20 730 Q240 716 500 730 T1020 730" stroke="#4a6488" stroke-opacity="0.32" stroke-width="2.8" stroke-dasharray="80 40 24 50"/>
+    <path d="M300 800 Q600 784 900 800 T1500 800 T2100 800" stroke="#3c577c" stroke-opacity="0.35" stroke-width="3.2" stroke-dasharray="110 50 30 60"/>
+    <path d="M-20 870 Q300 852 620 870 T1260 870 T1900 870" stroke="#2f4a6e" stroke-opacity="0.4" stroke-width="3.8" stroke-dasharray="130 60 36 70"/>
+  </g>
+
+  <!-- The ship -->
+  <ellipse cx="1156" cy="727" rx="210" ry="10" fill="#050a14" opacity="0.5"/>
+  <use href="#ship" transform="translate(1150 722) scale(1.02)"/>
+  <path d="M940 724 Q1000 716 1070 723 Q1150 714 1230 723 Q1300 716 1380 722 L1380 740 L940 740 Z" fill="url(#sea)"/>
+  <g fill="none" stroke="#f6dcb8" stroke-linecap="round">
+    <path d="M942 727 Q990 735 1040 731" stroke-opacity="0.35" stroke-width="2.4"/>
+    <path d="M1340 714 Q1376 724 1402 740" stroke-opacity="0.5" stroke-width="2.6"/>
+    <path d="M1300 730 Q1370 740 1440 743" stroke-opacity="0.3" stroke-width="2"/>
+    <path d="M860 742 Q920 750 980 745" stroke-opacity="0.2" stroke-width="2"/>
+  </g>
+
+  <!-- Gulls -->
+  <g fill="none" stroke="#1c1428" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M1310 250 q9 -9 18 0 q9 -9 18 0"/>
+    <path d="M1360 282 q6 -6 12 0 q6 -6 12 0" stroke-width="2.1"/>
+    <path d="M960 240 q5 -5 10 0 q5 -5 10 0" stroke-width="1.8"/>
+  </g>
+
+  <rect width="1600" height="900" fill="url(#vignette)"/>
+</svg>

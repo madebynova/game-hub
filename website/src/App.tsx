@@ -1,13 +1,12 @@
 import { lazy, Suspense } from 'react'
 import type { ReactNode } from 'react'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import Home from './pages/Home'
 
 /* Home ships in the main bundle; everything else is split off the route. */
 const Games = lazy(() => import('./pages/Games'))
 const GameDetails = lazy(() => import('./pages/GameDetails'))
-const Updates = lazy(() => import('./pages/Updates'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 /** Holds layout height while a route chunk loads, so nothing jumps. */
@@ -26,7 +25,8 @@ const router = createBrowserRouter([
       { path: '/', element: <Home /> },
       { path: '/games', element: lazyRoute(<Games />) },
       { path: '/games/:slug', element: lazyRoute(<GameDetails />) },
-      { path: '/updates', element: lazyRoute(<Updates />) },
+      // Updates now live on each game's page. Old links land on the library.
+      { path: '/updates', element: <Navigate to="/games" replace /> },
       { path: '*', element: lazyRoute(<NotFound />) },
     ],
   },

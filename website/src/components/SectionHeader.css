@@ -1,17 +1,7 @@
 .sh {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
-  padding-bottom: var(--s-4);
-  border-bottom: 1px solid var(--line);
-}
-
-.sh--page {
-  padding-bottom: var(--s-5);
-  margin-bottom: var(--s-6);
-}
-
-.sh--section {
+  gap: var(--s-1);
   margin-bottom: var(--s-5);
 }
 
@@ -26,12 +16,8 @@
 }
 
 .sh__title {
-  font-size: var(--t-lg);
-  letter-spacing: -0.025em;
-}
-
-.sh--page .sh__title {
   font-size: var(--t-xl);
+  font-weight: 700;
   letter-spacing: -0.03em;
 }
 
@@ -48,10 +34,4 @@
   font-size: var(--t-sm);
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;
-}
-
-@media (min-width: 720px) {
-  .sh--page .sh__title {
-    font-size: var(--t-2xl);
-  }
 }

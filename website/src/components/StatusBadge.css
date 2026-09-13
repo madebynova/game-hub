@@ -1,40 +1,57 @@
 .status {
+  --status-hue: var(--text-muted);
+
   display: inline-flex;
   align-items: center;
-  gap: var(--s-2);
+  gap: 7px;
+  height: 22px;
+  padding-inline: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--status-hue) 30%, transparent);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--status-hue) 10%, rgba(8, 9, 11, 0.6));
+  color: color-mix(in srgb, var(--status-hue) 55%, var(--text));
   font-size: var(--t-xs);
-  font-weight: 600;
+  font-weight: 650;
   letter-spacing: 0.06em;
+  line-height: 1;
   text-transform: uppercase;
-  color: var(--text-muted);
   white-space: nowrap;
 }
 
 .status--md {
-  font-size: var(--t-sm);
-  letter-spacing: 0.04em;
-  text-transform: none;
+  height: 28px;
+  padding-inline: 10px 12px;
+  font-size: 0.75rem;
 }
 
 .status__dot {
+  flex: none;
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: currentColor;
-  flex: none;
+  background: var(--status-hue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--status-hue) 22%, transparent);
 }
 
+.status--playable {
+  --status-hue: var(--status-live);
+}
+
+/* Live games breathe, slowly. Reduced motion stops it. */
 .status--playable .status__dot {
-  background: var(--status-live);
-  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.14);
+  animation: status-live 2.8s ease-in-out infinite;
 }
 
-.status--in-development .status__dot {
-  background: var(--status-dev);
-  box-shadow: 0 0 0 3px rgba(255, 176, 32, 0.14);
+.status--in-development {
+  --status-hue: var(--status-dev);
 }
 
-.status--coming-soon .status__dot {
-  background: var(--status-soon);
-  box-shadow: 0 0 0 3px rgba(122, 162, 255, 0.14);
+.status--coming-soon {
+  --status-hue: var(--status-soon);
+}
+
+@keyframes status-live {
+  50% {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--status-hue) 8%, transparent);
+  }
 }

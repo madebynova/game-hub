@@ -30,7 +30,7 @@ export interface Game {
   githubUrl?: string
   /** Cover image path (put files in /public). Falls back to generated art. */
   artwork?: string
-  /** Wide banner for the featured slot. Falls back to generated art. */
+  /** Wide banner for the featured slot and game page. Falls back to the cover. */
   banner?: string
   /** Alt text for the artwork. Required whenever artwork is set. */
   artworkAlt?: string
@@ -44,17 +44,24 @@ export interface Game {
   features?: string[]
   /** Controls reference, when the game has a fixed control scheme. */
   controls?: { keys: string; action: string }[]
-  /** Shows the game in the homepage hero slot. At most one should be true. */
+  /** Where it runs, e.g. "Browser". Shown under Project information. */
+  platform?: string
+  /** What it is built with, e.g. ["TypeScript", "Vite"]. */
+  tech?: string[]
+  /** Shows the game in the homepage spotlight. At most one should be true. */
   featured?: boolean
   /** Sorts the library. Higher first. Defaults to 0. */
   order?: number
 }
 
+/** One entry in a game's changelog. */
 export interface UpdateEntry {
   id: string
-  /** Slug of the game this belongs to, or omit for platform-wide news. */
-  gameSlug?: string
-  /** Heading, e.g. "Update 0.4". */
+  /** Slug of the game this belongs to. Updates live on that game's page. */
+  gameSlug: string
+  /** The game's own version label, if it has one, e.g. "v2.7". */
+  version?: string
+  /** Heading, e.g. "Black Market Auctions". */
   title: string
   /** ISO date, e.g. "2026-01-20". */
   date: string

@@ -2,8 +2,9 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(8, 9, 11, 0.85);
-  backdrop-filter: blur(12px);
+  background: rgba(8, 9, 11, 0.78);
+  backdrop-filter: saturate(140%) blur(14px);
+  -webkit-backdrop-filter: saturate(140%) blur(14px);
   border-bottom: 1px solid var(--line);
 }
 
@@ -21,45 +22,86 @@
   align-items: center;
   gap: var(--s-2);
   flex: none;
+  height: 36px;
 }
 
 .nav__mark {
   color: var(--accent);
-  transition: transform var(--base) var(--ease);
+  transition: rotate var(--slow) var(--ease-out);
 }
 
 .nav__brand:hover .nav__mark {
-  transform: rotate(90deg);
+  rotate: 90deg;
 }
 
 .nav__wordmark {
   font-size: var(--t-md);
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-indent: 0.18em;
+  font-weight: 750;
+  letter-spacing: 0.2em;
+  margin-right: -0.2em;
 }
 
-/* Desktop links --------------------------------------------------------- */
+/* Links ---------------------------------------------------------------- */
 
 .nav__links {
-  display: none;
-  align-items: center;
+  display: flex;
+  align-self: stretch;
   gap: var(--s-1);
   margin-right: auto;
+  padding-left: var(--s-2);
+  border-left: 1px solid var(--line);
+  margin-block: var(--s-4);
 }
 
 .nav__link {
   position: relative;
-  padding: var(--s-2) var(--s-3);
-  border-radius: var(--r-md);
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  margin-block: calc(var(--s-4) * -1);
+  padding-inline: var(--s-3);
   font-size: var(--t-sm);
   font-weight: 550;
   color: var(--text-muted);
   transition: color var(--fast) var(--ease);
 }
 
+/* Hover plate */
+.nav__link::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 2px;
+  right: 2px;
+  top: 50%;
+  height: 32px;
+  translate: 0 -50%;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  opacity: 0;
+  transition: opacity var(--fast) var(--ease);
+}
+
+/* Active bar, sitting on the header's bottom edge */
+.nav__link::after {
+  content: '';
+  position: absolute;
+  left: var(--s-3);
+  right: var(--s-3);
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+  scale: 0 1;
+  transition: scale var(--base) var(--ease-out);
+}
+
 .nav__link:hover {
   color: var(--text);
+}
+
+.nav__link:hover::before {
+  opacity: 1;
 }
 
 .nav__link.is-active {
@@ -67,30 +109,26 @@
 }
 
 .nav__link.is-active::after {
-  content: '';
-  position: absolute;
-  left: var(--s-3);
-  right: var(--s-3);
-  bottom: -1px;
-  height: 2px;
-  background: var(--accent);
-  border-radius: 2px;
+  scale: 1 1;
 }
 
-/* Actions --------------------------------------------------------------- */
-
-.nav__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  margin-left: auto;
+.nav__link:focus-visible {
+  outline: none;
 }
+
+.nav__link:focus-visible::before {
+  opacity: 1;
+  outline: 2px solid var(--accent);
+}
+
+/* GitHub --------------------------------------------------------------- */
 
 .nav__github {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--s-2);
-  height: 34px;
+  height: 36px;
   padding-inline: var(--s-3);
   border: 1px solid var(--line);
   border-radius: var(--r-md);
@@ -110,66 +148,31 @@
   background: var(--surface-2);
 }
 
-.nav__github-text {
-  display: none;
-}
+/* Phones: tighten up, and let the GitHub button go icon-only. */
+@media (max-width: 479px) {
+  .nav__inner {
+    gap: var(--s-3);
+  }
 
-.nav__toggle {
-  display: inline-grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  background: var(--surface-1);
-  color: var(--text-muted);
-}
-
-.nav__toggle:hover {
-  color: var(--text);
-  border-color: var(--line-strong);
-}
-
-/* Mobile drawer --------------------------------------------------------- */
-
-.nav__drawer {
-  border-top: 1px solid var(--line);
-  background: var(--bg);
-}
-
-.nav__drawer-links {
-  display: flex;
-  flex-direction: column;
-  padding-block: var(--s-2) var(--s-4);
-}
-
-.nav__drawer-link {
-  padding: var(--s-3) 0;
-  border-bottom: 1px solid var(--line);
-  font-size: var(--t-md);
-  font-weight: 550;
-  color: var(--text-muted);
-}
-
-.nav__drawer-link:last-child {
-  border-bottom: 0;
-}
-
-.nav__drawer-link.is-active {
-  color: var(--accent);
-}
-
-@media (min-width: 760px) {
   .nav__links {
-    display: flex;
+    padding-left: var(--s-1);
+  }
+
+  .nav__link {
+    padding-inline: var(--s-2);
+  }
+
+  .nav__link::after {
+    left: var(--s-2);
+    right: var(--s-2);
+  }
+
+  .nav__github {
+    width: 36px;
+    padding: 0;
   }
 
   .nav__github-text {
-    display: inline;
-  }
-
-  .nav__toggle,
-  .nav__drawer {
     display: none;
   }
 }

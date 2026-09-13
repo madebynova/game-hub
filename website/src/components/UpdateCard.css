@@ -1,47 +1,100 @@
+/* The timeline --------------------------------------------------------- */
+
+.update-log {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-5);
+}
+
 .update-list {
+  position: relative;
   display: grid;
   gap: var(--s-4);
+  width: 100%;
 }
+
+/* The rail */
+.update-list::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: var(--s-5);
+  bottom: var(--s-5);
+  width: 1px;
+  background: linear-gradient(var(--line-strong), var(--line) 80%, transparent);
+}
+
+.update-list > li {
+  position: relative;
+  padding-left: var(--s-6);
+}
+
+/* One node per entry; the newest is lit. */
+.update-list > li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 26px;
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--bg);
+}
+
+.update-list > li:first-child::before {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.update-log__more {
+  margin-left: var(--s-6);
+}
+
+/* An entry -------------------------------------------------------------- */
 
 .update {
   display: flex;
   flex-direction: column;
   gap: var(--s-3);
-  padding: var(--s-5);
+  padding: var(--s-4) var(--s-5);
   border: 1px solid var(--line);
-  border-left: 2px solid var(--line-strong);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   background: var(--surface-1);
-  transition: border-left-color var(--base) var(--ease);
+  transition: border-color var(--base) var(--ease);
 }
 
 .update:hover {
-  border-left-color: var(--accent);
+  border-color: var(--line-strong);
 }
 
 .update__head {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
+  gap: var(--s-1);
 }
 
 .update__meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--s-3);
+  gap: var(--s-2) var(--s-3);
   font-size: var(--t-xs);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
   font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.update__game {
-  color: var(--accent);
-}
-
-.update__game:hover {
-  text-decoration: underline;
+.update__version {
+  padding: 2px 7px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
 }
 
 .update__date {
@@ -53,23 +106,64 @@
 }
 
 .update__summary {
-  color: var(--text-muted);
   max-width: 68ch;
+  font-size: var(--t-sm);
+  color: var(--text-muted);
+}
+
+.update__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: fit-content;
+  font-size: var(--t-xs);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  list-style: none;
+  cursor: pointer;
+  transition: color var(--fast) var(--ease);
+}
+
+.update__toggle::-webkit-details-marker {
+  display: none;
+}
+
+.update__toggle::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  margin-right: 2px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  rotate: -45deg;
+  transition: rotate var(--fast) var(--ease);
+}
+
+.update__details[open] > .update__toggle::before {
+  rotate: 45deg;
+}
+
+.update__toggle:hover {
+  color: var(--text);
 }
 
 .update__groups {
   display: grid;
   gap: var(--s-4);
-  margin-top: var(--s-1);
+  margin-top: var(--s-4);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--line);
 }
 
 .update__group-label {
+  margin-bottom: var(--s-2);
   font-size: var(--t-xs);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-faint);
-  margin-bottom: var(--s-2);
 }
 
 .update__items {
@@ -88,9 +182,9 @@
   content: '';
   position: absolute;
   left: 0;
-  top: 0.6em;
-  width: 5px;
-  height: 1px;
+  top: 0.65em;
+  width: 6px;
+  height: 1.5px;
   background: var(--line-strong);
 }
 

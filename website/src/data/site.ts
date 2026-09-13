@@ -8,7 +8,7 @@ export const site = {
   name: 'NOVA',
   tagline: 'A home for my games.',
   description:
-    'NOVA is a small independent game platform. Games are added here as they are built.',
+    'Every game I build lands here. Play the ones that are ready, and follow the ones still being made.',
 
   /**
    * Where the GitHub button in the nav and the footer link point. Leave it
@@ -23,4 +23,3 @@ export const site = {
   /** Contact address, or empty to hide the footer contact link. */
   contactEmail: '',
 } as const
-

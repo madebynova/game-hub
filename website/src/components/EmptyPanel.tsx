@@ -17,6 +17,8 @@ interface EmptyPanelProps {
   motif?: EmptyMotif
   /** Use 'h2' when this sits directly under the page's h1, to keep levels in order. */
   titleAs?: 'h1' | 'h2' | 'h3'
+  /** 'page' holds up a short page; 'section' sits inside a page among others. */
+  size?: 'page' | 'section'
 }
 
 const MOTIF_COUNT: Record<Exclude<EmptyMotif, 'none'>, number> = {
@@ -29,10 +31,10 @@ const MOTIF_COUNT: Record<Exclude<EmptyMotif, 'none'>, number> = {
  * recurring visual idea.
  *
  * Instead of an apology or a spinner, it draws the outline of the content that
- * belongs here: cover frames in the library, changelog rows on updates. That
- * makes "nothing yet" read as a shelf awaiting stock rather than a failed
- * load, and it is honest — the frames carry no titles, art, dates or counts,
- * so nothing on the page implies content that does not exist.
+ * belongs here: cover frames in the library, changelog rows in a game's
+ * updates. That makes "nothing yet" read as a shelf awaiting stock rather than
+ * a failed load, and it is honest — the frames carry no titles, art, dates or
+ * counts, so nothing on the page implies content that does not exist.
  */
 export function EmptyPanel({
   title,
@@ -40,9 +42,10 @@ export function EmptyPanel({
   action,
   motif = 'none',
   titleAs: Title = 'h2',
+  size = 'page',
 }: EmptyPanelProps) {
   return (
-    <div className="empty">
+    <div className={`empty empty--${size}`}>
       {motif !== 'none' ? (
         <div className={`empty__motif empty__motif--${motif}`} aria-hidden="true">
           {Array.from({ length: MOTIF_COUNT[motif] }, (_, index) => (

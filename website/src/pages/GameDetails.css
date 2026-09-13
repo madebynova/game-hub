@@ -1,11 +1,46 @@
 .game {
-  padding-block: var(--s-5) var(--s-8);
+  padding-bottom: var(--section-y);
+}
+
+/* Hero ------------------------------------------------------------------ */
+
+.game__hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding-bottom: var(--s-5);
+}
+
+/* The banner again, blurred into a colour wash behind the whole hero. */
+.game__ambient {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.game__ambient .art {
+  position: absolute;
+  inset: -15%;
+  aspect-ratio: auto;
+  border-radius: 0;
+  background: none;
+  filter: blur(80px) saturate(1.3);
+  opacity: 0.22;
+}
+
+.game__ambient::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent 30%, var(--bg) 95%);
 }
 
 .game__back {
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
+  margin-block: var(--s-5) var(--s-4);
   font-size: var(--t-sm);
   font-weight: 550;
   color: var(--text-muted);
@@ -17,83 +52,220 @@
 }
 
 .game__back-icon {
-  transform: rotate(180deg);
+  rotate: 180deg;
   transition: transform var(--fast) var(--ease);
 }
 
 .game__back:hover .game__back-icon {
-  transform: rotate(180deg) translateX(2px);
+  transform: translateX(2px);
 }
 
-/* Masthead -------------------------------------------------------------- */
-
-.game__head {
+.game__banner {
+  position: relative;
+  isolation: isolate;
   display: grid;
-  gap: var(--s-5);
-  margin-top: var(--s-5);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-2);
 }
 
 .game__art {
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  overflow: hidden;
+  position: relative;
 }
 
 .game__art .art {
   border-radius: 0;
 }
 
+.game__art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, var(--surface-1), transparent 45%);
+  pointer-events: none;
+}
+
 .game__intro {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--s-3);
-}
-
-.game__title {
-  font-size: var(--t-2xl);
-  letter-spacing: -0.035em;
+  padding: 0 var(--s-5) var(--s-5);
 }
 
 .game__subtitle {
-  font-size: var(--t-sm);
-  font-weight: 500;
-  letter-spacing: 0.16em;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--text-faint);
+  color: var(--accent);
+}
+
+.game__title {
   margin-top: calc(var(--s-2) * -1);
+  font-size: var(--t-3xl);
+  font-weight: 750;
+  letter-spacing: -0.045em;
+  line-height: 1.02;
+}
+
+.game__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.game__chip {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding-inline: var(--s-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: rgba(8, 9, 11, 0.5);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
 }
 
 .game__desc {
-  max-width: 62ch;
-  color: var(--text-muted);
+  max-width: 58ch;
   font-size: var(--t-md);
+  color: var(--text-muted);
 }
 
 .game__intro .actions {
   margin-top: var(--s-2);
 }
 
-/* Sections -------------------------------------------------------------- */
+/* Wide screens: the banner fills the panel and the intro sits over it. */
+@media (min-width: 900px) {
+  .game__banner {
+    min-height: clamp(460px, 44vw, 580px);
+    align-items: end;
+  }
 
-.game__sections {
+  .game__art {
+    position: absolute;
+    inset: 0;
+  }
+
+  .game__art .art {
+    height: 100%;
+    aspect-ratio: auto;
+  }
+
+  .game__art::after {
+    background:
+      linear-gradient(90deg, rgba(8, 9, 11, 0.94) 0%, rgba(8, 9, 11, 0.7) 36%, rgba(8, 9, 11, 0) 70%),
+      linear-gradient(0deg, rgba(8, 9, 11, 0.7), transparent 55%);
+  }
+
+  .game__intro {
+    max-width: 680px;
+    padding: var(--s-8) var(--s-7) var(--s-7);
+  }
+
+  .game__desc {
+    color: #b9bfca;
+  }
+}
+
+/* In-page index */
+.game__contents {
+  display: flex;
+  gap: var(--s-1);
+  margin-top: var(--s-5);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.game__contents-link {
+  flex: none;
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-md);
+  font-size: var(--t-sm);
+  font-weight: 550;
+  color: var(--text-muted);
+  transition:
+    color var(--fast) var(--ease),
+    background-color var(--fast) var(--ease);
+}
+
+.game__contents-link:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.game__contents-link:focus-visible {
+  outline-offset: -2px;
+}
+
+/* Layout ---------------------------------------------------------------- */
+
+.game__layout {
+  display: grid;
+  gap: var(--section-y);
+  margin-top: var(--s-5);
+}
+
+.game__main {
   display: flex;
   flex-direction: column;
-  gap: var(--s-7);
-  margin-top: var(--s-8);
+  gap: var(--section-y);
+  min-width: 0;
+}
+
+@media (min-width: 1000px) {
+  .game__layout {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+    gap: var(--s-8);
+  }
+
+  .game__aside {
+    position: sticky;
+    top: calc(var(--nav-h) + var(--s-5));
+  }
+}
+
+/* Sections -------------------------------------------------------------- */
+
+.game__section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2) var(--s-4);
+  margin-bottom: var(--s-5);
 }
 
 .game__section-title {
-  font-size: var(--t-lg);
-  padding-bottom: var(--s-3);
+  font-size: var(--t-xl);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+/* A title with no head row around it spaces itself. */
+.game__section > .game__section-title {
   margin-bottom: var(--s-5);
-  border-bottom: 1px solid var(--line);
+}
+
+.game__section-meta {
+  font-size: var(--t-sm);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
 }
 
 .game__prose {
   display: grid;
   gap: var(--s-4);
-  max-width: 70ch;
+  max-width: 68ch;
+  font-size: var(--t-md);
   color: var(--text-muted);
 }
 
@@ -101,44 +273,54 @@
   display: grid;
   gap: var(--s-3);
   grid-template-columns: minmax(0, 1fr);
-  max-width: 900px;
 }
 
 .game__features li {
   position: relative;
-  padding: var(--s-3) var(--s-4) var(--s-3) var(--s-6);
+  padding: var(--s-4) var(--s-4) var(--s-4) calc(var(--s-4) + 20px);
   border: 1px solid var(--line);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   background: var(--surface-1);
   font-size: var(--t-sm);
   color: var(--text-muted);
+  transition: border-color var(--base) var(--ease);
 }
 
+.game__features li:hover {
+  border-color: var(--line-strong);
+}
+
+/* A small diamond, echoing the NOVA mark. */
 .game__features li::before {
   content: '';
   position: absolute;
   left: var(--s-4);
-  top: 1.25em;
-  width: 6px;
-  height: 6px;
+  top: calc(var(--s-4) + 0.55em);
+  width: 7px;
+  height: 7px;
   border-radius: 1px;
   background: var(--accent);
+  rotate: 45deg;
+}
+
+@media (min-width: 640px) {
+  .game__features {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .game__controls {
-  display: grid;
-  gap: 0;
   max-width: 640px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
   overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
 }
 
 .game__control {
   display: grid;
   grid-template-columns: minmax(140px, 190px) 1fr;
-  gap: var(--s-4);
   align-items: baseline;
+  gap: var(--s-4);
   padding: var(--s-3) var(--s-4);
   border-bottom: 1px solid var(--line);
   background: var(--surface-1);
@@ -149,7 +331,6 @@
 }
 
 .game__control dd {
-  margin: 0;
   font-size: var(--t-sm);
   color: var(--text-muted);
 }
@@ -175,20 +356,74 @@
   }
 }
 
-@media (min-width: 640px) {
-  .game__features {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+/* Project information --------------------------------------------------- */
+
+.info {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
 }
 
-@media (min-width: 900px) {
-  .game__head {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-    align-items: center;
-    gap: var(--s-7);
-  }
+.info__title {
+  padding: var(--s-4) var(--s-5);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
 
-  .game__title {
-    font-size: var(--t-3xl);
-  }
+.info__list {
+  padding-inline: var(--s-5);
+}
+
+.info__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding-block: var(--s-3);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--t-sm);
+}
+
+.info__row:last-child {
+  border-bottom: 0;
+}
+
+.info__row dt {
+  flex: none;
+  color: var(--text-faint);
+}
+
+.info__row dd {
+  text-align: right;
+  color: var(--text);
+}
+
+.info__tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.info__tags li {
+  padding: 1px var(--s-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.info__actions {
+  padding: var(--s-4) var(--s-5) var(--s-5);
+  border-top: 1px solid var(--line);
+}
+
+.info__actions .actions > * {
+  flex: 1 1 100%;
 }

@@ -5,8 +5,11 @@
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
   background: var(--surface-1);
-  /* Short pages otherwise leave a void between the panel and the footer that
-     is taller than the panel itself. */
+}
+
+/* Short pages otherwise leave a void between the panel and the footer that
+   is taller than the panel itself. */
+.empty--page {
   min-height: clamp(320px, 48vh, 540px);
 }
 
@@ -66,6 +69,10 @@
   padding: var(--s-6) var(--s-5) var(--s-7);
 }
 
+.empty--section .empty__body {
+  padding-block: var(--s-4) var(--s-6);
+}
+
 .empty__title {
   font-size: var(--t-lg);
   letter-spacing: -0.02em;
@@ -82,7 +89,7 @@
 }
 
 @media (max-width: 559px) {
-  .empty {
+  .empty--page {
     min-height: clamp(280px, 42vh, 420px);
   }
 
@@ -107,4 +114,3 @@
     padding: var(--s-5) var(--s-4) var(--s-6);
   }
 }
-

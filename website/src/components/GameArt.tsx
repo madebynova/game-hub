@@ -7,6 +7,8 @@ interface GameArtProps {
   variant?: 'cover' | 'banner'
   /** Native lazy-loading. Turn off for above-the-fold art. */
   lazy?: boolean
+  /** Empty alt, for art beside text that already names the game. */
+  decorative?: boolean
   className?: string
 }
 
@@ -26,7 +28,13 @@ function hueFor(seed: string): number {
  * ground — rather than anything pretending to be a screenshot. A game with no
  * art looks deliberately unillustrated instead of broken.
  */
-export function GameArt({ game, variant = 'cover', lazy = true, className }: GameArtProps) {
+export function GameArt({
+  game,
+  variant = 'cover',
+  lazy = true,
+  decorative = false,
+  className,
+}: GameArtProps) {
   const src = variant === 'banner' ? (game.banner ?? game.artwork) : game.artwork
   const wrapper = ['art', `art--${variant}`, className].filter(Boolean).join(' ')
 
@@ -36,7 +44,7 @@ export function GameArt({ game, variant = 'cover', lazy = true, className }: Gam
         <img
           className="art__img"
           src={src}
-          alt={game.artworkAlt ?? `${game.title} artwork`}
+          alt={decorative ? '' : (game.artworkAlt ?? `${game.title} artwork`)}
           loading={lazy ? 'lazy' : 'eager'}
           decoding="async"
         />

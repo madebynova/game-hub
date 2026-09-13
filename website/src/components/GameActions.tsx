@@ -28,32 +28,29 @@ export function GameActions({ game, context = 'listing', size = 'lg' }: GameActi
   const action = gameAction(game)
   const onDetail = context === 'detail'
 
-  // On the game's own page a 'view' action is a self-link, so it is dropped —
-  // which can leave the row with nothing but a marker to explain the absence.
-  const showView = action.kind === 'view' && !onDetail
-  const showPending = action.kind === 'view' && onDetail && !game.githubUrl
-
   return (
-    <div className="actions">
+    <div className={`actions actions--${size}`}>
       {action.kind === 'play' && (
         <Button href={action.href} size={size}>
           <PlayIcon />
           {action.label}
+          <span className="visually-hidden"> (opens in a new tab)</span>
         </Button>
       )}
 
-      {showView && (
+      {action.kind === 'view' && !onDetail && (
         <Button to={action.to} size={size}>
           {action.label}
-          <ArrowIcon />
+          <ArrowIcon className="btn__arrow" />
         </Button>
+      )}
+
+      {/* On its own page, say plainly why there is no Play button. */}
+      {action.kind === 'view' && onDetail && (
+        <span className="actions__marker actions__marker--soft">Not playable yet</span>
       )}
 
       {action.kind === 'none' && <span className="actions__marker">{action.label}</span>}
-
-      {showPending && (
-        <span className="actions__marker actions__marker--soft">Not playable yet</span>
-      )}
 
       {!onDetail && action.kind === 'play' && (
         <Button to={`/games/${game.slug}`} variant="secondary" size={size}>
@@ -65,6 +62,7 @@ export function GameActions({ game, context = 'listing', size = 'lg' }: GameActi
         <Button href={game.githubUrl} variant="secondary" size={size}>
           <GitHubIcon />
           Source
+          <span className="visually-hidden"> (opens in a new tab)</span>
         </Button>
       )}
     </div>

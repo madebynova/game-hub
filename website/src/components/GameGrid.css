@@ -1,24 +1,63 @@
 .grid {
   display: grid;
-  gap: var(--s-5);
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-4);
+  grid-template-columns: minmax(0, 1fr);
 }
 
-@media (min-width: 560px) {
+@media (min-width: 480px) {
+  .grid {
+    gap: var(--s-5);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 760px) {
   .grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1080px) {
   .grid {
-    gap: var(--s-5) var(--s-5);
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 1140px) {
-  .grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
+/* The open slot: the outline of a card with nothing in it, like EmptyPanel's
+   motif, so a small library reads as growing rather than unfinished. */
+.grid__slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: 160px;
+  padding: var(--s-5);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-lg);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.018) 0 8px,
+    transparent 8px 16px
+  );
+  text-align: center;
+  animation: card-in var(--slow) var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+.grid__slot-mark {
+  margin-bottom: var(--s-1);
+  color: var(--line-strong);
+}
+
+.grid__slot-title {
+  font-size: var(--t-sm);
+  font-weight: 650;
+  color: var(--text-muted);
+}
+
+.grid__slot-desc {
+  max-width: 24ch;
+  font-size: var(--t-xs);
+  color: var(--text-faint);
 }
