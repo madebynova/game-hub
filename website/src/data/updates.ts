@@ -32,6 +32,14 @@ export const updates: UpdateEntry[] = [
   // ABYSSBOUND (games/deep-dive — the folder keeps its earlier name) ------
 
   {
+    id: 'deep-dive-live',
+    gameSlug: 'deep-dive',
+    title: 'Playable in the browser',
+    date: '2026-09-13',
+    summary:
+      'ABYSSBOUND is live on its own site. Play now opens it in a new tab — a modern browser is the only requirement.',
+  },
+  {
     id: 'deep-dive-abyssbound',
     gameSlug: 'deep-dive',
     title: 'Deep Dive is now ABYSSBOUND',

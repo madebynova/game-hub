@@ -76,7 +76,7 @@ const TIDES_OF_FORTUNE_SOURCE_URL =
  * │ NOVA advertises no play link at all, which is the honest state.          │
  * └──────────────────────────────────────────────────────────────────────────┘
  */
-const ABYSSBOUND_PLAY_URL = ''
+const ABYSSBOUND_PLAY_URL = 'https://abyssbound.netlify.app'
 
 /** ABYSSBOUND's source, in the public game-hub monorepo. '' hides Source. */
 const ABYSSBOUND_SOURCE_URL = 'https://github.com/madebynova/game-hub/tree/main/games/deep-dive'

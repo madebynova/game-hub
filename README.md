@@ -10,7 +10,7 @@ as its own project.
 | --- | --- | --- |
 | **RUNOUT** — *Ding Dong* | A solo ding-dong-and-run extraction game. Ring the bell, get seen legging it, lose them, and decide whether to risk one more house before you run for the van. | **Playable** at [runout-game.netlify.app](https://runout-game.netlify.app) · source in [`games/runout`](games/runout) |
 | **Tides of Fortune** — *Open Waters* | A pirate trading adventure: sail, trade, take contracts, evade the Navy, build businesses, collect ships and grow your fortune across the open waters. | **In development** — not deployed yet · source in [`games/salt-and-sovereigns`](games/salt-and-sovereigns) |
-| **ABYSSBOUND** — *The Deep Opens* | *How deep will you go before you turn back?* A risk-vs-reward treasure diving game: dive from the boat, collect treasure while your oxygen drains, and decide whether to surface with what you have or push deeper through the reef, a shipwreck and the abyss. | **Ready to deploy** — playable locally, not deployed yet · source in [`games/deep-dive`](games/deep-dive) |
+| **ABYSSBOUND** — *The Deep Opens* | *How deep will you go before you turn back?* A risk-vs-reward treasure diving game: dive from the boat, collect treasure while your oxygen drains, and decide whether to surface with what you have or push deeper through the reef, a shipwreck and the abyss. | **Playable** at [abyssbound.netlify.app](https://abyssbound.netlify.app) · source in [`games/deep-dive`](games/deep-dive) |
 
 Tides of Fortune's folder and in-game files still use its earlier name, Salt &
 Sovereigns.
@@ -111,9 +111,9 @@ directory has to be chosen when importing the repo.
 
 ## Status
 
-Early and actively developed. RUNOUT is playable; ABYSSBOUND is playable locally
-and ready to deploy; Tides of Fortune is in early development and not deployed
-yet. New games are added to the library as they are built.
+Early and actively developed. RUNOUT and ABYSSBOUND are playable; Tides of
+Fortune is in early development and not deployed yet. New games are added to the
+library as they are built.
 
 ## Organisation rules
 
