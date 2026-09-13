@@ -188,6 +188,10 @@ kbd {
    down to the bottom so they never cover the shop's title or cash. */
 .hud-panel, .prompt, .toasts { z-index: 5; }
 #ui:has(.shop:not(.hidden)) .toasts { top: auto; bottom: 92px; flex-direction: column-reverse; }
+/* The trading deck shows its own cash, haul and objectives, so the left HUD column
+   and the depth gauge step aside rather than covering its header. */
+#ui:has(.shop:not(.hidden)) .hud-left,
+#ui:has(.shop:not(.hidden)) .depth-gauge { display: none; }
 
 .toast {
   padding: 9px 18px;
@@ -233,7 +237,18 @@ kbd {
 }
 .btn:hover:not(:disabled) { filter: brightness(1.08); }
 .btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 #a8741c; }
-.btn:disabled { cursor: not-allowed; filter: grayscale(0.9) brightness(0.55); box-shadow: none; }
+/* Unavailable actions (can't afford, nothing to sell, maxed): clearly inert, still readable. */
+.btn:disabled,
+.btn:disabled:hover {
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(214, 228, 236, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: none;
+  filter: none;
+}
+.btn:disabled kbd { color: inherit; border-color: rgba(255, 255, 255, 0.18); background: transparent; }
+.btn:focus-visible { outline: 2px solid #7fe7ff; outline-offset: 2px; }
 .btn kbd { color: #1b1204; border-color: rgba(0, 0, 0, 0.25); background: rgba(255, 255, 255, 0.3); font-size: 0.72em; margin-left: 6px; }
 .btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); box-shadow: none; }
 .btn-ghost kbd { color: var(--ink); border-color: rgba(255, 255, 255, 0.25); background: transparent; }
@@ -354,6 +369,8 @@ kbd {
 .upg-stat b { color: var(--o2); }
 .upg-stat .arrow { color: var(--ink-dim); }
 .btn-buy { min-width: 86px; }
+.upg-buy { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.upg-short { font-size: 11px; color: var(--ink-dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 .shop-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 24px; border-top: 1px solid var(--line); flex-wrap: wrap; }
 .shop-stats { font-size: 13px; color: var(--ink-dim); }
@@ -543,7 +560,7 @@ kbd {
 
 /* In narrower windows the centered messages would sit on top of the HUD panels —
    drop them below the objectives panel instead. */
-@media (max-width: 1150px) {
+@media (max-width: 1200px) {
   .toasts { top: 262px; width: min(460px, 76vw); }
   .toast { font-size: 14px; }
   .toast-hint { font-size: 14.5px; }

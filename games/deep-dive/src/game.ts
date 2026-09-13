@@ -712,6 +712,7 @@ export class Game {
     if (!claimed.length) return;
     const total = claimed.reduce((s, o) => s + o.reward, 0);
     this.save.cash += total;
+    this.save.stats.totalEarned += total;
     this.save.stats.objectivesDone += claimed.length;
     this.hud.cashPop(total);
     this.sfx.objective();

@@ -26,6 +26,7 @@ npm test          # unit tests (Vitest)
 | `E` | Climb aboard at the boat, open the trading deck |
 | `Space` | Dive in from the boat |
 | `Esc` | Close the trading deck |
+| `Tab` / `Enter` | Move between and press trading deck buttons |
 | `M` | Mute |
 
 ## The loop
@@ -49,7 +50,7 @@ Entering a zone shows a banner (bigger the first time), and the HUD shows the zo
 
 ## Treasure (Phase 2)
 
-20 treasures across five rarity tiers. Values are fixed per treasure with ±15% variation, so every tier is recognisable. Lit treasure of uncommon rarity and above shows its name before you pick it up.
+20 treasures across five rarity tiers. Values are fixed per treasure with ±15% variation, so every tier is recognisable. The nearest lit treasures of uncommon rarity and above show their names before you pick them up.
 
 | Rarity | Treasures | Base value |
 | --- | --- | --- |
@@ -93,6 +94,8 @@ The stats of the original gear's levels 0–3 are unchanged, so a Phase 1 save k
 | Dive Bag | 5 → 8 → 12 → 16 → **20 → 24** slots | $150, $450, $1,100, **$3,900, $8,500** |
 | Flashlight | 11 → 16 → 22 → 29 → **35 → 43**m beam | $120, $400, $1,000, **$3,600, $8,000** |
 | **Power Fins** *(new)* | +0 → +8 → +16 → +25% speed; resist 0 → 20 → 35 → 50% of currents | $350, $1,400, $3,800 |
+
+On the trading deck, upgrades you can't afford yet are greyed out and show how much more cash you need. Objective rewards count towards your lifetime earnings.
 
 Maxing everything costs about $50,000 — more than 10× Phase 1's $4,420. The zones are what make the gear matter:
 

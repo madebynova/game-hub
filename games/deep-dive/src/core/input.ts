@@ -10,6 +10,11 @@ export class Input {
 
   constructor(target: Window = window) {
     target.addEventListener('keydown', (e) => {
+      // A visible button reached with Tab keeps Enter/Space, so menus work from the keyboard.
+      if ((e.code === 'Enter' || e.code === 'Space') && e.target instanceof HTMLElement) {
+        const button = e.target.closest('button');
+        if (button && button.offsetParent !== null) return;
+      }
       if (GAME_KEYS.has(e.code)) e.preventDefault();
       if (!e.repeat) this.pressed.add(e.code);
       this.held.add(e.code);

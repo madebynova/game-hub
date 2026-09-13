@@ -77,7 +77,8 @@ export class Shop {
     this.root.addEventListener('click', (e) => {
       const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-action]');
       if (!btn || btn.disabled) return;
-      btn.blur(); // keep Space from re-triggering focused buttons
+      // Mouse clicks drop focus so Space goes back to the game; keyboard presses (detail 0) keep it.
+      if (e.detail > 0) btn.blur();
       switch (btn.dataset.action) {
         case 'sell': return handlers.onSell();
         case 'buy': return handlers.onBuy(btn.dataset.id as UpgradeId);
@@ -97,6 +98,7 @@ export class Shop {
 
   close() {
     this.isOpen = false;
+    if (document.activeElement instanceof HTMLElement && this.root.contains(document.activeElement)) document.activeElement.blur();
     this.root.classList.add('hidden');
     this.q('.sold-stamp').classList.add('hidden');
   }
@@ -106,6 +108,14 @@ export class Shop {
   }
 
   refresh(data: ShopData, fx: { sold?: number; upgraded?: UpgradeId } = {}) {
+    // Re-rendering replaces the buttons, so remember which one had keyboard focus.
+    const active = document.activeElement instanceof HTMLElement && this.root.contains(document.activeElement)
+      ? document.activeElement.closest<HTMLElement>('[data-action]')
+      : null;
+    const focusSelector = active
+      ? `[data-action="${active.dataset.action}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ''}`
+      : null;
+
     this.renderHaul(data);
     this.renderUpgrades(data);
     this.renderObjectives(data.objectives);
@@ -125,6 +135,10 @@ export class Shop {
       stamp.classList.add('go');
     }
     if (fx.upgraded) this.root.querySelector<HTMLElement>(`.upg[data-id="${fx.upgraded}"]`)?.classList.add('flash');
+    if (focusSelector) {
+      const again = this.root.querySelector<HTMLButtonElement>(focusSelector);
+      (again && !again.disabled ? again : this.q<HTMLButtonElement>('.btn-dive')).focus();
+    }
   }
 
   shake(id: UpgradeId) {
@@ -181,16 +195,23 @@ export class Shop {
       const pips = Array.from({ length: maxLevel(id) + 1 }, (_, i) => `<i class="${i <= level ? 'on' : ''} ${i >= 4 && id !== 'fins' ? 'deep' : ''}"></i>`).join('');
       const cur = def.format(upgradeValue(id, level));
       const stat = maxed ? `<b>${cur}</b> · max level` : `${cur} <span class="arrow">→</span> <b>${def.format(upgradeValue(id, level + 1))}</b>`;
-      return `<div class="upg ${maxed ? 'maxed' : ''} ${afford ? 'afford' : ''}" data-id="${id}">
+      const short = maxed || afford ? 0 : cost - data.cash;
+      const label = maxed
+        ? `${def.name} is at max level`
+        : afford ? `Buy ${def.name} for ${formatMoney(cost)}` : `${def.name} costs ${formatMoney(cost)}, you need ${formatMoney(short)} more`;
+      return `<div class="upg ${maxed ? 'maxed' : ''} ${afford ? 'afford' : ''} ${short ? 'short' : ''}" data-id="${id}">
         <div class="upg-icon">${def.icon}</div>
         <div class="upg-body">
           <div class="upg-title">${def.name} <span class="pips">${pips}</span>${deepTier ? '<span class="deep-tag">deep-rated</span>' : ''}</div>
           <div class="upg-desc">${def.description}</div>
           <div class="upg-stat">${stat}</div>
         </div>
-        <button class="btn btn-buy" data-action="buy" data-id="${id}" ${maxed ? 'disabled' : ''}>
-          ${maxed ? 'Maxed' : formatMoney(cost)}
-        </button>
+        <div class="upg-buy">
+          <button class="btn btn-buy" data-action="buy" data-id="${id}" ${afford ? '' : 'disabled'} aria-label="${label}" title="${label}">
+            ${maxed ? 'Maxed' : formatMoney(cost)}
+          </button>
+          ${short ? `<span class="upg-short">Need ${formatMoney(short)} more</span>` : ''}
+        </div>
       </div>`;
     }).join('');
   }

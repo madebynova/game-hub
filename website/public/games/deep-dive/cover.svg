@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" width="600" height="800">
+  <!-- Deep Dive cover (3:4). Original artwork: the dive boat at sunset, a diver
+       heading down past the reef with a flashlight on the wreck, and a relic
+       glowing in the abyss. -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0d1430"/>
+      <stop offset="0.45" stop-color="#2f3566"/>
+      <stop offset="0.8" stop-color="#a4607a"/>
+      <stop offset="1" stop-color="#f2a46c"/>
+    </linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3aa1b3"/>
+      <stop offset="0.1" stop-color="#1f7896"/>
+      <stop offset="0.32" stop-color="#11507a"/>
+      <stop offset="0.6" stop-color="#0a2440"/>
+      <stop offset="1" stop-color="#02060f"/>
+    </linearGradient>
+    <radialGradient id="sun">
+      <stop offset="0" stop-color="#ffd696" stop-opacity="0.65"/>
+      <stop offset="0.3" stop-color="#ffaa6e" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#ffa06e" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ray" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#bef5ff" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#bef5ff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="beam" gradientUnits="userSpaceOnUse" x1="333" y1="483" x2="569" y2="668">
+      <stop offset="0" stop-color="#fff3c4" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#fff3c4" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="rock" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6a7078"/>
+      <stop offset="1" stop-color="#1e242d"/>
+    </linearGradient>
+    <radialGradient id="relic">
+      <stop offset="0" stop-color="#ffcf6a" stop-opacity="0.9"/>
+      <stop offset="0.3" stop-color="#ff9a3c" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#ff9a3c" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cyan">
+      <stop offset="0" stop-color="#8ce6ff" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#8ce6ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="violet">
+      <stop offset="0" stop-color="#c89bff" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#c89bff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vignette" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="0.55" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.65"/>
+    </radialGradient>
+    <!-- The diver, head towards +x -->
+    <g id="diver">
+      <polygon points="-40,-6 -76,-18 -80,8 -40,4" fill="#f08a3a"/>
+      <polygon points="-40,6 -72,10 -70,30 -40,14" fill="#c96a28"/>
+      <rect x="-44" y="-8" width="34" height="13" rx="6" fill="#17344a"/>
+      <rect x="-44" y="4" width="34" height="12" rx="6" fill="#132a3c"/>
+      <rect x="-16" y="-28" width="44" height="15" rx="7" fill="#f2b84b"/>
+      <ellipse cx="6" cy="0" rx="26" ry="16" fill="#21607a"/>
+      <path d="M-4 -15 L-4 15" stroke="#f2b84b" stroke-width="4"/>
+      <path d="M16 9 L40 16" stroke="#17344a" stroke-width="9" stroke-linecap="round"/>
+      <circle cx="38" cy="-2" r="14" fill="#0f2231"/>
+      <rect x="42" y="-11" width="13" height="13" rx="4" fill="#7fe3ff"/>
+      <rect x="45" y="-9" width="3" height="6" fill="#ffffff" opacity="0.85"/>
+      <circle cx="50" cy="7" r="4.5" fill="#2a2f36"/>
+      <circle cx="42" cy="-16" r="4" fill="#fff3c4"/>
+    </g>
+  </defs>
+
+  <!-- Sky and sun -->
+  <rect width="600" height="252" fill="url(#sky)"/>
+  <circle cx="450" cy="215" r="150" fill="url(#sun)"/>
+  <circle cx="450" cy="215" r="30" fill="#ffe2b0"/>
+  <ellipse cx="160" cy="92" rx="120" ry="7" fill="#ffc8be" opacity="0.14"/>
+  <ellipse cx="470" cy="140" rx="90" ry="5" fill="#ffc8be" opacity="0.12"/>
+  <path d="M0 252 Q40 238 90 244 Q130 232 190 246 L330 250 Q420 236 500 244 Q560 238 600 246 L600 252 Z" fill="#3e2f55"/>
+
+  <!-- Sea -->
+  <rect y="250" width="600" height="550" fill="url(#sea)"/>
+  <g fill="url(#ray)">
+    <polygon points="40,252 80,252 200,640 130,640"/>
+    <polygon points="230,252 262,252 360,600 300,600"/>
+    <polygon points="420,252 470,252 590,660 510,660"/>
+  </g>
+
+  <!-- Reef ledge and kelp -->
+  <path d="M0 470 Q70 452 140 486 Q200 510 250 548 Q180 580 110 600 L0 622 Z" fill="url(#rock)"/>
+  <path d="M0 520 Q90 520 170 560 L0 640 Z" fill="#000" opacity="0.18"/>
+  <g fill="none" stroke-linecap="round">
+    <path d="M38 470 Q30 420 44 380 Q56 340 42 300" stroke="#3b8a55" stroke-width="7"/>
+    <path d="M72 466 Q84 424 70 392 Q60 360 74 330" stroke="#2f7a4f" stroke-width="6"/>
+    <path d="M118 482 Q108 450 122 424" stroke="#3b8a55" stroke-width="5"/>
+  </g>
+  <g>
+    <ellipse cx="160" cy="494" rx="16" ry="9" fill="#e0667d"/>
+    <ellipse cx="205" cy="520" rx="12" ry="7" fill="#f09a4a"/>
+    <path d="M96 470 l-8 -22 M96 470 l0 -24 M96 470 l8 -22" stroke="#c77ae0" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <!-- The wreck, caught in the flashlight -->
+  <g>
+    <line x1="470" y1="655" x2="530" y2="548" stroke="#2f2a26" stroke-width="9" stroke-linecap="round"/>
+    <path d="M370 700 L600 650 L600 720 L560 748 L400 756 Q370 730 370 700 Z" fill="#2e3236"/>
+    <path d="M430 700 L520 684 L540 730 L440 740 Z" fill="#0d1a2a"/>
+    <g stroke="#4d4239" stroke-width="5">
+      <path d="M452 740 Q458 716 452 696"/>
+      <path d="M494 736 Q502 710 496 688"/>
+    </g>
+    <path d="M380 704 L600 656" stroke="#6b5a48" stroke-width="3" opacity="0.8"/>
+  </g>
+
+  <!-- Flashlight beam -->
+  <polygon points="333,483 612,613 526,723" fill="url(#beam)"/>
+
+  <!-- The diver heading down, bubbles rising -->
+  <use href="#diver" transform="translate(290 470) rotate(38)"/>
+  <g fill="none" stroke="#bfefff" stroke-width="1.5" opacity="0.8">
+    <circle cx="316" cy="452" r="3.5"/>
+    <circle cx="310" cy="428" r="4.5"/>
+    <circle cx="318" cy="400" r="3"/>
+    <circle cx="308" cy="372" r="5"/>
+    <circle cx="314" cy="338" r="3.5"/>
+  </g>
+
+  <!-- The abyss -->
+  <path d="M0 760 Q150 720 300 742 Q450 768 600 740 L600 800 L0 800 Z" fill="#05070d"/>
+  <circle cx="92" cy="738" r="34" fill="url(#cyan)" opacity="0.6"/>
+  <circle cx="92" cy="738" r="4" fill="#bff3ff"/>
+  <path d="M92 742 Q88 760 92 790" stroke="#1f4a55" stroke-width="2" fill="none"/>
+  <circle cx="520" cy="752" r="30" fill="url(#violet)" opacity="0.55"/>
+  <circle cx="520" cy="752" r="3.5" fill="#ead6ff"/>
+  <path d="M520 756 Q524 772 520 792" stroke="#3a2a55" stroke-width="2" fill="none"/>
+  <circle cx="262" cy="752" r="80" fill="url(#relic)"/>
+  <polygon points="262,728 276,742 270,764 254,764 248,742" fill="#ff9a3c"/>
+  <polygon points="262,728 268,742 262,758 256,742" fill="#ffe7a3" opacity="0.8"/>
+
+  <!-- Marine snow -->
+  <g fill="#d2ebf5" opacity="0.4">
+    <circle cx="60" cy="330" r="1.3"/>
+    <circle cx="180" cy="410" r="1"/>
+    <circle cx="420" cy="360" r="1.4"/>
+    <circle cx="540" cy="470" r="1"/>
+    <circle cx="350" cy="560" r="1.2"/>
+    <circle cx="140" cy="660" r="1"/>
+    <circle cx="470" cy="600" r="1.1"/>
+    <circle cx="230" cy="300" r="1"/>
+  </g>
+
+  <!-- The boat -->
+  <g>
+    <line x1="242" y1="250" x2="242" y2="146" stroke="#5a4636" stroke-width="4"/>
+    <path d="M242 156 L340 252" stroke="#e6dcc8" stroke-width="1.5" opacity="0.6"/>
+    <polygon points="244,146 276,148 276,170 244,168" fill="#d6453d"/>
+    <path d="M245 148 L275 169" stroke="#f4f1ea" stroke-width="4"/>
+    <rect x="148" y="196" width="76" height="54" fill="#e3d8bf"/>
+    <polygon points="140,196 232,196 224,186 148,186" fill="#8f3a2f"/>
+    <rect x="158" y="208" width="20" height="16" fill="#ffd680"/>
+    <rect x="190" y="208" width="20" height="16" fill="#ffd680"/>
+    <path d="M100 236 L140 250 L336 250 L336 284 L160 288 Q116 274 100 236 Z" fill="#243a4f"/>
+    <path d="M100 236 L140 250 L336 250 L336 260 L150 262 Q116 256 100 236 Z" fill="#ded2b8"/>
+    <rect x="140" y="260" width="196" height="7" fill="#c2463a"/>
+    <path d="M324 262 L324 296 M334 262 L334 296 M324 274 L334 274 M324 286 L334 286" stroke="#c9cfd4" stroke-width="2"/>
+  </g>
+  <path d="M0 251 Q75 247 150 251 T300 251 T450 251 T600 251" fill="none" stroke="#ebfcff" stroke-width="2" opacity="0.75"/>
+
+  <rect width="600" height="800" fill="url(#vignette)"/>
+</svg>

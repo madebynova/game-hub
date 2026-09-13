@@ -8,8 +8,9 @@ import type { UpdateEntry } from '../types'
  * homepage. There is no separate updates page.
  *
  * Only write up what actually shipped. The entries below come from each game's
- * own history — RUNOUT's commit log in games/runout, and the in-game change log
- * in games/salt-and-sovereigns/src/game.js.
+ * own history — RUNOUT's commit log in games/runout, the in-game change log
+ * in games/salt-and-sovereigns/src/game.js, and Deep Dive's commit history and
+ * README in games/deep-dive.
  *
  * Newest first is handled by `sortedUpdates` below. Entries on the same date
  * keep the order they have here, so list same-day entries newest first.
@@ -28,6 +29,76 @@ import type { UpdateEntry } from '../types'
  *   }
  */
 export const updates: UpdateEntry[] = [
+  // Deep Dive (games/deep-dive) ------------------------------------------
+
+  {
+    id: 'deep-dive-polish',
+    gameSlug: 'deep-dive',
+    title: 'Trading deck polish and fixes',
+    date: '2026-09-13',
+    summary: 'A final pass on the trading deck and HUD before Deep Dive goes live.',
+    changes: [
+      {
+        label: 'Fixed',
+        items: [
+          'Upgrades you can’t afford are now greyed out and disabled, and show how much more cash you need',
+          'Trading deck buttons can be reached with Tab and pressed with Enter or Space',
+          'Messages no longer overlap the objectives panel in narrower windows',
+          'Objective rewards now count towards Earned on the trading deck',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'deep-dive-the-deep-opens',
+    gameSlug: 'deep-dive',
+    title: 'The Deep Opens',
+    date: '2026-09-13',
+    summary:
+      'The single dive site became three zones to explore, with a shipwreck, hazards, dive objectives and a much longer road to maxed-out gear.',
+    changes: [
+      {
+        label: 'Added',
+        items: [
+          'Three zones: the Shallow Reef, The Wreck — a sunken ship you can swim inside — and The Abyss',
+          '20 treasures across five rarity tiers, including heavy finds that take two bag slots, and a treasure log',
+          'Hazards: currents, collapsing wreckage, narrow passages and air pockets that refill a little air',
+          'Three dive objectives at a time, paid out when you make it back aboard',
+          'Discovery moments for rare finds, zone banners and a depth gauge',
+          'Power Fins, plus two deep-rated tiers for the Oxygen Tank, Dive Bag and Flashlight',
+        ],
+      },
+      {
+        label: 'Changed',
+        items: [
+          'Air drains much faster at depth — up to 3× in the abyss',
+          'Maxing all gear now costs around $50,000, and early upgrades cost a little more',
+          'Existing saves keep all their cash, upgrades and stats',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'deep-dive-first-dive',
+    gameSlug: 'deep-dive',
+    title: 'First playable dive',
+    date: '2026-09-13',
+    summary:
+      'The core loop: dive from the boat, collect treasure while your air runs down, then surface and sell before you black out.',
+    changes: [
+      {
+        label: 'Added',
+        items: [
+          'An oxygen meter that drains faster with depth, with low-air warnings and a last-breath grace period',
+          'Treasure in four rarities, a dive haul that is at risk until sold, and a trading deck on the boat',
+          'Oxygen Tank, Dive Bag and Flashlight upgrades',
+          'Blacking out sinks your haul in a glowing satchel you can dive back to recover',
+          'Progress saved in the browser',
+        ],
+      },
+    ],
+  },
+
   // RUNOUT ---------------------------------------------------------------
 
   {

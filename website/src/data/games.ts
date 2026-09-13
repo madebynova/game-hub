@@ -57,6 +57,30 @@ const TIDES_OF_FORTUNE_SOURCE_URL =
   'https://github.com/madebynova/game-hub/tree/main/games/salt-and-sovereigns'
 
 /**
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ DEEP DIVE'S LIVE URL GOES HERE.                                          │
+ * │                                                                          │
+ * │ Deep Dive lives in this same monorepo (games/deep-dive/) as its own Vite │
+ * │ project. Import the repo into Netlify with the base directory set to     │
+ * │ games/deep-dive — its netlify.toml supplies the build command and the    │
+ * │ dist publish directory — then paste the site's URL below:                │
+ * │                                                                          │
+ * │   DEEP_DIVE_PLAY_URL = 'https://your-deep-dive-site.netlify.app'         │
+ * │                                                                          │
+ * │ That one edit flips the card from "In development" to "Playable" and     │
+ * │ turns every VIEW PROJECT button into PLAY NOW — on the library card and  │
+ * │ the game page at once.                                                   │
+ * │                                                                          │
+ * │ Leave it empty until the site actually exists. An empty string means     │
+ * │ NOVA advertises no play link at all, which is the honest state.          │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+const DEEP_DIVE_PLAY_URL = ''
+
+/** Deep Dive's source, in the public game-hub monorepo. '' hides Source. */
+const DEEP_DIVE_SOURCE_URL = 'https://github.com/madebynova/game-hub/tree/main/games/deep-dive'
+
+/**
  * The NOVA library.
  *
  * Adding a game means adding an object to this array — no component needs
@@ -205,6 +229,60 @@ export const games: Game[] = [
 
     platform: 'Browser',
     tech: ['JavaScript', 'HTML5 Canvas', 'No build step'],
+
+    // Real screenshots only — add them to public/ and list them here when they
+    // exist. The gallery section hides itself until then.
+  },
+  {
+    id: 'deep-dive',
+    title: 'Deep Dive',
+    subtitle: 'The Deep Opens',
+    slug: 'deep-dive',
+    order: 80,
+
+    // Derived from the URL above so the two can never disagree: NOVA will not
+    // claim a game is playable while pointing at nothing.
+    status: DEEP_DIVE_PLAY_URL ? 'playable' : 'in-development',
+    playable: Boolean(DEEP_DIVE_PLAY_URL),
+    playUrl: DEEP_DIVE_PLAY_URL || undefined,
+    githubUrl: DEEP_DIVE_SOURCE_URL || undefined,
+
+    artwork: '/games/deep-dive/cover.svg',
+    banner: '/games/deep-dive/banner.svg',
+    artworkAlt:
+      'A dive boat on a sunset sea above a diver sweeping a flashlight towards a sunken shipwreck, with a relic glowing in the dark water far below.',
+
+    // Everything below is taken from the game's own README — no invented copy.
+    tagline: 'Dive for sunken treasure, watch your air, and decide how deep you dare to go.',
+
+    description:
+      'A risk-vs-reward treasure diving game. Dive from the boat, collect treasure while your oxygen drains, and decide whether to surface with what you have or push deeper for something better.',
+
+    body: [
+      'Treasure in your bag is at risk until you sell it on the boat. Run out of air and you black out — the crew hauls you aboard, but your haul sinks in a glowing satchel you can dive back to recover.',
+      'Sell, upgrade your gear and push through three zones that get darker, harder on your air and richer the deeper you go.',
+    ],
+
+    features: [
+      'Three zones: the Shallow Reef, a shipwreck you can swim inside, and the crushing dark of the Abyss',
+      'Oxygen drains faster the deeper you go, and a marker on the air gauge shows the air you need to swim straight up',
+      '20 treasures across five rarity tiers, with heavy finds that take two bag slots',
+      'Hazards without enemies: strong currents, collapsing wreckage, tight passages and limited air pockets',
+      'Optional dive objectives that only pay out once you make it back aboard',
+      'Oxygen Tank, Dive Bag, Flashlight and Power Fins upgrades, saved in your browser',
+    ],
+
+    controls: [
+      { keys: 'WASD / Arrows', action: 'Swim, or walk the deck' },
+      { keys: 'E (hold)', action: 'Collect treasure / recover a lost satchel' },
+      { keys: 'E', action: 'Climb aboard / open the trading deck' },
+      { keys: 'Space', action: 'Dive in from the boat' },
+      { keys: 'Esc', action: 'Close the trading deck' },
+      { keys: 'M', action: 'Mute' },
+    ],
+
+    platform: 'Browser',
+    tech: ['TypeScript', 'Vite', 'HTML5 Canvas'],
 
     // Real screenshots only — add them to public/ and list them here when they
     // exist. The gallery section hides itself until then.

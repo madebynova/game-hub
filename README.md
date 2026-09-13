@@ -10,6 +10,7 @@ as its own project.
 | --- | --- | --- |
 | **RUNOUT** — *Ding Dong* | A solo ding-dong-and-run extraction game. Ring the bell, get seen legging it, lose them, and decide whether to risk one more house before you run for the van. | **Playable** at [runout-game.netlify.app](https://runout-game.netlify.app) · source in [`games/runout`](games/runout) |
 | **Tides of Fortune** — *Open Waters* | A pirate trading adventure: sail, trade, take contracts, evade the Navy, build businesses, collect ships and grow your fortune across the open waters. | **In development** — not deployed yet · source in [`games/salt-and-sovereigns`](games/salt-and-sovereigns) |
+| **Deep Dive** — *The Deep Opens* | A risk-vs-reward treasure diving game: dive from the boat, collect treasure while your oxygen drains, and decide whether to surface with what you have or push deeper through the reef, a shipwreck and the abyss. | **Ready to deploy** — playable locally, not deployed yet · source in [`games/deep-dive`](games/deep-dive) |
 
 Tides of Fortune's folder and in-game files still use its earlier name, Salt &
 Sovereigns.
@@ -28,6 +29,8 @@ be built, tested and deployed without touching the others or the website.
 - **RUNOUT** — TypeScript and Vite, drawn on an HTML5 canvas. The production
   build is a single self-contained `index.html`.
 - **Tides of Fortune** — JavaScript, CSS and an HTML5 canvas, with no build step.
+- **Deep Dive** — TypeScript and Vite, drawn on an HTML5 canvas, with Vitest
+  unit tests.
 - **Hosting** — Netlify, one site per project, each configured by its own
   `netlify.toml`.
 
@@ -40,6 +43,7 @@ game-hub/
 │   ├── src/                  pages, components, styles
 │   └── public/games/         cover and banner art for each game
 ├── games/
+│   ├── deep-dive/            Deep Dive
 │   ├── runout/               RUNOUT
 │   └── salt-and-sovereigns/  Tides of Fortune
 ├── assets/                   shared assets (empty for now)
@@ -53,7 +57,7 @@ for how the library, changelogs and artwork are organised.
 
 ## Running it locally
 
-NOVA and RUNOUT need [Node.js](https://nodejs.org/) 22 or newer.
+NOVA, RUNOUT and Deep Dive need [Node.js](https://nodejs.org/) 22 or newer.
 
 **NOVA**
 
@@ -67,6 +71,14 @@ npm run dev
 
 ```bash
 cd games/runout
+npm install
+npm run dev
+```
+
+**Deep Dive**
+
+```bash
+cd games/deep-dive
 npm install
 npm run dev
 ```
@@ -88,6 +100,7 @@ repository. With the repo connected, every push to `main` rebuilds the site:
 | --- | --- | --- | --- |
 | NOVA | `website` | `npm run build` | `website/dist` |
 | RUNOUT | `games/runout` | `npm run build` | `games/runout/dist` |
+| Deep Dive | `games/deep-dive` | `npm run build` | `games/deep-dive/dist` |
 | Tides of Fortune | `games/salt-and-sovereigns` | *(none)* | `games/salt-and-sovereigns` |
 
 The settings are also declared in each folder's `netlify.toml`, so only the base
@@ -95,9 +108,9 @@ directory has to be chosen when importing the repo.
 
 ## Status
 
-Early and actively developed. RUNOUT is playable; Tides of Fortune is in early
-development and not deployed yet. New games are added to the library as they
-are built.
+Early and actively developed. RUNOUT is playable; Deep Dive is playable locally
+and ready to deploy; Tides of Fortune is in early development and not deployed
+yet. New games are added to the library as they are built.
 
 ## Organisation rules
 
