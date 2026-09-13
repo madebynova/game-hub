@@ -99,6 +99,7 @@ export class Game {
         this.sfx.deny();
         this.shop.shake(id);
       },
+      onTab: () => this.sfx.panel(true),
     });
     this.overlays = new Overlays(uiRoot);
     this.announcer = new Announcer(uiRoot);
@@ -321,7 +322,7 @@ export class Game {
       satchel: this.save.lostSatchel,
       stats: this.save.stats,
       objectives: objectiveRows(this.tracker, this.haul.total),
-      discovered: this.save.discovered.length,
+      discovered: this.save.discovered,
     };
   }
 

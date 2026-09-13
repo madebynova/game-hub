@@ -66,7 +66,7 @@ Entering a zone shows a banner (bigger the first time), and the HUD shows the zo
 
 Each area rolls from its own loot table: shallows → reef edge → wreck field → wreck interior → abyss → shrine, and each step is worth noticeably more per bag slot. Collected spots restock with a fresh roll on your next dive; uncollected treasure stays where it is.
 
-**Discovery moments:** rare and better finds freeze the action for a beat, burst with light (visible even in the abyss), shake the camera, play a rarity-specific sting and show a card with the item, rarity and value. The first find of each treasure type is marked **New find** and added to your **treasure log** (shown on the trading deck).
+**Discovery moments:** rare and better finds freeze the action for a beat, burst with light (visible even in the abyss), shake the camera, play a rarity-specific sting and show a card with the item, rarity and value. The first find of each treasure type is marked **New find** and added to your **treasure log** — a tab on the trading deck that lists all 20 treasures by rarity, with base values for everything you've found.
 
 ## Hazards (Phase 2)
 

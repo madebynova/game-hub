@@ -40,14 +40,29 @@ export type ToastKind = 'info' | 'good' | 'warn' | 'bad' | 'hint' | 'epic';
 
 /** Deepest point shown on the depth gauge, in meters. */
 const GAUGE_MAX_M = 260;
+/** Messages on screen at once; older ones make way. */
+const MAX_TOASTS = 3;
 
+type StyleProp = 'transform' | 'left' | 'top' | 'opacity' | 'color';
+
+/**
+ * The in-dive HUD. Hierarchy: oxygen and depth (top-left), money (top-right),
+ * objectives under the oxygen panel, messages in the gap between, prompts at the bottom.
+ */
 export class Hud {
   private root: HTMLElement;
-  private q = <T extends HTMLElement = HTMLElement>(sel: string) => this.root.querySelector<T>(sel)!;
+  private el: Record<
+    | 'oxygen' | 'pct' | 'bar' | 'fill' | 'mark' | 'depth' | 'zone' | 'air' | 'chips' | 'current' | 'pocket'
+    | 'objectives' | 'objList' | 'haul' | 'haulVal' | 'haulTag' | 'bag' | 'bagCount' | 'pips' | 'cash' | 'cashVal'
+    | 'gauge' | 'marker' | 'markerLabel' | 'best' | 'prompt' | 'toasts',
+    HTMLElement
+  >;
   private shownCash: number | null = null;
   private shownHaul = 0;
-  private pips = -1;
-  private cache = new Map<HTMLElement, string>();
+  private pipCapacity = -1;
+  private pipsOn = -1;
+  private texts = new Map<HTMLElement, string>();
+  private styles = new Map<string, string>();
   private promptHtml: string | null = '';
   private objectivesKey = '';
 
@@ -60,35 +75,37 @@ export class Hud {
     const abyssM = Math.round(DEPTH_ZONES.abyss / PX_PER_METER);
     this.root.innerHTML = `
       <div class="hud-left">
-        <div class="hud-panel hud-oxygen">
-          <div class="hud-label"><span>Oxygen</span><span class="o2-pct">100%</span></div>
+        <div class="hud-panel hud-oxygen" data-status="ok">
+          <div class="o2-head"><span class="hud-label">Oxygen</span><span class="o2-pct">100%</span></div>
           <div class="o2-bar">
             <div class="o2-fill"></div>
             <div class="o2-mark" title="Air needed to swim straight up"></div>
           </div>
-          <div class="hud-depth"><span class="depth-val">0</span><small>m</small><span class="zone">On deck</span></div>
-          <div class="hud-air">
-            <span class="air-use">Air use 1.0×</span>
+          <div class="dive-row">
+            <span class="depth"><span class="depth-val">0</span><small>m</small></span>
+            <span class="zone-info"><span class="zone">On deck</span><span class="air-use">Breathing easy</span></span>
+          </div>
+          <div class="chips hidden">
             <span class="chip chip-current hidden"></span>
             <span class="chip chip-pocket hidden">Air pocket</span>
           </div>
         </div>
         <div class="hud-panel hud-objectives">
-          <div class="hud-label"><span>Objectives</span><span class="obj-hint">paid at the boat</span></div>
+          <div class="obj-head"><span class="hud-label">Objectives</span><span class="obj-hint">paid aboard</span></div>
           <ul class="obj-list"></ul>
         </div>
       </div>
       <div class="hud-panel hud-stats">
         <div class="stat stat-haul">
-          <div class="hud-label"><span>Dive haul</span><span class="haul-tag"></span></div>
+          <div class="stat-head"><span class="hud-label">Dive haul</span><span class="haul-tag"></span></div>
           <div class="stat-val haul-val">$0</div>
         </div>
         <div class="stat stat-bag">
-          <div class="hud-label"><span>Bag</span><span class="bag-count">0 / 5</span></div>
+          <div class="stat-head"><span class="hud-label">Bag</span><span class="bag-count">0/5</span></div>
           <div class="bag-pips"></div>
         </div>
         <div class="stat stat-cash">
-          <div class="hud-label"><span>Cash</span><span class="cash-tag">banked</span></div>
+          <div class="stat-head"><span class="hud-label">Cash</span></div>
           <div class="stat-val cash-val">$0</div>
         </div>
       </div>
@@ -98,75 +115,101 @@ export class Hud {
         <div class="dg-marker"><span class="dg-marker-label">0m</span></div>
       </div>
       <div class="prompt hidden"></div>
-      <div class="toasts"></div>
+      <div class="toasts" aria-live="polite"></div>
     `;
     parent.appendChild(this.root);
+
+    const pick = (sel: string) => this.root.querySelector<HTMLElement>(sel)!;
+    this.el = {
+      oxygen: pick('.hud-oxygen'), pct: pick('.o2-pct'), bar: pick('.o2-bar'), fill: pick('.o2-fill'), mark: pick('.o2-mark'),
+      depth: pick('.depth-val'), zone: pick('.zone'), air: pick('.air-use'),
+      chips: pick('.chips'), current: pick('.chip-current'), pocket: pick('.chip-pocket'),
+      objectives: pick('.hud-objectives'), objList: pick('.obj-list'),
+      haul: pick('.stat-haul'), haulVal: pick('.haul-val'), haulTag: pick('.haul-tag'),
+      bag: pick('.stat-bag'), bagCount: pick('.bag-count'), pips: pick('.bag-pips'),
+      cash: pick('.stat-cash'), cashVal: pick('.cash-val'),
+      gauge: pick('.depth-gauge'), marker: pick('.dg-marker'), markerLabel: pick('.dg-marker-label'), best: pick('.dg-best'),
+      prompt: pick('.prompt'), toasts: pick('.toasts'),
+    };
   }
 
   private setText(el: HTMLElement, text: string) {
-    if (this.cache.get(el) !== text) {
+    if (this.texts.get(el) !== text) {
       el.textContent = text;
-      this.cache.set(el, text);
+      this.texts.set(el, text);
     }
+  }
+
+  /** Write a style only when its value changes — keeps per-frame DOM work minimal. */
+  private setStyle(el: HTMLElement, key: string, prop: StyleProp, value: string) {
+    if (this.styles.get(key) === value) return;
+    this.styles.set(key, value);
+    el.style[prop] = value;
+  }
+
+  private setData(el: HTMLElement, name: string, value: string) {
+    if (el.dataset[name] !== value) el.dataset[name] = value;
   }
 
   update(s: HudState, dt: number) {
     this.root.classList.toggle('hidden', !s.visible);
     if (!s.visible) return;
+    const e = this.el;
 
+    // Oxygen — the panel itself changes colour as air becomes dangerous.
     const frac = clamp(s.oxygen / s.maxOxygen, 0, 1);
-    this.q('.o2-fill').style.transform = `scaleX(${frac})`;
-    const bar = this.q('.o2-bar');
-    bar.dataset.status = s.status;
-    bar.classList.toggle('refilling', s.refilling || s.inAirPocket);
-    this.setText(this.q('.o2-pct'), `${Math.ceil(frac * 100)}%`);
-    const mark = this.q('.o2-mark');
-    mark.style.opacity = s.needed > 1 && !s.onBoat ? '1' : '0';
-    mark.style.left = `${clamp(s.needed / s.maxOxygen, 0, 1) * 100}%`;
+    this.setStyle(e.fill, 'fill', 'transform', `scaleX(${frac.toFixed(3)})`);
+    this.setData(e.oxygen, 'status', s.status);
+    e.bar.classList.toggle('refilling', s.refilling || s.inAirPocket);
+    this.setText(e.pct, `${Math.ceil(frac * 100)}%`);
+    const showMark = s.needed > 1 && !s.onBoat;
+    this.setStyle(e.mark, 'markOpacity', 'opacity', showMark ? '1' : '0');
+    if (showMark) this.setStyle(e.mark, 'markLeft', 'left', `${(clamp(s.needed / s.maxOxygen, 0, 1) * 100).toFixed(1)}%`);
 
-    this.setText(this.q('.depth-val'), String(s.depthM));
-    const zoneEl = this.q('.zone');
-    this.setText(zoneEl, s.onBoat ? 'On deck' : s.depthM <= 0 || !s.zone ? 'Surface' : s.zone.name);
-    zoneEl.style.color = s.zone && !s.onBoat && s.depthM > 0 ? s.zone.accent : '';
-
+    // Depth and zone.
     const underwater = !s.onBoat && s.depthM > 0;
-    const airUse = this.q('.air-use');
-    this.setText(airUse, underwater ? `Air use ${s.airUse.toFixed(1)}×` : s.onBoat ? 'Breathing easy' : 'Breathing');
-    airUse.dataset.level = !underwater ? 'calm' : s.airUse >= 2.2 ? 'crushing' : s.airUse >= 1.5 ? 'heavy' : 'normal';
-    const chip = this.q('.chip-current');
-    chip.classList.toggle('hidden', !s.currentName);
-    if (s.currentName) this.setText(chip, `⇢ ${s.currentName}`);
-    this.q('.chip-pocket').classList.toggle('hidden', !s.inAirPocket);
+    this.setText(e.depth, String(s.depthM));
+    this.setText(e.zone, s.onBoat ? 'On deck' : underwater && s.zone ? s.zone.name : 'Surface');
+    this.setStyle(e.zone, 'zoneColor', 'color', underwater && s.zone ? s.zone.accent : '');
+    this.setText(e.air, underwater ? `Air use ${s.airUse.toFixed(1)}×` : s.onBoat ? 'Breathing easy' : 'Breathing');
+    this.setData(e.air, 'level', !underwater ? 'calm' : s.airUse >= 2.2 ? 'crushing' : s.airUse >= 1.5 ? 'heavy' : 'normal');
+    e.current.classList.toggle('hidden', !s.currentName);
+    if (s.currentName) this.setText(e.current, `⇢ ${s.currentName}`);
+    e.pocket.classList.toggle('hidden', !s.inAirPocket);
+    e.chips.classList.toggle('hidden', !s.currentName && !s.inAirPocket);
 
     this.renderObjectives(s.objectives);
 
+    // Haul (at risk) vs cash (safe).
     this.shownHaul = Math.abs(this.shownHaul - s.haulValue) < 1 ? s.haulValue : damp(this.shownHaul, s.haulValue, 10, dt);
-    this.setText(this.q('.haul-val'), formatMoney(this.shownHaul));
-    const tagText = s.haulCount === 0 ? '' : s.onBoat ? 'secured' : 'at risk';
-    this.setText(this.q('.haul-tag'), tagText);
-    this.q('.stat-haul').dataset.risk = tagText === 'at risk' ? 'yes' : 'no';
+    this.setText(e.haulVal, formatMoney(this.shownHaul));
+    const tag = s.haulCount === 0 ? '' : s.onBoat ? 'secured' : 'at risk';
+    this.setText(e.haulTag, tag);
+    this.setData(e.haul, 'risk', tag === 'at risk' ? 'yes' : 'no');
 
-    if (this.pips !== s.bagCapacity) {
-      this.pips = s.bagCapacity;
-      const pipBox = this.q('.bag-pips');
-      pipBox.innerHTML = '<i></i>'.repeat(s.bagCapacity);
-      pipBox.classList.toggle('dense', s.bagCapacity > 16);
+    if (this.pipCapacity !== s.bagCapacity) {
+      this.pipCapacity = s.bagCapacity;
+      e.pips.innerHTML = '<i></i>'.repeat(s.bagCapacity);
+      e.pips.classList.toggle('dense', s.bagCapacity > 16);
+      this.pipsOn = -1;
     }
-    const pipEls = this.q('.bag-pips').children;
-    for (let i = 0; i < pipEls.length; i++) pipEls[i].classList.toggle('on', i < s.usedSlots);
-    this.setText(this.q('.bag-count'), `${s.usedSlots} / ${s.bagCapacity}`);
-    this.q('.stat-bag').classList.toggle('full', s.usedSlots >= s.bagCapacity);
+    if (this.pipsOn !== s.usedSlots) {
+      this.pipsOn = s.usedSlots;
+      const pips = e.pips.children;
+      for (let i = 0; i < pips.length; i++) pips[i].classList.toggle('on', i < s.usedSlots);
+    }
+    this.setText(e.bagCount, `${s.usedSlots}/${s.bagCapacity}`);
+    e.bag.classList.toggle('full', s.usedSlots >= s.bagCapacity);
 
     if (this.shownCash === null) this.shownCash = s.cash;
     this.shownCash = Math.abs(this.shownCash - s.cash) < 1 ? s.cash : damp(this.shownCash, s.cash, 6, dt);
-    this.setText(this.q('.cash-val'), formatMoney(this.shownCash));
+    this.setText(e.cashVal, formatMoney(this.shownCash));
 
-    const gauge = this.q('.depth-gauge');
-    gauge.classList.toggle('dim', s.onBoat);
-    const pos = clamp(s.depthM / GAUGE_MAX_M, 0, 1) * 100;
-    this.q('.dg-marker').style.top = `${pos}%`;
-    this.setText(this.q('.dg-marker-label'), `${s.depthM}m`);
-    this.q('.dg-best').style.top = `${clamp(s.bestDepthM / GAUGE_MAX_M, 0, 1) * 100}%`;
+    // Depth gauge.
+    e.gauge.classList.toggle('dim', s.onBoat);
+    this.setStyle(e.marker, 'gaugeMarker', 'top', `${(clamp(s.depthM / GAUGE_MAX_M, 0, 1) * 100).toFixed(1)}%`);
+    this.setText(e.markerLabel, `${s.depthM}m`);
+    this.setStyle(e.best, 'gaugeBest', 'top', `${(clamp(s.bestDepthM / GAUGE_MAX_M, 0, 1) * 100).toFixed(1)}%`);
   }
 
   private renderObjectives(rows: ObjectiveRow[]) {
@@ -174,31 +217,31 @@ export class Hud {
     if (key === this.objectivesKey) return;
     const prevDone = new Set(this.objectivesKey.split('~').filter((k) => k.endsWith('|true')).map((k) => k.split('|')[0]));
     this.objectivesKey = key;
-    const list = this.q('.obj-list');
-    list.innerHTML = rows.map((r) => `
-      <li class="${r.done ? 'done' : ''} ${r.done && !prevDone.has(r.text) ? 'just-done' : ''}">
-        <span class="obj-check">${r.done ? '✓' : ''}</span>
-        <span class="obj-text">${r.text}</span>
-        <span class="obj-prog">${r.done ? `+${formatMoney(r.reward)}` : r.progress}</span>
-      </li>`).join('');
-    this.q('.hud-objectives').classList.toggle('hidden', rows.length === 0);
+    this.el.objList.innerHTML = rows.map((r) => {
+      const progress = !r.done && r.progress !== '—' ? ` <em class="obj-prog">${r.progress}</em>` : '';
+      return `<li class="${r.done ? 'done' : ''} ${r.done && !prevDone.has(r.text) ? 'just-done' : ''}">
+        <span class="obj-check" aria-hidden="true">${r.done ? '✓' : ''}</span>
+        <span class="obj-text">${r.text}${progress}</span>
+        <span class="obj-reward">+${formatMoney(r.reward)}</span>
+      </li>`;
+    }).join('');
+    this.el.objectives.classList.toggle('hidden', rows.length === 0);
   }
 
   setPrompt(html: string | null) {
     if (html === this.promptHtml) return;
     this.promptHtml = html;
-    const el = this.q('.prompt');
-    el.classList.toggle('hidden', !html);
-    if (html) el.innerHTML = html;
+    this.el.prompt.classList.toggle('hidden', !html);
+    if (html) this.el.prompt.innerHTML = html;
   }
 
   toast(html: string, kind: ToastKind = 'info', seconds = 2.5) {
-    const box = this.q('.toasts');
+    const box = this.el.toasts;
     const el = document.createElement('div');
     el.className = `toast toast-${kind}`;
     el.innerHTML = html;
     box.appendChild(el);
-    while (box.children.length > 4) box.firstElementChild!.remove();
+    while (box.children.length > MAX_TOASTS) box.firstElementChild!.remove();
     setTimeout(() => {
       el.classList.add('out');
       setTimeout(() => el.remove(), 400);
@@ -212,20 +255,20 @@ export class Hud {
   }
 
   bumpHaul() {
-    this.restartAnim(this.q('.stat-haul'), 'bump');
-    this.restartAnim(this.q('.stat-bag'), 'bump');
+    this.restartAnim(this.el.haul, 'bump');
+    this.restartAnim(this.el.bag, 'bump');
   }
 
   shakeBag() {
-    this.restartAnim(this.q('.stat-bag'), 'shake');
+    this.restartAnim(this.el.bag, 'shake');
   }
 
   flashOxygen() {
-    this.restartAnim(this.q('.hud-oxygen'), 'shake');
+    this.restartAnim(this.el.oxygen, 'shake');
   }
 
   cashPop(amount: number) {
-    const stat = this.q('.stat-cash');
+    const stat = this.el.cash;
     this.restartAnim(stat, amount >= 0 ? 'bump-good' : 'bump');
     const pop = document.createElement('span');
     pop.className = `cash-pop ${amount >= 0 ? 'gain' : 'spend'}`;

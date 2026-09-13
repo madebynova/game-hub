@@ -1,8 +1,9 @@
 import { PX_PER_METER } from '../config';
 import { formatMoney } from '../core/math';
 import type { LostSatchel, SaveData } from '../core/save';
-import { RARITIES, TREASURES, slotsOf, type HaulItem } from '../data/treasures';
+import { RARITIES, slotsOf, type HaulItem, type TreasureId } from '../data/treasures';
 import { UPGRADES, UPGRADE_ORDER, maxLevel, nextCost, upgradeValue, type UpgradeId } from '../data/upgrades';
+import { treasureLog } from '../systems/progression';
 import type { ObjectiveRow } from './hud';
 
 export interface ShopData {
@@ -15,7 +16,7 @@ export interface ShopData {
   satchel: LostSatchel | null;
   stats: SaveData['stats'];
   objectives: ObjectiveRow[];
-  discovered: number;
+  discovered: readonly TreasureId[];
 }
 
 export interface ShopHandlers {
@@ -26,9 +27,13 @@ export interface ShopHandlers {
   onReset(): void;
   /** Clicked an upgrade the player can't afford yet. */
   onDenied(id: UpgradeId): void;
+  /** Switched between the gear and treasure log tabs. */
+  onTab(): void;
 }
 
-/** Trading deck overlay: sell the haul, buy gear, check objectives, dive again. */
+type ShopTab = 'gear' | 'log';
+
+/** Trading deck overlay: sell the haul, buy gear, browse the treasure log, check objectives, dive again. */
 export class Shop {
   isOpen = false;
   private root: HTMLElement;
@@ -57,8 +62,12 @@ export class Shop {
             <div class="sold-stamp hidden"></div>
           </section>
           <section class="shop-upgrades">
-            <h3>Gear upgrades</h3>
-            <div class="upgrade-list"></div>
+            <div class="shop-tabs" role="tablist" aria-label="Trading deck sections">
+              <button class="tab is-active" role="tab" aria-selected="true" data-action="tab" data-tab="gear">Gear upgrades</button>
+              <button class="tab" role="tab" aria-selected="false" data-action="tab" data-tab="log">Treasure log <span class="tab-count"></span></button>
+            </div>
+            <div class="upgrade-list" data-panel="gear" role="tabpanel"></div>
+            <div class="treasure-log hidden" data-panel="log" role="tabpanel"></div>
           </section>
         </div>
         <section class="shop-objectives">
@@ -94,6 +103,9 @@ export class Shop {
         case 'dive': return handlers.onDive();
         case 'close': return handlers.onClose();
         case 'reset': return handlers.onReset();
+        case 'tab':
+          this.setTab(btn.dataset.tab as ShopTab);
+          return handlers.onTab();
       }
     });
   }
@@ -102,6 +114,7 @@ export class Shop {
     this.isOpen = true;
     this.root.classList.remove('hidden');
     this.shownCash = data.cash;
+    this.setTab('gear');
     this.refresh(data);
   }
 
@@ -122,18 +135,17 @@ export class Shop {
       ? document.activeElement.closest<HTMLElement>('[data-action]')
       : null;
     const focusSelector = active
-      ? `[data-action="${active.dataset.action}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ''}`
+      ? `[data-action="${active.dataset.action}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ''}${active.dataset.tab ? `[data-tab="${active.dataset.tab}"]` : ''}`
       : null;
 
     this.renderHaul(data);
     this.renderUpgrades(data);
+    this.renderLog(data.discovered);
     this.renderObjectives(data.objectives);
     this.animateCash(data.cash);
 
     const s = data.stats;
-    const total = Object.keys(TREASURES).length;
-    this.q('.shop-stats').innerHTML =
-      `Dives <b>${s.dives}</b> · Deepest <b>${s.bestDepthM}m</b> · Earned <b>${formatMoney(s.totalEarned)}</b> · Treasure log <b>${data.discovered}/${total}</b>`;
+    this.q('.shop-stats').innerHTML = `Dives <b>${s.dives}</b> · Deepest <b>${s.bestDepthM}m</b> · Earned <b>${formatMoney(s.totalEarned)}</b>`;
     this.q('.btn-dive').innerHTML = data.items.length ? 'Sell &amp; dive <kbd>Space</kbd>' : 'Dive <kbd>Space</kbd>';
 
     if (fx.sold) {
@@ -156,6 +168,17 @@ export class Shop {
     card.classList.remove('shake');
     void card.offsetWidth;
     card.classList.add('shake');
+  }
+
+  private setTab(tab: ShopTab) {
+    for (const b of this.root.querySelectorAll<HTMLElement>('.tab')) {
+      const on = b.dataset.tab === tab;
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-selected', String(on));
+    }
+    for (const panel of this.root.querySelectorAll<HTMLElement>('[data-panel]')) {
+      panel.classList.toggle('hidden', panel.dataset.panel !== tab);
+    }
   }
 
   private renderHaul(data: ShopData) {
@@ -211,7 +234,7 @@ export class Shop {
       return `<div class="upg ${maxed ? 'maxed' : ''} ${afford ? 'afford' : ''} ${short ? 'short' : ''}" data-id="${id}">
         <div class="upg-icon">${def.icon}</div>
         <div class="upg-body">
-          <div class="upg-title">${def.name} <span class="pips">${pips}</span>${deepTier ? '<span class="deep-tag">deep-rated</span>' : ''}</div>
+          <div class="upg-title">${def.name} <span class="pips" title="Level ${level + 1} of ${maxLevel(id) + 1}">${pips}</span>${deepTier ? '<span class="deep-tag">deep-rated</span>' : ''}</div>
           <div class="upg-desc">${def.description}</div>
           <div class="upg-stat">${stat}</div>
         </div>
@@ -225,10 +248,31 @@ export class Shop {
     }).join('');
   }
 
+  /** Every treasure grouped by rarity: found ones show name and base value, the rest stay hidden. */
+  private renderLog(discovered: readonly TreasureId[]) {
+    const groups = treasureLog(discovered);
+    const found = groups.reduce((s, g) => s + g.found, 0);
+    const total = groups.reduce((s, g) => s + g.entries.length, 0);
+    this.q('.tab-count').textContent = `${found}/${total}`;
+    this.q('.treasure-log').innerHTML = `
+      <div class="log-summary">${found} of ${total} found · base values · rarer treasure lies deeper</div>
+      ${groups.map((g) => `
+        <div class="log-group" style="--c:${g.color}">
+          <div class="log-rarity">${g.label}<span>${g.found}/${g.entries.length}</span></div>
+          <ul class="log-items">${g.entries.map((t) => t.found
+            ? `<li title="${t.name}: base value ${formatMoney(t.value)}${t.slots > 1 ? `, takes ${t.slots} bag slots` : ''}">
+                 <span class="log-name">${t.name}${t.slots > 1 ? '<small class="log-heavy">heavy</small>' : ''}</span>
+                 <span class="log-val">${formatMoney(t.value)}</span>
+               </li>`
+            : `<li class="missing" title="Not found yet"><span class="log-name">Undiscovered</span><span class="log-val">?</span></li>`).join('')}
+          </ul>
+        </div>`).join('')}`;
+  }
+
   private renderObjectives(rows: ObjectiveRow[]) {
     this.q('.obj-cards').innerHTML = rows.map((r) => `
       <div class="obj-card ${r.done ? 'done' : ''}">
-        <div class="obj-card-text">${r.text}</div>
+        <div class="obj-card-text">${r.done ? '✓ ' : ''}${r.text}</div>
         <div class="obj-card-reward">+${formatMoney(r.reward)}</div>
       </div>`).join('');
   }

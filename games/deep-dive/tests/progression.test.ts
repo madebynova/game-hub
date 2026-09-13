@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { defaultSave } from '../src/core/save';
 import { ObjectiveTracker, type Objective } from '../src/systems/objectives';
-import { objectiveRows, recordDiscovery, recordVisits } from '../src/systems/progression';
+import { TREASURES } from '../src/data/treasures';
+import { objectiveRows, recordDiscovery, recordVisits, treasureLog } from '../src/systems/progression';
 
 describe('progression log', () => {
   it('records zones once and reports first-time visits', () => {
@@ -17,6 +18,19 @@ describe('progression log', () => {
     expect(recordDiscovery(save, 'bell')).toBe(true);
     expect(recordDiscovery(save, 'bell')).toBe(false);
     expect(save.discovered).toEqual(['bell']);
+  });
+
+  it('builds the treasure log grouped by rarity, cheapest first, marking what was found', () => {
+    const log = treasureLog(['coins', 'heart', 'bell']);
+    expect(log.map((g) => g.rarity)).toEqual(['common', 'uncommon', 'rare', 'epic', 'legendary']);
+    expect(log.reduce((n, g) => n + g.entries.length, 0)).toBe(Object.keys(TREASURES).length);
+    expect(log.map((g) => g.found)).toEqual([1, 1, 0, 0, 1]);
+    expect(log[0].entries[0]).toMatchObject({ id: 'coins', found: true, value: 14 });
+    expect(log[1].entries.find((e) => e.id === 'bell')).toMatchObject({ found: true, slots: 2 });
+    for (const g of log) {
+      for (let i = 1; i < g.entries.length; i++) expect(g.entries[i].value).toBeGreaterThanOrEqual(g.entries[i - 1].value);
+    }
+    expect(treasureLog([]).every((g) => g.found === 0)).toBe(true);
   });
 
   it('formats objective rows with live progress', () => {
