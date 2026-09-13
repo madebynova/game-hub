@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Salt &amp; Sovereigns — Open Waters</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<!-- HUD -->
+<div class="hud" id="topbar">
+  <div class="title">🏴‍☠️ Salt &amp; Sovereigns</div>
+  <div class="sub">Open Waters</div>
+  <div class="btns">
+    <button class="btn" id="mapBtn">Map (M)</button>
+    <button class="btn" id="helpBtn">Help</button>
+    <button class="btn" id="settingsBtn">⚙️ Settings</button>
+    <button class="btn danger" id="newBtn">New Game</button>
+  </div>
+</div>
+
+<div class="hud" id="dash">
+  <h3>
+    <span class="dash-title-wrap">Ship's Dashboard
+      <span class="dash-help" tabindex="0" role="button" aria-label="What do these numbers mean?">?
+        <span class="dash-help-tip">
+          <b>Gold</b> — money you have right now.<br>
+          <b>Cargo</b> — goods aboard / your max hold space.<br>
+          <b>Health</b> — your ship's condition. Hits 0 and you're wrecked.<br>
+          <b>Speed</b> — how fast you're sailing right now.<br>
+          <b>Wanted</b> — how much trouble you're in with the law.<br>
+          <b>Lifetime Earned</b> — total gold you've earned this voyage (never drops).<br>
+          <b>Net Worth</b> — your gold + cargo + ship value, all together.<br>
+          <b>Fortune</b> — your progress toward the 1,000,000 gold goal.<br>
+          <b>Holdings</b> — income from businesses you own.<br>
+          <b>Playtime</b> — how long you've played this voyage.
+        </span>
+      </span>
+    </span>
+    <small id="dashDay"></small>
+  </h3>
+  <div class="drow"><span class="k">Gold</span><span class="v" id="dGold">0</span></div>
+  <div class="drow"><span class="k">Cargo</span>
+    <span style="display:flex;align-items:center;gap:8px;">
+      <span class="v" id="dCargo">0 / 0</span>
+      <span class="meter cargo"><i id="mCargo"></i></span>
+    </span>
+  </div>
+  <div class="drow"><span class="k">Health</span>
+    <span style="display:flex;align-items:center;gap:8px;">
+      <span class="v" id="dHp">100</span>
+      <span class="meter hp"><i id="mHp"></i></span>
+    </span>
+  </div>
+  <div class="drow"><span class="k">Speed</span><span class="v" id="dSpd">0 kn</span></div>
+  <div class="drow"><span class="k">Wanted</span><span class="v" id="dWanted">— clean —</span></div>
+  <div class="drow"><span class="k" title="Total gold earned this voyage — never falls when you spend">Lifetime earned</span><span class="v" id="dLife">0</span></div>
+  <div class="drow"><span class="k" title="Gold + cargo value + ship & upgrade value">Net worth</span><span class="v" id="dNet">0</span></div>
+  <div class="drow"><span class="k" title="Long-term goal: a net worth of 1,000,000 Sovereigns">Fortune</span>
+    <span style="display:flex;align-items:center;gap:8px;">
+      <span class="v" id="dFortune">0 / 1M</span>
+      <span class="meter fortune"><i id="mFortune"></i></span>
+    </span>
+  </div>
+  <div class="drow" id="drowHoldings" hidden><span class="k" title="Passive income from your business ventures — collect at any port's Business Holdings">Holdings</span><span class="v" id="dHoldings">—</span></div>
+  <div class="drow"><span class="k">Playtime</span><span class="v" id="dPlay">00h 00m 00s</span></div>
+</div>
+
+<div class="hud" id="compass">
+  <canvas id="minimap" width="180" height="130"></canvas>
+</div>
+
+<div class="hud" id="hint">Sail toward a port to dock</div>
+<div class="hud" id="pauseBadge">⏸️ GAME PAUSED</div>
+<div class="hud" id="wantedBadge"></div>
+<div class="hud" id="auctionBadge"></div>
+<div id="boardWarn"></div>
+<div id="toastLayer"></div>
+<div id="miniTip"></div>
+<button class="btn" id="uiToggle" title="Hide or show the HUD — key: H">🙈 Hide HUD</button>
+
+<!-- Trade modal -->
+<div class="modal-back" id="tradeModal">
+  <div class="modal tm">
+    <header class="tm-head">
+      <div class="tm-title">
+        <h2 id="tPort">Port</h2>
+        <span class="tm-faction" id="tFaction"></span>
+      </div>
+      <div class="tm-stats">
+        <span class="tm-stat"><i>Day</i><b id="tmDay">1</b></span>
+        <span class="tm-stat"><i>Purse</i><b id="tmPurse">0</b></span>
+        <span class="tm-stat tm-hold"><i>Hold</i><b id="tmCargo">0 / 0</b>
+          <span class="tm-holdbar"><b id="tmCargoFill"></b></span></span>
+      </div>
+    </header>
+    <div id="tWinLine"></div>
+    <p class="port-blurb" id="tBlurb"></p>
+
+    <nav class="tm-tabs" id="tmTabs">
+      <button data-tab="mkt" class="on">🛒 Market</button>
+      <button data-tab="svc">⚓ Services</button>
+      <button data-tab="job">📋 Contracts</button>
+      <button data-tab="empire">🏛 Empire</button>
+      <button data-tab="fleet">⚜️ Fleet</button>
+      <button data-tab="hold">📦 Hold</button>
+    </nav>
+
+    <!-- MARKET -->
+    <section class="tm-panel" id="tabMkt">
+      <div class="mkt-restbar">
+        <button class="btn gold" id="mktRestBtn">🛏 Rest 1 Day</button>
+        <span id="mktRestSummary">Rest to let markets shift overnight — you stay right here.</span>
+      </div>
+      <div class="tm-qtybar">
+        <span class="tm-qtylabel">Trade quantity</span>
+        <div class="qty-toggle" id="qtyToggle">
+          <button data-q="1">×1</button>
+          <button data-q="5">×5</button>
+          <button data-q="10">×10</button>
+          <button data-q="max" class="on">Max</button>
+        </div>
+      </div>
+      <div class="mkt-list" id="mktLegal"></div>
+      <div class="mkt-blackhdr">⚠ Black Market <span>buy in havens · fence at Crown ports</span></div>
+      <div class="mkt-list black" id="mktBlack"></div>
+    </section>
+
+    <!-- CONTRACTS -->
+    <section class="tm-panel" id="tabJob" hidden>
+      <h4 class="job-h">Active contracts</h4>
+      <div id="jobActive" class="job-list"></div>
+      <h4 class="job-h">Contract board</h4>
+      <div id="jobBoardList" class="job-list"></div>
+    </section>
+
+    <!-- PORT SERVICES -->
+    <section class="tm-panel" id="tabSvc" hidden>
+      <div class="svc-qtybar">
+        <span class="tm-qtylabel">Buy quantity</span>
+        <div class="qty-toggle" id="svcQty">
+          <button data-q="1" class="on">×1</button>
+          <button data-q="5">×5</button>
+          <button data-q="10">×10</button>
+          <button data-q="max">Max</button>
+        </div>
+        <span class="svc-qty-note">applies to Cargo Hold, Shipwright, Cannons &amp; False Holds</span>
+      </div>
+      <div class="svc-grid">
+        <div class="svc-card" id="svcRepair">
+          <h4>🔧 Repair Hull</h4>
+          <p class="svc-desc" id="repairInfo"></p>
+          <button class="btn gold" id="repairBtn">Repair</button>
+        </div>
+        <div class="svc-card" id="svcHold">
+          <h4>📦 Expand Cargo Hold</h4>
+          <p class="svc-desc" id="holdInfo"></p>
+          <button class="btn" id="holdBtn">Expand Hold</button>
+        </div>
+        <div class="svc-card" id="svcRest">
+          <h4>🛏️ Rest &amp; Advance Time</h4>
+          <p class="svc-desc" id="restInfo"></p>
+          <button class="btn gold" id="restBtn">Rest 1 Day</button>
+        </div>
+        <div class="svc-card" id="svcHoldings">
+          <h4>🏦 Business Holdings</h4>
+          <p class="svc-desc" id="holdingsInfo"></p>
+          <div class="holdings-btns">
+            <button class="btn gold" id="collectHoldingsBtn">Collect</button>
+            <button class="btn" id="buyVentureBtn">Buy Venture</button>
+          </div>
+        </div>
+        <div class="svc-card" id="svcShipwright">
+          <h4>🛠️ Shipwright</h4>
+          <p class="svc-desc" id="shipwrightInfo">Permanent handling upgrades.</p>
+          <div class="sw-list" id="shipwrightList"></div>
+        </div>
+        <div class="svc-card" id="svcInsurance">
+          <h4>📜 Hull Insurance</h4>
+          <p class="svc-desc" id="insuranceInfo"></p>
+          <button class="btn" id="insuranceBtn">Buy Policy</button>
+        </div>
+        <div class="svc-card" id="svcCrew">
+          <h4>🧑‍✈️ Sign On Crew</h4>
+          <p class="svc-desc">Permanent hands with a lasting edge.</p>
+          <div class="sw-list" id="crewList"></div>
+        </div>
+        <div class="svc-card" id="svcGrand">
+          <h4>⚓ Grand Fittings</h4>
+          <p class="svc-desc">Rare, expensive milestones on the road to a Fortune.</p>
+          <div class="sw-list" id="grandList"></div>
+        </div>
+        <div class="svc-card" id="svcGuns">
+          <h4>💣 Gunfoundry</h4>
+          <p class="svc-desc" id="gunsInfo"></p>
+          <button class="btn" id="gunsBtn">Run Out More Guns</button>
+        </div>
+        <div class="svc-card" id="svcPaint">
+          <h4>🎨 Shipyard — Paint &amp; Colours</h4>
+          <p class="svc-desc">180 gold per change. Pure vanity.</p>
+          <div class="paint-row"><span>Hull</span><span id="paintHull"></span></div>
+          <div class="paint-row"><span>Sail</span><span id="paintSail"></span></div>
+        </div>
+        <div class="svc-card" id="svcFalseHold">
+          <h4>🗝️ False Cargo Hold</h4>
+          <p class="svc-desc" id="falseHoldInfo"></p>
+          <button class="btn" id="falseHoldBtn">Fit Hidden Hold</button>
+        </div>
+        <div id="smugglerServices">
+          <div class="svc-card smug" id="svcPayoff">
+            <h4>💰 Pay Off Officials</h4>
+            <p class="svc-desc" id="payoffInfo"></p>
+            <button class="btn gold" id="payoffBtn">Clear Bounty</button>
+          </div>
+          <div class="svc-card smug" id="svcFlag">
+            <h4>🏴 Buy False Colours</h4>
+            <p class="svc-desc" id="falseFlagInfo"></p>
+            <button class="btn" id="falseFlagBtn">Buy Colours</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EMPIRE (Port Real Estate) -->
+    <section class="tm-panel" id="tabEmpire" hidden>
+      <div id="empireIdentity"></div>
+      <div id="empireHere"></div>
+      <h4 class="job-h">Your empire</h4>
+      <div id="empireList" class="job-list"></div>
+      <h4 class="job-h">Investment opportunities</h4>
+      <p class="muted" style="margin:0 0 8px;">Every business you don't yet own, across all 8 ports — sail there to buy in.</p>
+      <div id="empireOpportunities" class="job-list"></div>
+      <h4 class="job-h">Trade influence</h4>
+      <p class="muted" style="margin:0 0 8px;">How much say you have over a commodity's supply — built from the
+        production properties you own. Small, capped bonuses only; the market still runs on its own.</p>
+      <div id="empireInfluence" class="job-list"></div>
+    </section>
+
+    <!-- FLEET (Legendary Ships) -->
+    <section class="tm-panel" id="tabFleet" hidden>
+      <div id="fleetCurrent"></div>
+      <h4 class="job-h">Legendary vessels</h4>
+      <p class="muted" style="margin:0 0 8px;">Purpose-built ships, not upgrades to your own — each trades something
+        away for what it's best at. Own several and switch your flagship freely; only one sails at a time.</p>
+      <div id="fleetList" class="job-list"></div>
+    </section>
+
+    <!-- HOLD -->
+    <section class="tm-panel" id="tabHold" hidden>
+      <div class="hold-list" id="holdList"></div>
+      <p class="hold-empty" id="holdEmpty" hidden>Your hold is empty — buy low somewhere and fill it.</p>
+      <div class="hold-summary" id="holdSummary" hidden></div>
+    </section>
+
+    <footer class="foot">
+      <span class="purse" id="tPurse"></span>
+      <button class="btn gold" id="setSailBtn">Set Sail ⛵</button>
+    </footer>
+  </div>
+</div>
+
+<!-- Navy encounter modal -->
+<div class="modal-back" id="navyModal">
+  <div class="modal">
+    <h2 id="navyTitle">⚓ Navy Encounter</h2>
+    <div id="navyBody"></div>
+    <div class="pause-btns">
+      <button class="btn gold wide" id="navyBribeBtn">Bribe</button>
+      <button class="btn wide" id="navyHideBtn">Attempt to Hide</button>
+      <button class="btn wide" id="navyFightBtn">Fight</button>
+      <button class="btn danger wide" id="navyFleeBtn">Flee</button>
+    </div>
+  </div>
+</div>
+
+<!-- Black Market Auction modal -->
+<div class="modal-back" id="auctionModal">
+  <div class="modal">
+    <h2>🏴 Black Market Auction</h2>
+    <p class="port-blurb">Word only reaches the right ears. Bid carefully — or don't.</p>
+    <h3 id="aucTitle" style="margin:10px 0 2px;color:#fff;"></h3>
+    <p class="muted" id="aucDesc" style="margin:0 0 10px;"></p>
+    <div class="auc-stats">
+      <span class="tm-stat"><i>Current Bid</i><b id="aucCurBid">0</b></span>
+      <span class="tm-stat"><i>Leading</i><b id="aucLeader">—</b></span>
+      <span class="tm-stat"><i>Your Gold</i><b id="aucGold">0</b></span>
+      <span class="tm-stat"><i>Next Bid</i><b id="aucNext">0</b></span>
+    </div>
+    <h4 class="job-h">Rival activity</h4>
+    <div id="aucLog" class="auc-log"></div>
+    <h4 class="job-h">On the floor</h4>
+    <div id="aucRivals" class="auc-rivals"></div>
+    <p class="win-line" id="aucResult" hidden></p>
+    <div class="pause-btns">
+      <button class="btn gold wide" id="aucBidBtn">Place Bid</button>
+      <button class="btn danger wide" id="aucWalkBtn">Walk Away</button>
+      <button class="btn gold wide" id="aucCloseBtn" hidden>Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings hub -->
+<div class="modal-back" id="settingsModal">
+  <div class="modal">
+    <h2>⚙️ Settings</h2>
+    <p class="port-blurb">Save, share your friend code, and review your voyage.</p>
+    <div class="settings-grid">
+      <button class="settings-item" id="setSaveBtn">
+        <span class="si-ico">💾</span>
+        <span class="si-txt"><b>Save Game</b><i>Store this voyage in your browser</i></span>
+      </button>
+      <button class="settings-item" id="setIoBtn">
+        <span class="si-ico">📦</span>
+        <span class="si-txt"><b>Export / Import</b><i>Copy your friend code or load one</i></span>
+      </button>
+      <button class="settings-item" id="setLogBtn">
+        <span class="si-ico">📜</span>
+        <span class="si-txt"><b>Change Log</b><i>Every update, newest first</i></span>
+      </button>
+      <button class="settings-item" id="setLbBtn">
+        <span class="si-ico">🏆</span>
+        <span class="si-txt"><b>Leaderboard</b><i>Rank against rival captains</i></span>
+      </button>
+      <button class="settings-item" id="setFriendsBtn">
+        <span class="si-ico">🧭</span>
+        <span class="si-txt"><b>Friends</b><i>Add captains, compare voyages</i></span>
+      </button>
+      <button class="settings-item" id="setStatsBtn">
+        <span class="si-ico">📊</span>
+        <span class="si-txt"><b>Statistics</b><i>Your full voyage record</i></span>
+      </button>
+      <button class="settings-item" id="setEmpireBtn">
+        <span class="si-ico">🏛</span>
+        <span class="si-txt"><b>Empire Dashboard</b><i>Everything you've built, at a glance</i></span>
+      </button>
+      <button class="settings-item" id="setProfileBtn">
+        <span class="si-ico">👤</span>
+        <span class="si-txt"><b>My Captain</b><i>Your profile &amp; friend code</i></span>
+      </button>
+      <button class="settings-item" id="setVoyagesBtn">
+        <span class="si-ico">⚓</span>
+        <span class="si-txt"><b>Voyages</b><i>Multiple save slots</i></span>
+      </button>
+    </div>
+    <div class="foot"><span class="msg" id="setVer"></span><button class="btn" data-close="settingsModal">Close</button></div>
+  </div>
+</div>
+
+<!-- IO modal -->
+<div class="modal-back" id="ioModal">
+  <div class="modal">
+    <h2>📦 Export / Import — Friend Code</h2>
+    <div class="friend-slot"></div>
+    <div class="field"><label>Your friend code (this is the string to share)</label>
+      <textarea id="exportBox" readonly onclick="this.select()"></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+      <button class="btn gold" id="copyBtn">📋 Copy Friend Code</button>
+      <button class="btn" id="downloadBtn">Download .txt</button>
+    </div>
+    <div class="field"><label>Load a friend's code (replaces your current voyage)</label>
+      <textarea id="importBox" placeholder="Paste a friend's SnSW2:… code here to load their progress…"></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap;">
+      <button class="btn gold" id="importBtn">Load This Code</button>
+      <span class="msg" id="importMsg"></span>
+    </div>
+    <div class="foot"><span class="msg">To just compare scores without losing your game, add a friend on the Leaderboard instead.</span><button class="btn" data-close="ioModal">Close</button></div>
+  </div>
+</div>
+
+<!-- Change log modal -->
+<div class="modal-back" id="logModal">
+  <div class="modal">
+    <h2>📜 Change Log</h2>
+    <p class="port-blurb">Every update to Salt &amp; Sovereigns — newest first.</p>
+    <div id="logBody" class="log-list"></div>
+    <div class="foot"><span class="msg" id="logVer"></span><button class="btn" data-close="logModal">Close</button></div>
+  </div>
+</div>
+
+<!-- Captain name picker -->
+<div class="modal-back" id="captainModal">
+  <div class="modal" style="max-width:420px;text-align:center;">
+    <h2>⚓ Name Your Captain</h2>
+    <p class="port-blurb">This is the name that flies on the leaderboard. Choose well.</p>
+    <input type="text" id="captainInput" maxlength="24" placeholder="e.g. Redbeard, Twin Gemini…"
+      autocomplete="off" spellcheck="false" />
+    <div class="foot" style="justify-content:center;">
+      <button class="btn gold wide" id="captainOkBtn">Take the Helm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Leaderboard modal -->
+<div class="modal-back" id="lbModal">
+  <div class="modal">
+    <h2>🏆 Captains' Leaderboard</h2>
+    <p class="port-blurb">Ranked by Lifetime Earnings. Click any captain to open their profile.</p>
+    <div class="lb-head">
+      <span class="lb-rank">#</span><span class="lb-name">Captain</span>
+      <span class="lb-worth">Lifetime</span><span class="lb-worth">Net Worth</span><span class="lb-time">Playtime</span>
+    </div>
+    <div id="lbBody" class="lb-list"></div>
+    <div class="lb-youline" id="lbYouLine"></div>
+    <div class="friend-slot"></div>
+    <div class="lb-import">
+      <label>Compare with a friend — paste their friend code</label>
+      <textarea id="lbRivalCode" placeholder="Paste a friend's SnSW2:… code to put them on the board (this does NOT replace your game)…"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;">
+        <button class="btn gold" id="lbAddBtn">Add to Board</button>
+        <span class="msg" id="lbRivalMsg"></span>
+      </div>
+    </div>
+    <div class="foot"><span class="msg">Your playtime updates live and rides along in every save &amp; friend code.</span><button class="btn" data-close="lbModal">Close</button></div>
+  </div>
+</div>
+
+<!-- Statistics modal -->
+<div class="modal-back" id="statsModal">
+  <div class="modal">
+    <h2>📊 Voyage Statistics</h2>
+    <p class="port-blurb">Everything you've done since this voyage began.</p>
+    <div id="statsBody" class="stat-wrap"></div>
+    <div class="foot"><span class="msg"></span><button class="btn" data-close="statsModal">Close</button></div>
+  </div>
+</div>
+
+<!-- Empire Dashboard modal -->
+<div class="modal-back" id="empireDashModal">
+  <div class="modal">
+    <h2>🏛 Empire Dashboard</h2>
+    <p class="port-blurb">Everything you've built, in one place — a captain's-eye view of the empire.</p>
+    <div id="empireDashBody" class="stat-wrap"></div>
+    <div class="foot"><span class="msg"></span><button class="btn" data-close="empireDashModal">Close</button></div>
+  </div>
+</div>
+
+<!-- Captain profile modal (shared by leaderboard + friends) -->
+<div class="modal-back" id="profileModal">
+  <div class="modal">
+    <div class="prof-head"><h2 id="profName">Captain</h2><span class="prof-rank" id="profRank"></span></div>
+    <p class="prof-note" id="profNote"></p>
+    <div id="profBody" class="stat-wrap"></div>
+    <div class="foot"><span class="msg"></span><button class="btn" data-close="profileModal">Close</button></div>
+  </div>
+</div>
+
+<!-- Friends modal -->
+<div class="modal-back" id="friendsModal">
+  <div class="modal">
+    <h2>🧭 Friends</h2>
+    <p class="port-blurb">Add captains by friend code to compare voyages and open their profiles.</p>
+
+    <div class="friend-code-box">
+      <div>
+        <label>Your friend code</label>
+        <div class="fc-code" id="myFriendCode">SSW-····-····</div>
+      </div>
+      <button class="btn gold" id="fcCopyBtn">📋 Copy</button>
+    </div>
+
+    <div class="field">
+      <label>Add a friend — paste the full save code they shared (SnSW2:…)</label>
+      <textarea id="friendAddBox" placeholder="Paste a friend's SnSW2:… code to send them a friend request…"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;">
+        <button class="btn gold" id="friendAddBtn">Send Friend Request</button>
+        <span class="msg" id="friendAddMsg"></span>
+      </div>
+    </div>
+
+    <div id="friendReqWrap" hidden>
+      <h4 class="job-h">Incoming friend requests</h4>
+      <div id="friendReqList" class="friend-list"></div>
+    </div>
+
+    <h4 class="job-h">Your friends</h4>
+    <div id="friendList" class="friend-list"></div>
+
+    <div class="foot">
+      <span class="msg">No server — statuses come from the last code each captain shared.</span>
+      <button class="btn" data-close="friendsModal">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Save slots / voyages modal -->
+<div class="modal-back" id="voyagesModal">
+  <div class="modal">
+    <h2>⚓ Voyages</h2>
+    <p class="port-blurb">Keep several runs going at once. Your current voyage also auto-saves on its own.</p>
+    <div id="slotList" class="slot-list"></div>
+    <div class="foot"><span class="msg" id="slotMsg"></span><button class="btn" data-close="voyagesModal">Close</button></div>
+  </div>
+</div>
+
+<!-- Help / Captain's Manual (tabbed) -->
+<div class="modal-back" id="helpModal">
+  <div class="modal">
+    <h2>📖 Captain's Manual</h2>
+    <p class="port-blurb">Pick a topic — every entry matches how the game actually plays.</p>
+    <nav class="help-tabs" id="helpTabs">
+      <button data-htab="start" class="on">Getting Started</button>
+      <button data-htab="trade">Trading</button>
+      <button data-htab="ships">Ships</button>
+      <button data-htab="nav">Navigation</button>
+      <button data-htab="navy">Combat &amp; Navy</button>
+      <button data-htab="money">Economy</button>
+      <button data-htab="controls">Controls</button>
+      <button data-htab="tips">Tips</button>
+    </nav>
+    <div class="help-body" id="helpBody"></div>
+    <div class="foot"><span class="msg" id="helpVer"></span><button class="btn" data-close="helpModal">Close</button></div>
+  </div>
+</div>
+
+<!-- Help / start modal -->
+<div class="modal-back" id="startModal">
+  <div class="modal">
+    <h2>Salt &amp; Sovereigns</h2>
+    <p class="port-blurb">A top-down pirate trading venture for a free period.</p>
+    <p><b>Steer</b> with <span class="keycap">W</span><span class="keycap">A</span><span class="keycap">S</span><span class="keycap">D</span> or the <span class="keycap">Arrows</span> — your ship carries momentum, so plan your turns.
+       Sail into any of the <b>8 port islands</b> and ease off as you touch the harbour to open the trading window.</p>
+    <p><b>Buy low, sell high.</b> Prices are frozen while you sail; they only move when you <b>Rest &amp; Advance Time</b> in a port.
+       <span class="down">Reefs</span> gash your hull — mind the pale rocks.</p>
+    <p><b>Goal:</b> build a <b>Fortune — a net worth of 1,000,000 Sovereigns</b>. Passing 10,000 just makes you an established trader; the real voyage is everything after.</p>
+    <p>Press <span class="keycap">M</span> for the charts, <span class="keycap">Esc</span> to pause, <span class="keycap">H</span> to hide the HUD.
+       Full details are in the <b>📖 Manual</b> below.</p>
+    <div id="continueCard" class="win-line" style="display:none;text-align:left;font-weight:normal;"></div>
+    <div class="friend-slot"></div>
+    <div class="foot">
+      <span class="msg" id="startMsg"></span>
+      <span style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn" id="startHelpBtn">📖 Manual</button>
+        <button class="btn" id="startSlotsBtn">Voyages…</button>
+        <button class="btn gold" id="continueBtn">Continue Voyage</button>
+        <button class="btn" id="startNewBtn">New Voyage</button>
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- Full chart / map modal (toggle with M) -->
+<div class="modal-back" id="mapModal">
+  <div class="modal">
+    <h2>Charts <span class="port-blurb" style="display:inline;font-size:.8rem;">— press M or Close to weigh anchor</span></h2>
+    <nav class="tm-tabs" id="mapTabs">
+      <button data-mtab="map" class="on">🗺 Map</button>
+      <button data-mtab="market">📈 Market</button>
+      <button data-mtab="ports">⚓ Ports</button>
+    </nav>
+
+    <section id="mapTabMap" class="map-tabpanel">
+      <div class="map-stage"><canvas id="mapCanvas" width="900" height="470"></canvas></div>
+      <div class="map-legend">
+        <span class="deal-low">🟢 GREAT BUY</span> well below normal
+        &nbsp;·&nbsp; <span class="flat">🟡 FAIR</span> near normal
+        &nbsp;·&nbsp; <span class="deal-high">🔴 GREAT SELL</span> well above normal
+        &nbsp;·&nbsp; <span class="held">🟦 held</span> now &nbsp;·&nbsp; pale rocks = reefs
+        &nbsp;·&nbsp; <span style="color:#e58a5c;font-weight:bold;">● Crown</span>
+        &nbsp;<span style="color:#4caf50;font-weight:bold;">● Haven</span>
+        &nbsp;·&nbsp; gold ring = business you own
+        &nbsp;·&nbsp; <span style="color:#ffce85;font-weight:bold;">⚑ flag</span> = contract delivery here
+        (<span style="color:#e5645a;font-weight:bold;">red</span> = due soon)
+      </div>
+    </section>
+
+    <section id="mapTabMarket" class="map-tabpanel" hidden>
+      <p class="port-blurb">Best prices right now across every port you could reach. Prices are frozen until you Rest.</p>
+      <div id="mapMarket" class="map-mkt-wrap"></div>
+    </section>
+
+    <section id="mapTabPorts" class="map-tabpanel" hidden>
+      <div class="map-grid" id="mapPorts"></div>
+    </section>
+
+    <div class="foot">
+      <span class="msg">Prices only move when you Rest &amp; Advance Time in a port.</span>
+      <button class="btn gold" id="mapCloseBtn">Close Map</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pause menu (toggle with ESC) -->
+<div class="modal-back" id="pauseModal">
+  <div class="modal">
+    <h2>Paused</h2>
+    <p class="port-blurb">The tide will keep. Take your time, captain.</p>
+    <div class="pause-btns">
+      <button class="btn gold wide" id="resumeBtn">Resume Game <span class="kc">Esc</span></button>
+      <button class="btn wide" id="quickSaveBtn">Quick Save</button>
+      <button class="btn wide" id="pauseHelpBtn">📖 Manual</button>
+      <button class="btn wide" id="pauseMenuBtn">Main Menu</button>
+    </div>
+    <div id="pauseSaveMsg">✓ Game Saved!</div>
+  </div>
+</div>
+
+<script src="src/game.js"></script>
+</body>
+</html>

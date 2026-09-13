@@ -1,0 +1,9 @@
+# Static site — no build step. Netlify just serves this folder as-is.
+[build]
+  publish = "."
+
+# Single-page game: anything that isn't a real file falls back to index.html.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

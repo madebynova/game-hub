@@ -13,7 +13,8 @@ game-hub/
 │   ├── src/
 │   └── public/
 └── games/
-    └── runout/
+    ├── runout/
+    └── salt-and-sovereigns/
 ```
 
 ### `website/`
@@ -25,11 +26,15 @@ The NOVA game-hub website lives here.
 ### `games/`
 Each game gets its own folder. If a game has 2 files or 200 files, they stay together inside that game's folder.
 
-- `games/runout/` — the RUNOUT game project.
+- `games/runout/` — the RUNOUT game project (Vite + TypeScript, its own build).
+- `games/salt-and-sovereigns/` — the Salt & Sovereigns game project (static HTML/CSS/JS, no build step).
 
 ## 🎮 Current Games
 
-RUNOUT is the first game being prepared for the hub. More games can be added later without mixing their files together.
+- **RUNOUT** — a solo ding-dong-and-run extraction game.
+- **Salt & Sovereigns** — a pirate trading adventure: sail, trade, take contracts, evade the Navy, build businesses, and grow your fortune across the open waters.
+
+More games can be added later without mixing their files together.
 
 ## 🌐 Deployment
 
