@@ -1,10 +1,10 @@
 // Central tuning values. Tweak these to change game feel without touching systems.
 
 export const WORLD = {
-  width: 4200,
+  width: 5600,
   /** y of the water surface. Everything with y > 0 is underwater. */
   waterY: 0,
-  bottom: 3200,
+  bottom: 4400,
   wallMargin: 150,
 };
 
@@ -23,11 +23,11 @@ export const PLAYER = {
 };
 
 export const OXYGEN = {
-  /** Oxygen units drained per second at the surface level. */
-  baseDrain: 1,
-  /** Extra drain per second at `depthForMaxDrain` (pressure). */
-  depthDrainBonus: 0.8,
-  depthForMaxDrain: 3000,
+  /**
+   * Pressure curve: [depth in world units, oxygen drained per second].
+   * Gentle on the reef, noticeably heavier at the wreck, punishing in the abyss.
+   */
+  pressureCurve: [[0, 1], [1150, 1.25], [2100, 1.7], [3000, 2.3], [4000, 3]] as [number, number][],
   refillRate: 45,
   lowFrac: 0.35,
   criticalFrac: 0.15,
@@ -45,9 +45,10 @@ export const BOAT = {
   boardRight: 900,
 };
 
+/** Depth (world units) where each zone's depth band begins. */
 export const DEPTH_ZONES = {
-  reef: 820,
-  abyss: 1500,
+  wreck: 1150,
+  abyss: 2100,
 };
 
 export const SAVE_KEY = 'deepdive.save.v1';

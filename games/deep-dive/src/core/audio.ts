@@ -148,6 +148,55 @@ export class Sfx {
     this.tone(220, 1.6, { type: 'sine', vol: 0.25, slide: 0.3 });
   }
 
+  /** Discovery sting for rare+ finds: shimmer (rare), bell chord (very rare), full swell (legendary). */
+  discovery(tier: number) {
+    const chord = tier >= 4 ? [523, 659, 784, 988, 1318] : tier === 3 ? [587, 740, 880, 1175] : [659, 988, 1318];
+    chord.forEach((f, i) => this.tone(f, 0.9 + tier * 0.25, { type: 'triangle', vol: 0.09, delay: i * (tier >= 4 ? 0.09 : 0.06) }));
+    if (tier >= 3) this.tone(tier >= 4 ? 131 : 196, 1.6, { type: 'sine', vol: 0.18, delay: 0.02 });
+    if (tier >= 4) {
+      [1568, 2093, 2637].forEach((f, i) => this.tone(f, 0.5, { type: 'sine', vol: 0.05, delay: 0.5 + i * 0.12 }));
+    }
+  }
+
+  newDiscovery() {
+    this.tone(1760, 0.12, { type: 'sine', vol: 0.06, delay: 0.25 });
+    this.tone(2349, 0.2, { type: 'sine', vol: 0.06, delay: 0.33 });
+  }
+
+  zoneEnter(rank: number) {
+    const base = [392, 294, 196][rank] ?? 196;
+    this.tone(base, 1.8, { type: 'sine', vol: 0.16 });
+    this.tone(base * 1.5, 1.6, { type: 'sine', vol: 0.07, delay: 0.25 });
+  }
+
+  creak() {
+    this.tone(90 + Math.random() * 40, 0.7, { type: 'sawtooth', vol: 0.025, slide: 0.8 });
+  }
+
+  rumble() {
+    this.noise(1.2, 120, 0.6);
+    this.creak();
+  }
+
+  debris() {
+    this.noise(0.7, 300, 0.9);
+    this.noise(0.4, 1400, 0.25, 0.08);
+    this.tone(70, 0.5, { type: 'sine', vol: 0.35, slide: 0.5 });
+  }
+
+  airPocket() {
+    this.noise(0.25, 2600, 0.12);
+    this.tone(700 + Math.random() * 300, 0.1, { type: 'sine', vol: 0.03, slide: 1.6 });
+  }
+
+  pressureGroan() {
+    this.tone(55 + Math.random() * 15, 2.2, { type: 'sine', vol: 0.12, slide: 0.85 });
+  }
+
+  objective() {
+    [784, 1175].forEach((f, i) => this.tone(f, 0.25, { type: 'triangle', vol: 0.12, delay: i * 0.09 }));
+  }
+
   click() {
     this.tone(1200, 0.04, { type: 'triangle', vol: 0.05 });
   }

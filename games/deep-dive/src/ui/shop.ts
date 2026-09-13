@@ -1,16 +1,21 @@
 import { PX_PER_METER } from '../config';
 import { formatMoney } from '../core/math';
 import type { LostSatchel, SaveData } from '../core/save';
-import { RARITIES, type HaulItem } from '../data/treasures';
+import { RARITIES, TREASURES, slotsOf, type HaulItem } from '../data/treasures';
 import { UPGRADES, UPGRADE_ORDER, maxLevel, nextCost, upgradeValue, type UpgradeId } from '../data/upgrades';
+import type { ObjectiveRow } from './hud';
 
 export interface ShopData {
   cash: number;
   items: HaulItem[];
   total: number;
+  usedSlots: number;
+  capacity: number;
   upgrades: Record<UpgradeId, number>;
   satchel: LostSatchel | null;
   stats: SaveData['stats'];
+  objectives: ObjectiveRow[];
+  discovered: number;
 }
 
 export interface ShopHandlers {
@@ -21,7 +26,7 @@ export interface ShopHandlers {
   onReset(): void;
 }
 
-/** Trading deck overlay: sell the haul, buy gear, dive again. */
+/** Trading deck overlay: sell the haul, buy gear, check objectives, dive again. */
 export class Shop {
   isOpen = false;
   private root: HTMLElement;
@@ -44,7 +49,7 @@ export class Shop {
           <section class="shop-haul">
             <h3>Dive haul <small>not yours until sold</small></h3>
             <ul class="haul-list"></ul>
-            <div class="haul-total"><span>Total value</span><b class="haul-total-val">$0</b></div>
+            <div class="haul-total"><span>Total value <em class="haul-slots"></em></span><b class="haul-total-val">$0</b></div>
             <button class="btn btn-sell" data-action="sell">Sell haul</button>
             <div class="satchel-note hidden"></div>
             <div class="sold-stamp hidden"></div>
@@ -54,6 +59,10 @@ export class Shop {
             <div class="upgrade-list"></div>
           </section>
         </div>
+        <section class="shop-objectives">
+          <h3>Dive objectives <small>complete underwater, paid when you climb aboard</small></h3>
+          <div class="obj-cards"></div>
+        </section>
         <footer class="shop-foot">
           <div class="shop-stats"></div>
           <div class="shop-actions">
@@ -99,10 +108,13 @@ export class Shop {
   refresh(data: ShopData, fx: { sold?: number; upgraded?: UpgradeId } = {}) {
     this.renderHaul(data);
     this.renderUpgrades(data);
+    this.renderObjectives(data.objectives);
     this.animateCash(data.cash);
 
     const s = data.stats;
-    this.q('.shop-stats').innerHTML = `Dives <b>${s.dives}</b> · Deepest <b>${s.bestDepthM}m</b> · Earned <b>${formatMoney(s.totalEarned)}</b>`;
+    const total = Object.keys(TREASURES).length;
+    this.q('.shop-stats').innerHTML =
+      `Dives <b>${s.dives}</b> · Deepest <b>${s.bestDepthM}m</b> · Earned <b>${formatMoney(s.totalEarned)}</b> · Treasure log <b>${data.discovered}/${total}</b>`;
     this.q('.btn-dive').innerHTML = data.items.length ? 'Sell &amp; dive <kbd>Space</kbd>' : 'Dive <kbd>Space</kbd>';
 
     if (fx.sold) {
@@ -112,10 +124,7 @@ export class Shop {
       void stamp.offsetWidth;
       stamp.classList.add('go');
     }
-    if (fx.upgraded) {
-      const card = this.root.querySelector<HTMLElement>(`.upg[data-id="${fx.upgraded}"]`);
-      card?.classList.add('flash');
-    }
+    if (fx.upgraded) this.root.querySelector<HTMLElement>(`.upg[data-id="${fx.upgraded}"]`)?.classList.add('flash');
   }
 
   shake(id: UpgradeId) {
@@ -138,15 +147,17 @@ export class Shop {
     this.q('.haul-list').innerHTML = rows.length
       ? rows.map(({ item, count, value }) => {
           const r = RARITIES[item.rarity];
+          const heavy = slotsOf(item) > 1 ? ' <small class="heavy">heavy</small>' : '';
           return `<li style="--c:${r.color}">
             <span class="dot"></span>
-            <span class="name">${item.name}${count > 1 ? ` <small>×${count}</small>` : ''}</span>
+            <span class="name">${item.name}${count > 1 ? ` <small>×${count}</small>` : ''}${heavy}</span>
             <span class="rar">${r.label}</span>
             <span class="val">${formatMoney(value)}</span>
           </li>`;
         }).join('')
       : `<li class="empty">Your bag is empty.<br>Dive in and bring something back!</li>`;
     this.q('.haul-total-val').textContent = formatMoney(data.total);
+    this.q('.haul-slots').textContent = data.items.length ? `· ${data.usedSlots}/${data.capacity} slots` : '';
     const sell = this.q<HTMLButtonElement>('.btn-sell');
     sell.disabled = data.items.length === 0;
     sell.textContent = data.items.length ? `Sell for ${formatMoney(data.total)}` : 'Nothing to sell';
@@ -166,13 +177,14 @@ export class Shop {
       const cost = nextCost(id, level);
       const maxed = cost === null;
       const afford = !maxed && data.cash >= cost;
-      const pips = Array.from({ length: maxLevel(id) + 1 }, (_, i) => `<i class="${i <= level ? 'on' : ''}"></i>`).join('');
+      const deepTier = level >= 3 && !maxed && id !== 'fins';
+      const pips = Array.from({ length: maxLevel(id) + 1 }, (_, i) => `<i class="${i <= level ? 'on' : ''} ${i >= 4 && id !== 'fins' ? 'deep' : ''}"></i>`).join('');
       const cur = def.format(upgradeValue(id, level));
       const stat = maxed ? `<b>${cur}</b> · max level` : `${cur} <span class="arrow">→</span> <b>${def.format(upgradeValue(id, level + 1))}</b>`;
       return `<div class="upg ${maxed ? 'maxed' : ''} ${afford ? 'afford' : ''}" data-id="${id}">
         <div class="upg-icon">${def.icon}</div>
         <div class="upg-body">
-          <div class="upg-title">${def.name} <span class="pips">${pips}</span></div>
+          <div class="upg-title">${def.name} <span class="pips">${pips}</span>${deepTier ? '<span class="deep-tag">deep-rated</span>' : ''}</div>
           <div class="upg-desc">${def.description}</div>
           <div class="upg-stat">${stat}</div>
         </div>
@@ -181,6 +193,14 @@ export class Shop {
         </button>
       </div>`;
     }).join('');
+  }
+
+  private renderObjectives(rows: ObjectiveRow[]) {
+    this.q('.obj-cards').innerHTML = rows.map((r) => `
+      <div class="obj-card ${r.done ? 'done' : ''}">
+        <div class="obj-card-text">${r.text}</div>
+        <div class="obj-card-reward">+${formatMoney(r.reward)}</div>
+      </div>`).join('');
   }
 
   private animateCash(target: number) {
@@ -195,6 +215,7 @@ export class Shop {
       el.textContent = formatMoney(this.shownCash);
       if (t < 1) this.cashAnim = requestAnimationFrame(tick);
     };
+    el.textContent = formatMoney(from);
     this.cashAnim = requestAnimationFrame(tick);
   }
 }

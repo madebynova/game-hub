@@ -1,5 +1,5 @@
 import { BOAT, PLAYER, WORLD } from '../config';
-import { clamp, damp } from '../core/math';
+import { clamp, closestOnSegment, damp } from '../core/math';
 import type { World } from '../world/world';
 
 export type PlayerMode = 'deck' | 'airborne' | 'swim';
@@ -73,7 +73,11 @@ export class Player {
     return false;
   }
 
-  updateSwim(dt: number, ax: number, ay: number, world: World, speedMul = 1) {
+  /**
+   * @param speedMul fins bonus (and slowdown when out of air)
+   * @param flowX,flowY current push in world units per second, applied on top of swimming
+   */
+  updateSwim(dt: number, ax: number, ay: number, world: World, speedMul = 1, flowX = 0, flowY = 0) {
     const len = Math.hypot(ax, ay) || 1;
     const ix = ax / len;
     const iy = ay / len;
@@ -94,11 +98,13 @@ export class Player {
       this.vy *= max / speed;
     }
 
-    // Sub-step so fast movement never tunnels into terrain.
-    const steps = Math.max(1, Math.ceil((speed * dt) / (PLAYER.radius * 0.5)));
+    // Sub-step so fast movement (plus currents) never tunnels into terrain or wreck walls.
+    const moveX = this.vx + flowX;
+    const moveY = this.vy + flowY;
+    const steps = Math.max(1, Math.ceil((Math.hypot(moveX, moveY) * dt) / (PLAYER.radius * 0.5)));
     for (let s = 0; s < steps; s++) {
-      this.x += (this.vx * dt) / steps;
-      this.y += (this.vy * dt) / steps;
+      this.x += (moveX * dt) / steps;
+      this.y += (moveY * dt) / steps;
       this.collide(world);
     }
 
@@ -118,6 +124,16 @@ export class Player {
     let delta = target - this.angle;
     delta = Math.atan2(Math.sin(delta), Math.cos(delta));
     this.angle += delta * (1 - Math.exp(-7 * dt));
+  }
+
+  private pushOut(nx: number, ny: number, depth: number) {
+    this.x += nx * depth;
+    this.y += ny * depth;
+    const vn = this.vx * nx + this.vy * ny;
+    if (vn < 0) {
+      this.vx -= vn * nx;
+      this.vy -= vn * ny;
+    }
   }
 
   private collide(world: World) {
@@ -145,23 +161,11 @@ export class Player {
       const sx = bx - ax;
       const sy = by - ay;
       const t = clamp(((this.x - ax) * sx + (this.y - ay) * sy) / (sx * sx + sy * sy), 0, 1);
-      const cx = ax + sx * t;
-      const cy = ay + sy * t;
-      const dx = this.x - cx;
-      const dy = this.y - cy;
+      const dx = this.x - (ax + sx * t);
+      const dy = this.y - (ay + sy * t);
       const d = Math.hypot(dx, dy);
       const above = dx * sy - dy * sx >= 0; // cross product sign: player is on the water side
-      if (d < r && above && d > 0.0001) {
-        const nx = dx / d;
-        const ny = dy / d;
-        this.x += nx * (r - d);
-        this.y += ny * (r - d);
-        const vn = this.vx * nx + this.vy * ny;
-        if (vn < 0) {
-          this.vx -= vn * nx;
-          this.vy -= vn * ny;
-        }
-      }
+      if (d < r && above && d > 0.0001) this.pushOut(dx / d, dy / d, r - d);
     }
     // Safety net if somehow below the floor.
     const fy = world.floorY(this.x);
@@ -177,16 +181,15 @@ export class Player {
       const d2 = dx * dx + dy * dy;
       if (d2 < min * min) {
         const d = Math.sqrt(d2) || 1;
-        const nx = dx / d;
-        const ny = dy / d;
-        this.x = rock.x + nx * min;
-        this.y = rock.y + ny * min;
-        const vn = this.vx * nx + this.vy * ny;
-        if (vn < 0) {
-          this.vx -= vn * nx;
-          this.vy -= vn * ny;
-        }
+        this.pushOut(dx / d, dy / d, min - d);
       }
+    }
+
+    // Wreck hull, decks and bulkheads.
+    for (const w of world.walls) {
+      const { cx, cy, d } = closestOnSegment(this.x, this.y, w.ax, w.ay, w.bx, w.by);
+      const min = w.half + r;
+      if (d < min && d > 0.0001) this.pushOut((this.x - cx) / d, (this.y - cy) / d, min - d);
     }
     if (this.y < WORLD.waterY) this.y = WORLD.waterY;
   }

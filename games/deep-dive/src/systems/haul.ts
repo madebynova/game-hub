@@ -1,4 +1,4 @@
-import type { HaulItem } from '../data/treasures';
+import { slotsOf, type HaulItem } from '../data/treasures';
 
 /** The treasure carried on the current dive. It is at risk until sold on the boat. */
 export class Haul {
@@ -14,25 +14,34 @@ export class Haul {
     return this.items.reduce((s, i) => s + i.value, 0);
   }
 
+  /** Bag slots in use — heavy finds take more than one. */
+  get usedSlots() {
+    return this.items.reduce((s, i) => s + slotsOf(i), 0);
+  }
+
   get isFull() {
-    return this.items.length >= this.capacity;
+    return this.usedSlots >= this.capacity;
   }
 
   get freeSlots() {
-    return Math.max(0, this.capacity - this.items.length);
+    return Math.max(0, this.capacity - this.usedSlots);
+  }
+
+  canFit(item: HaulItem) {
+    return slotsOf(item) <= this.freeSlots;
   }
 
   add(item: HaulItem): boolean {
-    if (this.isFull) return false;
+    if (!this.canFit(item)) return false;
     this.items.push(item);
     return true;
   }
 
-  /** Add as many items as fit; returns the ones that did not fit. */
+  /** Add everything that fits (in order); returns the items that did not fit. */
   addMany(items: HaulItem[]): HaulItem[] {
-    const fit = items.slice(0, this.freeSlots);
-    this.items.push(...fit);
-    return items.slice(fit.length);
+    const leftover: HaulItem[] = [];
+    for (const item of items) if (!this.add(item)) leftover.push(item);
+    return leftover;
   }
 
   clear(): HaulItem[] {

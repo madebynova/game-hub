@@ -32,4 +32,25 @@ export function weightedPick<T extends string>(weights: Partial<Record<T, number
   return entries[entries.length - 1][0];
 }
 
-export const formatMoney = (n: number) => '$' + Math.round(n).toLocaleString('en-US');
+export function pointInPolygon(x: number, y: number, poly: [number, number][]) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i];
+    const [xj, yj] = poly[j];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+/** Closest point on segment AB to P, and the distance. */
+export function closestOnSegment(px: number, py: number, ax: number, ay: number, bx: number, by: number) {
+  const sx = bx - ax;
+  const sy = by - ay;
+  const len2 = sx * sx + sy * sy || 1;
+  const t = clamp(((px - ax) * sx + (py - ay) * sy) / len2, 0, 1);
+  const cx = ax + sx * t;
+  const cy = ay + sy * t;
+  return { cx, cy, d: Math.hypot(px - cx, py - cy) };
+}
+
+export const formatMoney =(n: number) => '$' + Math.round(n).toLocaleString('en-US');

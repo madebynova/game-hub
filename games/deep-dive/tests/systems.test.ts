@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { defaultSave } from '../src/core/save';
 import type { HaulItem } from '../src/data/treasures';
+import { UPGRADES } from '../src/data/upgrades';
 import { purchaseUpgrade, sellHaul } from '../src/systems/economy';
 import { Haul } from '../src/systems/haul';
 import { drainRate, oxygenStatus, oxygenToSurface } from '../src/systems/oxygen';
 
-const item = (value: number): HaulItem => ({ defId: 'coins', name: 'Tarnished Coins', rarity: 'common', value });
+const item = (value: number, defId: HaulItem['defId'] = 'coins'): HaulItem => ({ defId, name: defId, rarity: 'common', value });
 
 describe('Haul', () => {
   it('respects bag capacity', () => {
@@ -24,6 +25,24 @@ describe('Haul', () => {
     const leftover = haul.addMany([item(2), item(3), item(4)]);
     expect(haul.count).toBe(3);
     expect(leftover.map((i) => i.value)).toEqual([4]);
+  });
+
+  it('heavy treasure takes two slots', () => {
+    const haul = new Haul(3);
+    expect(haul.add(item(170, 'bell'))).toBe(true);
+    expect(haul.usedSlots).toBe(2);
+    expect(haul.freeSlots).toBe(1);
+    expect(haul.add(item(460, 'bust'))).toBe(false);
+    expect(haul.add(item(14))).toBe(true);
+    expect(haul.isFull).toBe(true);
+  });
+
+  it('addMany skips heavy items that do not fit but still packs lighter ones', () => {
+    const haul = new Haul(2);
+    haul.add(item(1));
+    const leftover = haul.addMany([item(460, 'bust'), item(14)]);
+    expect(haul.items.map((i) => i.defId)).toEqual(['coins', 'coins']);
+    expect(leftover.map((i) => i.defId)).toEqual(['bust']);
   });
 });
 
@@ -44,28 +63,32 @@ describe('economy', () => {
     const save = defaultSave();
     expect(purchaseUpgrade(save, 'bag')).toEqual({ ok: false, reason: 'funds' });
     save.cash = 100_000;
-    for (let i = 0; i < 3; i++) expect(purchaseUpgrade(save, 'bag').ok).toBe(true);
-    expect(save.upgrades.bag).toBe(3);
+    const costs = UPGRADES.bag.costs;
+    for (let i = 0; i < costs.length; i++) expect(purchaseUpgrade(save, 'bag').ok).toBe(true);
+    expect(save.upgrades.bag).toBe(costs.length);
     expect(purchaseUpgrade(save, 'bag')).toEqual({ ok: false, reason: 'maxed' });
-    expect(save.cash).toBe(100_000 - 120 - 380 - 950);
+    expect(save.cash).toBe(100_000 - costs.reduce((s, c) => s + c, 0));
   });
 });
 
 describe('oxygen', () => {
-  it('drains faster with depth', () => {
+  it('drains faster with depth, and much faster in the abyss', () => {
     expect(drainRate(0)).toBe(1);
-    expect(drainRate(3000)).toBeCloseTo(1.8);
     expect(drainRate(1500)).toBeGreaterThan(drainRate(500));
+    expect(drainRate(4000)).toBeCloseTo(3);
+    expect(drainRate(3500)).toBeGreaterThan(drainRate(600) * 2);
+    for (let y = 0; y < 4400; y += 50) expect(drainRate(y + 50)).toBeGreaterThanOrEqual(drainRate(y));
   });
 
   it('needs more air to surface from deeper water', () => {
     expect(oxygenToSurface(0)).toBe(0);
     expect(oxygenToSurface(2000)).toBeGreaterThan(oxygenToSurface(1000));
+    expect(oxygenToSurface(2000, 300)).toBeLessThan(oxygenToSurface(2000, 215));
   });
 
-  it('starting tank can comfortably explore the shallows and reach the reef', () => {
-    // Round trip straight down to the reef (~1300) should use well under the base 60s tank.
-    expect(oxygenToSurface(1300) * 2).toBeLessThan(30);
+  it('starting tank can comfortably explore the reef and reach the wreck', () => {
+    expect(oxygenToSurface(760) * 2).toBeLessThan(12);
+    expect(oxygenToSurface(1700) * 2).toBeLessThan(30);
   });
 
   it('flags critical when there is not enough air to surface', () => {

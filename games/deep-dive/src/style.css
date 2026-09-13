@@ -422,7 +422,137 @@ kbd {
 .blackout-card .sub { color: #ffd79a; }
 .blackout-card .tip { font-size: 13px; margin: 16px 0 20px; opacity: 0.8; }
 
+/* ------------------------------------------------------------------ Phase 2: HUD additions */
+
+.hud-left { position: absolute; top: 16px; left: 16px; display: flex; flex-direction: column; gap: 10px; width: 290px; }
+.hud-left .hud-panel { position: static; }
+.hud-oxygen { left: auto; width: auto; }
+
+.hud-air { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px; min-height: 20px; flex-wrap: wrap; }
+.air-use { color: var(--ink-dim); font-variant-numeric: tabular-nums; margin-right: auto; }
+.air-use[data-level='heavy'] { color: #ffd79a; }
+.air-use[data-level='crushing'] { color: #d7a6ff; font-weight: 700; animation: pressurePulse 1.6s ease-in-out infinite; }
+@keyframes pressurePulse { 50% { opacity: 0.55; } }
+.chip { font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+.chip-current { background: rgba(160, 225, 255, 0.16); color: #bfefff; border: 1px solid rgba(160, 225, 255, 0.35); }
+.chip-pocket { background: rgba(235, 250, 255, 0.18); color: #fff; border: 1px solid rgba(255, 255, 255, 0.45); }
+
+.hud-objectives { padding: 9px 14px 10px; }
+.obj-hint { text-transform: none; letter-spacing: 0; font-weight: 500; color: rgba(159, 184, 198, 0.7); }
+.obj-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.obj-list li { display: grid; grid-template-columns: 14px 1fr auto; gap: 6px; align-items: center; font-size: 12.5px; color: var(--ink); line-height: 1.25; }
+.obj-check { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.3); display: grid; place-items: center; font-size: 10px; font-weight: 900; color: #06220f; }
+.obj-prog { color: var(--ink-dim); font-variant-numeric: tabular-nums; font-size: 11.5px; }
+.obj-list li.done .obj-check { background: var(--good); border-color: var(--good); }
+.obj-list li.done .obj-text { color: var(--ink-dim); }
+.obj-list li.done .obj-prog { color: var(--good); font-weight: 700; }
+.obj-list li.just-done { animation: objDone 1s ease-out; }
+@keyframes objDone { 0% { background: rgba(125, 255, 176, 0.3); } 100% { background: transparent; } }
+
+.bag-pips.dense { max-width: 150px; gap: 3px; }
+.bag-pips.dense i { width: 9px; height: 9px; }
+
+.depth-gauge {
+  position: absolute;
+  right: 22px;
+  top: 118px;
+  height: min(46vh, 420px);
+  width: 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--line);
+  transition: opacity 0.4s;
+}
+.depth-gauge.dim { opacity: 0.45; }
+.dg-band { position: absolute; left: 0; right: 0; background: color-mix(in srgb, var(--accent) 35%, transparent); border-top: 1px solid color-mix(in srgb, var(--accent) 70%, transparent); }
+.dg-band:first-child { border-top: none; border-radius: 6px 6px 0 0; }
+.dg-band:nth-child(3) { border-radius: 0 0 6px 6px; }
+.dg-band span { position: absolute; right: 16px; top: 3px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); white-space: nowrap; opacity: 0.85; }
+.dg-best { position: absolute; left: -4px; right: -4px; height: 2px; background: rgba(255, 255, 255, 0.4); transition: top 0.3s; }
+.dg-marker { position: absolute; left: -6px; width: 22px; height: 4px; margin-top: -2px; border-radius: 2px; background: #fff; box-shadow: 0 0 8px rgba(255, 255, 255, 0.9); transition: top 0.15s linear; }
+.dg-marker-label { position: absolute; right: 28px; top: -8px; font-size: 11px; font-weight: 800; color: #fff; white-space: nowrap; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); font-variant-numeric: tabular-nums; }
+
+/* ------------------------------------------------------------------ Phase 2: zone banner & discovery card */
+
+.zone-banner {
+  position: absolute;
+  left: 50%;
+  top: 30vh;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+  animation: bannerIn 3.6s ease-out forwards;
+  z-index: 4;
+}
+.zb-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+.zb-title { font-size: clamp(34px, 5vw, 58px); font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase; color: #fff; text-shadow: 0 0 30px color-mix(in srgb, var(--accent) 60%, transparent), 0 3px 0 rgba(0, 0, 0, 0.3); }
+.zb-sub { font-size: 15px; color: #d9e8ef; margin-top: 2px; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8); }
+@keyframes bannerIn {
+  0% { opacity: 0; letter-spacing: 0.4em; transform: translateX(-50%) translateY(8px); }
+  15% { opacity: 1; transform: translateX(-50%); }
+  75% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.discovery {
+  position: absolute;
+  left: 50%;
+  bottom: 96px;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  min-width: min(420px, 90vw);
+  padding: 10px 18px 10px 10px;
+  border-radius: 16px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 22%, #06101f), rgba(6, 16, 31, 0.94));
+  border: 1px solid color-mix(in srgb, var(--c) 70%, transparent);
+  box-shadow: 0 0 40px color-mix(in srgb, var(--c) 30%, transparent), 0 12px 30px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 6;
+  animation: discIn 0.45s cubic-bezier(0.2, 1.3, 0.4, 1);
+}
+.discovery[data-tier='3'] { animation: discIn 0.45s cubic-bezier(0.2, 1.3, 0.4, 1), discGlow 1.2s ease-in-out infinite alternate; }
+.discovery[data-tier='4'] { padding: 14px 22px 14px 14px; animation: discIn 0.6s cubic-bezier(0.2, 1.4, 0.4, 1), discGlow 0.8s ease-in-out infinite alternate; }
+.disc-icon { width: 64px; height: 64px; border-radius: 12px; background: radial-gradient(circle, color-mix(in srgb, var(--c) 35%, transparent), rgba(0, 0, 0, 0.3) 70%); }
+.disc-rarity { font-size: 11px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: var(--c); }
+.disc-new { margin-left: 6px; padding: 1px 6px; border-radius: 99px; background: var(--c); color: #0b0f18; letter-spacing: 0.06em; }
+.disc-name { font-size: 22px; font-weight: 900; color: #fff; line-height: 1.1; }
+.discovery[data-tier='4'] .disc-name { font-size: 26px; }
+.disc-meta { font-size: 12px; color: var(--ink-dim); margin-top: 2px; }
+.disc-value { font-size: 26px; font-weight: 900; color: var(--amber); font-variant-numeric: tabular-nums; }
+@keyframes discIn { from { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.9); } }
+@keyframes discGlow { to { box-shadow: 0 0 70px color-mix(in srgb, var(--c) 55%, transparent), 0 12px 30px rgba(0, 0, 0, 0.5); } }
+
+/* ------------------------------------------------------------------ Phase 2: shop additions */
+
+.haul-list .heavy { color: #ffcf8a; border: 1px solid rgba(255, 207, 138, 0.4); border-radius: 99px; padding: 0 5px; font-size: 10px; margin-left: 4px; }
+.haul-total em { font-style: normal; color: rgba(159, 184, 198, 0.75); margin-left: 4px; }
+.pips i.deep { background: rgba(197, 134, 255, 0.2); }
+.pips i.deep.on { background: #c586ff; }
+.deep-tag { font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #d7a6ff; border: 1px solid rgba(197, 134, 255, 0.45); border-radius: 99px; padding: 1px 6px; }
+
+.shop-objectives { padding: 14px 24px 16px; border-top: 1px solid var(--line); }
+.shop-objectives h3 { margin: 0 0 10px; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim); }
+.shop-objectives h3 small { text-transform: none; letter-spacing: 0; font-weight: 400; margin-left: 6px; color: rgba(159, 184, 198, 0.75); }
+.obj-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.obj-card { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.035); border: 1px solid var(--line); font-size: 13px; }
+.obj-card-reward { font-weight: 800; color: var(--good); white-space: nowrap; }
+.obj-card.done { border-color: rgba(125, 255, 176, 0.5); }
+
+/* In narrower windows the centered messages would sit on top of the HUD panels —
+   drop them below the objectives panel instead. */
+@media (max-width: 1150px) {
+  .toasts { top: 262px; width: min(460px, 76vw); }
+  .toast { font-size: 14px; }
+  .toast-hint { font-size: 14.5px; }
+}
+
 @media (max-width: 760px) {
+  .hud-left { width: 210px; }
+  .obj-cards { grid-template-columns: 1fr; }
+  .depth-gauge { display: none; }
   .shop-grid { grid-template-columns: 1fr; }
   .shop-haul { border-right: none; border-bottom: 1px solid var(--line); }
   .hud-oxygen { width: 200px; }
