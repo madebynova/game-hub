@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="UNTITLED GARAGE — a Rick and Morty inspired exploration and mystery game. Phase 1 beta." />
+<title>UNTITLED GARAGE — Phase 1</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13' fill='%2397ce4c'/><circle cx='16' cy='16' r='6' fill='%23123'/></svg>" />
+<link rel="stylesheet" href="styles/main.css" />
+</head>
+<body>
+  <!-- The world renders here. Everything else is a DOM overlay so panels stay
+       crisp and cheap on low-powered machines. -->
+  <div id="stage">
+    <canvas id="game" width="960" height="540" aria-label="Game world"></canvas>
+
+    <!-- ── HUD ─────────────────────────────────────────────────────────── -->
+    <div id="hud" class="layer">
+      <div id="location-tag"><span id="location-name">—</span><span id="location-sub"></span></div>
+
+      <div id="hint" class="hidden"><kbd>E</kbd><span id="hint-text"></span></div>
+
+      <div id="toasts"></div>
+
+      <div id="bottom-bar">
+        <button class="tab" data-panel="inventory" title="Inventory (I)">POCKETS <kbd>I</kbd></button>
+        <button class="tab" data-panel="journal" title="Journal (J)">JOURNAL <kbd>J</kbd></button>
+        <button class="tab" data-panel="help" title="Help (H)">HELP <kbd>H</kbd></button>
+        <button class="tab" id="audio-toggle" title="Mute / unmute">AUDIO: ON</button>
+      </div>
+
+      <div id="research-ticker" class="hidden">
+        <span class="rt-label">ANALYZING</span>
+        <span class="rt-name">—</span>
+        <div class="rt-bar"><i></i></div>
+      </div>
+    </div>
+
+    <!-- ── Narration / subtitles ───────────────────────────────────────── -->
+    <div id="narration" class="layer hidden"><p id="narration-text"></p><span class="narration-more">SPACE</span></div>
+
+    <!-- ── Panel host (terminal, research station, memory device, etc.) ── -->
+    <div id="panel-host" class="layer hidden">
+      <div id="panel">
+        <header><h2 id="panel-title">—</h2><button id="panel-close" title="Close (Esc)">✕</button></header>
+        <div id="panel-body"></div>
+      </div>
+    </div>
+
+    <!-- ── Full-screen effects: fades, glitches, memory playback ───────── -->
+    <div id="fx" class="layer"></div>
+
+    <!-- ── Boot / title ────────────────────────────────────────────────── -->
+    <div id="boot" class="layer">
+      <div class="boot-inner">
+        <h1>UNTITLED<span>GARAGE</span></h1>
+        <p class="tag">an unauthorized dimensional incident &middot; PHASE 1 BETA</p>
+        <div class="boot-buttons">
+          <button id="btn-continue" class="primary hidden">CONTINUE</button>
+          <button id="btn-new" class="primary">WAKE UP</button>
+        </div>
+        <p class="boot-note">WASD / arrows to move &middot; E to interact &middot; mouse works too</p>
+        <p id="boot-wipe" class="boot-note danger hidden"><button id="btn-wipe" class="linkish">erase saved progress</button></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="rotate-note">Turn your device sideways, or use a bigger screen.</div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
