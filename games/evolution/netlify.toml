@@ -1,0 +1,28 @@
+# Static site - no build step, no dependencies. Netlify serves this folder as-is.
+# In Netlify, import the game-hub repo and set the base directory to
+# games/evolution; this file supplies the rest.
+[build]
+  publish = "."
+
+# Single-page game: anything that isn't a real file falls back to index.html.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# The game is one HTML file plus plain scripts. They must not be cached
+# aggressively or players will be stuck on an old build after an update.
+[[headers]]
+  for = "/src/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/styles/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

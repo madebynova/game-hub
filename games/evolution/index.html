@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="EVOLUTION — Phase 1: The Cradle. Explore a living biome as a small creature and develop the adaptations that open the world up." />
+<title>EVOLUTION — The Cradle</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='18' r='11' fill='%236fd39b'/><circle cx='12' cy='15' r='2.6' fill='%230d1a16'/><circle cx='20' cy='15' r='2.6' fill='%230d1a16'/><circle cx='16' cy='23' r='2.2' fill='%23ffe6a3'/></svg>" />
+<link rel="stylesheet" href="styles/main.css" />
+</head>
+<body>
+<div id="stage">
+  <canvas id="game" aria-label="The Cradle"></canvas>
+
+  <!-- ── HUD ──────────────────────────────────────────────────────────── -->
+  <div id="hud" class="layer hidden">
+
+    <!-- Creature card + adaptation tracks -->
+    <div id="panel-left">
+      <div id="creature-card">
+        <div id="stage-name">Hatchling</div>
+        <div id="trait-chips"></div>
+        <div id="biomass-row"><span class="bm-dot"></span><span id="biomass">0</span><span class="bm-label">biomass</span></div>
+      </div>
+
+      <div id="tracks">
+        <div class="track" data-track="aquatic">
+          <div class="track-head">
+            <span class="track-icon"></span>
+            <span class="track-name">Aquatic</span>
+            <span class="track-val">0<i>/100</i></span>
+          </div>
+          <div class="track-bar"><i></i><b></b></div>
+          <div class="track-hint">Spend time in water</div>
+        </div>
+        <div class="track" data-track="mobility">
+          <div class="track-head">
+            <span class="track-icon"></span>
+            <span class="track-name">Mobility</span>
+            <span class="track-val">0<i>/100</i></span>
+          </div>
+          <div class="track-bar"><i></i><b></b></div>
+          <div class="track-hint">Explore new ground</div>
+        </div>
+        <div class="track" data-track="gathering">
+          <div class="track-head">
+            <span class="track-icon"></span>
+            <span class="track-name">Gathering</span>
+            <span class="track-val">0<i>/100</i></span>
+          </div>
+          <div class="track-bar"><i></i><b></b></div>
+          <div class="track-hint">Harvest what grows</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Minimap + buttons -->
+    <div id="panel-right">
+      <div id="minimap-wrap">
+        <canvas id="minimap" width="168" height="168"></canvas>
+        <div id="minimap-ring"></div>
+      </div>
+      <div id="buttons">
+        <button class="btn" data-panel="journal" title="Journal (J)">Journal <kbd>J</kbd></button>
+        <button class="btn" data-panel="creature" title="Creature (C)">Creature <kbd>C</kbd></button>
+        <button class="btn" id="btn-pause" title="Pause (Esc)">Menu <kbd>Esc</kbd></button>
+      </div>
+    </div>
+
+    <!-- Zone banner -->
+    <div id="zone-banner" class="hidden"><span id="zone-name"></span><span id="zone-sub"></span></div>
+
+    <!-- Interaction prompt -->
+    <div id="prompt" class="hidden"><kbd id="prompt-key">E</kbd><span id="prompt-text"></span></div>
+
+    <!-- Toasts -->
+    <div id="toasts"></div>
+
+    <!-- Ability readout (leap cooldown etc.) -->
+    <div id="abilities"></div>
+  </div>
+
+  <!-- ── Unlock ceremony ─────────────────────────────────────────────── -->
+  <div id="ceremony" class="layer hidden">
+    <div id="cer-inner">
+      <div id="cer-kicker">Adaptation developed</div>
+      <div id="cer-name">—</div>
+      <div id="cer-track">—</div>
+      <p id="cer-desc">—</p>
+      <div id="cer-gain">—</div>
+      <div id="cer-dismiss">Press <kbd>Space</kbd> to continue</div>
+    </div>
+  </div>
+
+  <!-- ── Panels ──────────────────────────────────────────────────────── -->
+  <div id="modal" class="layer hidden">
+    <div id="modal-box">
+      <div id="modal-head">
+        <h2 id="modal-title">Journal</h2>
+        <button id="modal-close" aria-label="Close">×</button>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ── Title screen ────────────────────────────────────────────────── -->
+  <div id="title" class="layer">
+    <div id="title-inner">
+      <div id="title-kicker">Phase 1</div>
+      <h1 id="title-main">EVOLUTION</h1>
+      <div id="title-sub">The Cradle</div>
+      <p id="title-blurb">
+        You are small, and the world is not. Wander it, taste it, carry pieces of it home —
+        and the Cradle will change what you are.
+      </p>
+      <div id="title-actions">
+        <button class="big-btn primary" id="btn-continue">Continue</button>
+        <button class="big-btn" id="btn-new">New Creature</button>
+      </div>
+      <div id="title-save-line"></div>
+      <div id="title-controls">
+        <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> <span>move</span></div>
+        <div><kbd>E</kbd> <span>interact</span></div>
+        <div><kbd>Space</kbd> <span>leap (once developed)</span></div>
+        <div><kbd>J</kbd> <kbd>C</kbd> <kbd>Esc</kbd> <span>journal · creature · menu</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="fade" class="layer"></div>
+</div>
+
+<noscript><p style="color:#e8f3ec;font:16px system-ui;padding:24px">EVOLUTION needs JavaScript.</p></noscript>
+
+<script src="src/core/util.js"></script>
+<script src="src/core/input.js"></script>
+<script src="src/core/audio.js"></script>
+<script src="src/core/camera.js"></script>
+<script src="src/world/world.js"></script>
+<script src="src/world/terrain.js"></script>
+<script src="src/world/critters.js"></script>
+<script src="src/entities/creature.js"></script>
+<script src="src/systems/adaptations.js"></script>
+<script src="src/systems/discovery.js"></script>
+<script src="src/systems/player.js"></script>
+<script src="src/systems/interact.js"></script>
+<script src="src/systems/save.js"></script>
+<script src="src/ui/fx.js"></script>
+<script src="src/ui/hud.js"></script>
+<script src="src/ui/panels.js"></script>
+<script src="src/world/render.js"></script>
+<script src="src/main.js"></script>
+</body>
+</html>
