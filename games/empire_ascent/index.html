@@ -1034,6 +1034,506 @@ button { font: inherit; color: inherit; }
   .vb-result { order: -1; }   /* outcome sits directly under the mechanism */
   .vb-target-name { font-size: 15px; }
 }
+
+/* =====================================================================
+   10. RESONANCE FORGE (Step 3)
+     10a. Module layout + stage
+     10b. Scene (SVG)
+     10c. Stage overlays (temperature, label, resonance, popups)
+     10d. Panel
+     10e. Keyframes
+     10f. Responsive
+   ===================================================================== */
+
+/* ---------- 10a. Module layout + stage ---------- */
+.status-pill[data-tone="fire"] { --accent: #ff8a1f; }
+
+.fg {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 300px);
+  align-items: center;
+  gap: 24px;
+  padding: 22px;
+  border-radius: var(--radius-lg);
+}
+.fg-stage {
+  --fg-fire-a: #ff7a1a;
+  --fg-fire-b: #ffc247;
+  --fg-coal: #ff5a1f;
+  --fg-amb: #ff8c28;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 640 / 440;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #06080c;
+  box-shadow: inset 0 0 0 1px var(--surface-border), 0 12px 30px rgba(0, 0, 0, 0.45);
+  container-type: inline-size;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.fg-stage[data-live] { cursor: pointer; touch-action: none; }   /* no scroll/zoom while forging */
+.fg-stage.impact { animation: fg-impact 0.18s ease-out; }
+.fg-stage.jolt { animation: fg-jolt 0.3s linear; }
+.fg-stage[data-attuned] { --fg-fire-a: #a855f7; --fg-fire-b: #e9d5ff; --fg-coal: #7c3aed; --fg-amb: #8b5cf6; }
+.fg-scene, .fg-fx { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.fg-fx { z-index: 2; pointer-events: none; }
+
+/* ---------- 10b. Scene ---------- */
+.fg-wall-lines { stroke: rgba(255, 255, 255, 0.022); stroke-width: 1; fill: none; }
+.fg-hood { fill: #0f131a; stroke: #1c232e; stroke-width: 2; }
+.fg-stone { fill: #151a23; stroke: #252e3b; stroke-width: 2; }
+.fg-stone-lines { stroke: #0c1016; stroke-width: 2; fill: none; }
+.fg-mouth { fill: #0a0604; }
+.fg-mouth-glow { opacity: 0.7; transition: opacity 0.5s; }
+.fg-stage[data-furnace="hot"] .fg-mouth-glow { opacity: 1; }
+.fg-stop-core { stop-color: var(--fg-fire-b); transition: stop-color 0.6s; }
+.fg-stop-mid { stop-color: var(--fg-fire-a); stop-opacity: 0.55; transition: stop-color 0.6s; }
+.fg-stop-amb { stop-color: var(--fg-amb); transition: stop-color 0.6s; }
+.fg-flame {
+  fill: var(--fg-fire-a);
+  opacity: 0.85;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: fg-flicker 0.8s ease-in-out infinite alternate;
+  transition: fill 0.6s;
+}
+.fg-flame.f2 { fill: var(--fg-fire-b); animation-duration: 0.62s; animation-delay: -0.2s; }
+.fg-flame.f3 { animation-duration: 0.95s; animation-delay: -0.5s; }
+.fg-stage[data-furnace="hot"] .fg-flame { animation-duration: 0.35s; }
+.fg-coals circle { fill: var(--fg-coal); animation: fg-coal 2.2s ease-in-out infinite alternate; transition: fill 0.6s; }
+.fg-coals circle:nth-child(2n) { animation-delay: -1.1s; }
+.fg-lip { fill: #1b212b; stroke: #2a3340; stroke-width: 1.5; }
+.fg-shadow { fill: rgba(0, 0, 0, 0.55); }
+.fg-anvil { fill: url(#fgAnvilGrad); stroke: #07090c; stroke-width: 2; }
+.fg-anvil-edge { stroke: rgba(255, 255, 255, 0.16); stroke-width: 1.5; }
+.fg-facelight { fill: var(--fg-amb); opacity: 0; }
+.fg-piece-wrap { transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s; }
+.fg-piece { stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; }
+.fg-piece-glow { fill: none; stroke-width: 12; opacity: 0; }
+.fg-piece-hi { fill: none; stroke: rgba(255, 255, 255, 0.22); stroke-width: 0.8; }
+.fg-stage[data-band] .fg-piece-hi { animation: fg-band 1.1s ease-in-out infinite; }
+.fg-cracks { fill: none; stroke: #140605; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.fg-trough-back { fill: #0d1218; }
+.fg-tub { fill: #131920; stroke: #26303d; stroke-width: 2; }
+.fg-tub-bands { stroke: #2e3848; stroke-width: 2.5; fill: none; }
+.fg-head { stroke: #0a0d12; stroke-width: 1.5; }
+.fg-head-face { fill: #c4cdd9; opacity: 0.45; transition: fill 0.6s, opacity 0.6s; }
+.fg-head-band { fill: #2c3441; }
+.fg-stage[data-attuned] .fg-head-face { fill: #c084fc; opacity: 0.95; }
+.fg-ambient { opacity: 0.08; mix-blend-mode: screen; }
+.fg-flash { fill: #fff1c9; opacity: 0; }
+.fg-flash.on { animation: fg-flash 0.22s ease-out; }
+.fg-flash.perfect { fill: #f5ecff; animation-duration: 0.4s; }
+.fg-ripple { fill: none; stroke: #c084fc; stroke-width: 2; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.fg-ripple.on { animation: fg-ripple 0.9s ease-out; }
+.fg-column { opacity: 0; transform-box: fill-box; transform-origin: 50% 100%; }
+.fg-veil { fill: #040108; opacity: 0; }
+.fg-stage.attune .fg-column { animation: fg-column 2.4s ease-out; }
+.fg-stage.attune .fg-veil { animation: fg-veil 2.4s ease-out; }
+
+/* ---------- 10c. Stage overlays ---------- */
+.fg-temp {
+  position: absolute;
+  z-index: 3;
+  left: 12px;
+  top: 18%;
+  bottom: 26%;
+  width: 6px;
+  border-radius: 99px;
+  /* stops mirror HEAT_STOPS in the script */
+  background: linear-gradient(0deg, #2a2a2e 0%, #4a1c14 20%, #8f1f12 35%, #d6391a 50%, #ff6a1a 65%, #ffa630 80%, #ffe07a 92%, #fff6d6 100%);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 0 3px rgba(255, 255, 255, 0.04);
+  opacity: 0.8;
+  pointer-events: none;
+}
+.fg-temp i {
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  bottom: calc(var(--t, 0) * 100%);
+  height: 3px;
+  border-radius: 2px;
+  transform: translateY(50%);
+  background: #fff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+}
+.fg-label {
+  position: absolute;
+  z-index: 3;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 3px 11px;
+  border-radius: 99px;
+  border: 1px solid var(--surface-border);
+  background: rgba(6, 8, 12, 0.65);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0.2s, color 0.2s, border-color 0.2s;
+}
+.fg-label:empty { opacity: 0; }
+.fg-label[data-tone="danger"] { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, transparent); }
+.fg-label[data-tone="quench"] { color: var(--cyan); border-color: color-mix(in srgb, var(--cyan) 45%, transparent); }
+.fg-label[data-tone="fire"] { color: #ffb366; }
+
+.fg-res {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: 12px;
+  width: min(58%, 380px);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.fg-res-label {
+  display: block;
+  margin-bottom: 5px;
+  text-align: center;
+  font-size: 9px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgba(139, 155, 180, 0.8);
+  transition: color 0.4s;
+}
+.fg-res-track {
+  position: relative;
+  height: 7px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  transition: box-shadow 0.4s;
+}
+.fg-res-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff7a1a 0%, #ffca28 45%, #c084fc 82%, #8b5cf6 100%);
+  clip-path: inset(0 calc(100% - var(--res, 0%)) 0 0 round 99px);
+  transition: clip-path 0.22s var(--ease);
+}
+.fg-res[data-full] .fg-res-label { color: #d8b4fe; }
+.fg-res[data-full] .fg-res-track { box-shadow: inset 0 0 0 1px rgba(216, 180, 254, 0.3), 0 0 16px rgba(168, 85, 247, 0.55); }
+.fg-res[data-full] .fg-res-fill { animation: fg-res-full 1.1s ease-in-out infinite; }
+.fg-res[data-hollow] .fg-res-fill {
+  background: linear-gradient(90deg, #12061f, #7c3aed, #e9d5ff, #7c3aed, #12061f);
+  background-size: 200% 100%;
+  animation: fg-hollow 2.4s linear infinite;
+}
+
+.fg-pop {
+  position: absolute;
+  z-index: 4;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  white-space: nowrap;
+  font-weight: 800;
+  font-size: clamp(10px, 1.9cqw, 13px);
+  letter-spacing: 0.18em;
+  text-shadow: 0 0 10px currentColor;
+  animation: fg-pop 0.72s var(--ease) forwards;
+}
+.fg-pop.perfect { color: #f5ecff; font-size: clamp(11px, 2.3cqw, 15px); text-shadow: 0 0 12px #a855f7, 0 0 2px #fff; }
+.fg-pop.weak { color: #ffb74d; }
+.fg-pop.bad { color: var(--danger); }
+
+/* ---------- 10d. Panel ---------- */
+.fg-panel { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.fg-eyebrow {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.fg-bps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 6px; }
+.fg-bp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 68px;
+  padding: 8px 3px;
+  border-radius: 10px;
+  border: 1px solid var(--surface-border);
+  background: rgba(11, 14, 20, 0.55);
+  color: var(--text-muted);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: border-color 0.15s, background 0.15s, color 0.15s, opacity 0.15s;
+}
+.fg-bp:hover:not(:disabled) { color: var(--text); border-color: #334052; }
+.fg-bp[aria-pressed="true"] {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--purple) 60%, transparent);
+  background: color-mix(in srgb, var(--purple) 12%, rgba(11, 14, 20, 0.55));
+  box-shadow: 0 0 14px rgba(171, 71, 188, 0.18);
+}
+.fg-bp:disabled { cursor: default; opacity: 0.45; }
+.fg-bp[aria-pressed="true"]:disabled { opacity: 0.8; }
+.fg-bp:focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
+.fg-bp-ico { font-size: 19px; line-height: 1.15; }
+.fg-bp-name { font-size: 10px; font-weight: 600; line-height: 1.15; text-align: center; }
+.fg-bp-fee { font: 600 10px/1.2 var(--mono); color: var(--gold); }
+.fg-bp[data-locked] .fg-bp-fee { color: var(--text-muted); }
+
+.fg-gauges { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fg-gauge {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(11, 14, 20, 0.55);
+  border: 1px solid var(--surface-border);
+}
+.fg-gauge b { font: 700 18px/1 var(--mono); transition: color 0.2s; }
+.fg-gauge b.hot { color: #ffb74d; }
+.fg-bar { height: 6px; border-radius: 99px; background: var(--surface-border); overflow: hidden; }
+.fg-bar span {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff8a1f, #ffca28);
+  transition: width 0.25s var(--ease), background 0.3s;
+}
+.fg-bar.integrity span { background: var(--green); }
+.fg-bar.integrity[data-low] span { background: var(--danger); }
+
+.fg-result { animation: view-in 0.3s var(--ease); }
+.fg-item {
+  --tier: #cfd8e3;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--tier) 40%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--tier) 10%, transparent), rgba(11, 14, 20, 0.5));
+}
+[data-tier="crude"] { --tier: #8b9bb4; }
+[data-tier="standard"] { --tier: #cfd8e3; }
+[data-tier="fine"] { --tier: var(--green); }
+[data-tier="superior"] { --tier: var(--cyan); }
+[data-tier="masterwork"] { --tier: var(--gold); }
+[data-tier="voidforged"] { --tier: #c084fc; }
+[data-tier="shattered"] { --tier: var(--danger); }
+.fg-item-head { display: flex; align-items: center; gap: 10px; }
+.fg-item-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  font-size: 21px;
+  background: rgba(11, 14, 20, 0.6);
+  border: 1px solid color-mix(in srgb, var(--tier) 45%, transparent);
+}
+.fg-item-title { flex: 1; min-width: 0; }
+.fg-item-tier { display: block; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--tier); }
+.fg-item-name { display: block; font-size: 15px; font-weight: 800; line-height: 1.2; }
+.fg-item-q { font: 800 18px/1 var(--mono); color: var(--tier); }
+.fg-item[data-tier="voidforged"] { box-shadow: 0 0 22px rgba(168, 85, 247, 0.25); }
+.fg-item[data-tier="voidforged"] .fg-item-name {
+  background: linear-gradient(90deg, #e9d5ff, #a855f7, #e9d5ff);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: fg-hollow 3s linear infinite;
+}
+.fg-item-stats { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--text-muted); }
+.fg-item-stats b { color: var(--text); font-family: var(--mono); }
+.fg-item-affix { font-size: 12px; letter-spacing: 0.04em; color: #d8b4fe; }
+.fg-loot { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; }
+.fg-loot div { padding: 7px 4px; border-radius: 8px; background: rgba(11, 14, 20, 0.5); text-align: center; }
+.fg-loot b { display: block; font: 700 14px/1.25 var(--mono); color: var(--gold); }
+.fg-loot .neg b { color: var(--text-muted); }
+.fg-loot small { font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+.fg-item-meta { font-size: 12px; color: var(--text-muted); }
+
+.fg-hint { margin: 0; font-size: 12.5px; color: var(--text-muted); }
+.fg-hint::before { content: "◇ "; color: #ff8a1f; }
+
+.fg-actions { display: flex; gap: 8px; }
+.fg-action {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, #ff8a1f 55%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, #ff8a1f 24%, #10161f), color-mix(in srgb, #ff8a1f 9%, #0b0f15));
+  color: #fff4e6;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 8px 22px rgba(255, 138, 31, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 0.1s var(--ease), filter 0.15s, opacity 0.2s;
+}
+.fg-action[data-mode="quench"] {
+  border-color: color-mix(in srgb, var(--cyan) 55%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--cyan) 24%, #10161f), color-mix(in srgb, var(--cyan) 9%, #0b0f15));
+  color: #e6f7ff;
+}
+.fg-action:hover:not(:disabled) { filter: brightness(1.15); }
+.fg-action:active:not(:disabled) { transform: scale(0.98); }
+.fg-action:focus-visible { outline: 2px solid #ff8a1f; outline-offset: 2px; }
+.fg-action:disabled { cursor: default; opacity: 0.5; filter: saturate(0.3); }
+.fg-action.denied { animation: fg-jolt 0.3s linear; }
+.fg-action kbd {
+  display: none;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font: 600 10px var(--mono);
+  letter-spacing: 0;
+  color: rgba(255, 244, 230, 0.7);
+}
+.fg-reheat {
+  position: relative;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: 68px;
+  min-height: 52px;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--surface-border);
+  background: rgba(11, 14, 20, 0.6);
+  color: var(--text);
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.fg-reheat:disabled { opacity: 0.35; cursor: default; }
+.fg-reheat:focus-visible { outline: 2px solid #ff8a1f; outline-offset: 2px; }
+.fg-reheat[data-urge] { animation: fg-urge 0.9s ease-in-out infinite; }
+.fg-reheat-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  background: linear-gradient(0deg, rgba(255, 106, 26, 0.6), rgba(255, 202, 40, 0.25));
+}
+.fg-reheat.holding .fg-reheat-fill { height: 100%; transition: height 0.38s linear; }
+.fg-reheat-ico { position: relative; font-size: 17px; line-height: 1.1; }
+.fg-reheat-txt { position: relative; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+@media (hover: hover) and (pointer: fine) {
+  .fg-action:not(:disabled) kbd { display: inline-block; }
+  .fg-reheat-txt::after { content: " · R"; }
+}
+
+.fg-armory-head { display: flex; align-items: baseline; justify-content: space-between; }
+.fg-armory-count { font-size: 11px; color: var(--text-muted); }
+.fg-armory-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.fg-armory-list li {
+  --tier: #8b9bb4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(11, 14, 20, 0.45);
+  font-size: 12px;
+}
+.fg-armory-list li i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--tier); box-shadow: 0 0 6px var(--tier); }
+.fg-armory-list li span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fg-armory-list li small { font: 600 11px var(--mono); color: var(--tier); }
+.fg-armory-list li.empty { justify-content: center; color: var(--text-muted); }
+.fg-armory-list li[data-tier="voidforged"] span { color: #e9d5ff; }
+
+.fg-foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--surface-border);
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.fg-foot b { color: var(--text); font-weight: 600; }
+.fg-sound {
+  margin-left: auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  border: 1px solid var(--surface-border);
+  background: rgba(11, 14, 20, 0.5);
+  font-size: 15px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.fg-sound:focus-visible { outline: 2px solid #ff8a1f; outline-offset: 2px; }
+.fg-sound[aria-pressed="false"] { opacity: 0.55; }
+
+/* ---------- 10e. Keyframes ---------- */
+@keyframes fg-flicker {
+  from { transform: scaleY(0.86) scaleX(1.04); opacity: 0.7; }
+  to   { transform: scaleY(1.08) scaleX(0.96); opacity: 0.95; }
+}
+@keyframes fg-coal { from { opacity: 0.55; } to { opacity: 1; } }
+@keyframes fg-impact { 35% { transform: translateY(2px); } }
+@keyframes fg-jolt {
+  20% { transform: translate(-4px, 1px); }
+  40% { transform: translate(4px, -1px); }
+  60% { transform: translate(-3px, 0); }
+  80% { transform: translate(2px, 1px); }
+}
+@keyframes fg-flash { from { opacity: 0.95; } to { opacity: 0; } }
+@keyframes fg-ripple { from { opacity: 0.9; transform: scale(0.4); } to { opacity: 0; transform: scale(4.5); } }
+@keyframes fg-column {
+  0%   { opacity: 0; transform: scaleY(0.15); }
+  22%  { opacity: 0.95; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1.1); }
+}
+@keyframes fg-veil { 0% { opacity: 0; } 14% { opacity: 0.62; } 100% { opacity: 0; } }
+@keyframes fg-res-full { 50% { filter: brightness(1.35); } }
+@keyframes fg-hollow { to { background-position: -200% 0; } }
+@keyframes fg-band { 50% { stroke: rgba(255, 244, 214, 0.75); stroke-width: 1.6; } }
+@keyframes fg-urge { 50% { border-color: #ff8a1f; box-shadow: 0 0 14px rgba(255, 138, 31, 0.35); } }
+@keyframes fg-pop {
+  from { opacity: 0; transform: translate(-50%, -30%) scale(0.9); }
+  20%  { opacity: 1; transform: translate(-50%, -60%) scale(1.05); }
+  to   { opacity: 0; transform: translate(-50%, -140%) scale(1); }
+}
+
+/* ---------- 10f. Responsive ---------- */
+@media (max-width: 1000px) {
+  .fg { grid-template-columns: 1fr; }
+  .fg-panel { width: 100%; max-width: 560px; margin: 0 auto; }
+}
+@media (max-width: 820px) {
+  .fg { padding: 12px; gap: 14px; border-radius: var(--radius); }
+  .fg-stage { aspect-ratio: 5 / 4; }       /* taller crop on phones: bigger anvil, same scene */
+  .fg-panel { gap: 12px; }
+  .fg-actions { order: -2; }                /* strike / reheat directly under the anvil */
+  .fg-result { order: -1; }
+  .fg-temp { left: 8px; }
+}
 </style>
 </head>
 <body>
@@ -1243,8 +1743,159 @@ button { font: inherit; color: inherit; }
             <h1 class="view-title">Resonance Forge</h1>
             <p class="view-desc">Tune raw materials to resonant frequencies and forge artifacts of mastery.</p>
           </div>
-          <span class="status-pill">Cold</span>
+          <span class="status-pill" id="forgePill">Cold</span>
         </div>
+
+        <!-- Resonance Forge module (Step 3). Blueprint chips, armory rows and particles are rendered by ForgeView. -->
+        <div class="fg glass" id="module-forge">
+          <div class="fg-stage" id="fgStage" data-phase="idle">
+            <svg class="fg-scene" viewBox="0 0 640 440" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              <defs>
+                <radialGradient id="fgWallGrad" cx="16%" cy="72%" r="90%">
+                  <stop offset="0" stop-color="#2b1a12"/>
+                  <stop offset=".42" stop-color="#11141b"/>
+                  <stop offset="1" stop-color="#06080c"/>
+                </radialGradient>
+                <radialGradient id="fgMouthGrad" cx="50%" cy="88%" r="80%">
+                  <stop offset="0" class="fg-stop-core"/>
+                  <stop offset=".45" class="fg-stop-mid"/>
+                  <stop offset="1" stop-color="#0a0604"/>
+                </radialGradient>
+                <radialGradient id="fgAmbientGrad" cx="54%" cy="66%" r="46%">
+                  <stop offset="0" class="fg-stop-amb" stop-opacity=".9"/>
+                  <stop offset="1" class="fg-stop-amb" stop-opacity="0"/>
+                </radialGradient>
+                <linearGradient id="fgAnvilGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#4a5467"/>
+                  <stop offset=".18" stop-color="#2a313e"/>
+                  <stop offset="1" stop-color="#0c1016"/>
+                </linearGradient>
+                <linearGradient id="fgSteelGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#8d98aa"/>
+                  <stop offset=".45" stop-color="#4a5566"/>
+                  <stop offset="1" stop-color="#232a35"/>
+                </linearGradient>
+                <linearGradient id="fgFinishGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#e3e9f1"/>
+                  <stop offset=".5" stop-color="#8793a4"/>
+                  <stop offset="1" stop-color="#3a4352"/>
+                </linearGradient>
+                <linearGradient id="fgVoidGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#3b1466"/>
+                  <stop offset=".5" stop-color="#0b0414"/>
+                  <stop offset="1" stop-color="#6d28d9"/>
+                </linearGradient>
+                <linearGradient id="fgHandleGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#4a3424"/>
+                  <stop offset="1" stop-color="#1c120b"/>
+                </linearGradient>
+                <linearGradient id="fgWaterGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#16384a"/>
+                  <stop offset="1" stop-color="#07131b"/>
+                </linearGradient>
+                <linearGradient id="fgColumnGrad" x1="0" y1="1" x2="0" y2="0">
+                  <stop offset="0" stop-color="#a855f7" stop-opacity=".75"/>
+                  <stop offset="1" stop-color="#a855f7" stop-opacity="0"/>
+                </linearGradient>
+                <filter id="fgBlur" x="-40%" y="-150%" width="180%" height="400%"><feGaussianBlur stdDeviation="7"/></filter>
+              </defs>
+
+              <rect width="640" height="440" fill="url(#fgWallGrad)"/>
+              <path class="fg-wall-lines" d="M232 0 V392 M372 0 V392 M512 0 V392 M188 150 H640 M188 60 H640"/>
+
+              <!-- furnace -->
+              <path class="fg-hood" d="M6 98 H190 L168 36 H28 Z"/>
+              <path class="fg-stone" d="M14 392 V168 Q14 110 98 104 Q182 110 182 168 V392 Z"/>
+              <path class="fg-stone-lines" d="M14 204 H182 M14 256 H44 M152 256 H182 M14 306 H44 M152 306 H182 M14 354 H182 M60 354 V392 M136 354 V392"/>
+              <path class="fg-mouth" d="M48 338 V258 Q48 216 98 212 Q148 216 148 258 V338 Z"/>
+              <path class="fg-mouth-glow" d="M48 338 V258 Q48 216 98 212 Q148 216 148 258 V338 Z" fill="url(#fgMouthGrad)"/>
+              <path class="fg-flame f1" d="M66 334 C58 310 72 296 68 272 C82 290 90 310 82 334 Z"/>
+              <path class="fg-flame f2" d="M88 334 C80 302 98 284 94 252 C112 278 118 306 106 334 Z"/>
+              <path class="fg-flame f3" d="M112 334 C106 312 118 300 116 282 C128 298 132 314 126 334 Z"/>
+              <g class="fg-coals">
+                <circle cx="62" cy="334" r="6"/><circle cx="76" cy="336" r="7"/><circle cx="92" cy="333" r="6"/>
+                <circle cx="106" cy="336" r="7"/><circle cx="121" cy="334" r="6"/><circle cx="134" cy="336" r="5"/>
+              </g>
+              <path class="fg-lip" d="M38 338 H158 V352 H38 Z"/>
+
+              <!-- quench trough (back) -->
+              <path class="fg-trough-back" d="M492 350 H624 V362 H492 Z"/>
+
+              <!-- anvil -->
+              <ellipse class="fg-shadow" cx="338" cy="394" rx="136" ry="9"/>
+              <path class="fg-anvil" d="M194 306 Q220 300 236 300 H454 V318 Q438 320 430 330 L412 352 Q406 362 406 372 H422 V392 H260 V372 H276 Q276 362 270 352 L252 332 Q244 322 236 320 Q214 318 194 306 Z"/>
+              <path class="fg-anvil-edge" d="M236 301 H453"/>
+              <ellipse class="fg-facelight" id="fgFace" cx="350" cy="302" rx="112" ry="6" filter="url(#fgBlur)"/>
+
+              <!-- workpiece -->
+              <g class="fg-piece-wrap" id="fgPieceWrap">
+                <path class="fg-piece-glow" id="fgPieceGlow" filter="url(#fgBlur)"/>
+                <path class="fg-piece" id="fgPiece"/>
+                <path class="fg-piece-hi" id="fgPieceHi"/>
+                <path class="fg-cracks" id="fgCracks"/>
+              </g>
+
+              <!-- quench trough (front) -->
+              <rect class="fg-water" x="494" y="354" width="128" height="10" rx="3" fill="url(#fgWaterGrad)"/>
+              <path class="fg-tub" d="M486 360 H630 L620 394 H496 Z"/>
+              <path class="fg-tub-bands" d="M490 372 H626 M493 384 H623"/>
+
+              <rect class="fg-column" x="296" y="30" width="110" height="262" fill="url(#fgColumnGrad)"/>
+              <ellipse class="fg-flash" id="fgFlash" cx="352" cy="274" rx="54" ry="18" filter="url(#fgBlur)"/>
+
+              <!-- hammer (rotates about the smith's grip) -->
+              <g class="fg-hammer" id="fgHammer" transform="rotate(34 612 238)">
+                <rect x="384" y="232" width="252" height="12" rx="6" fill="url(#fgHandleGrad)"/>
+                <rect class="fg-head" x="322" y="210" width="64" height="58" rx="5" fill="url(#fgSteelGrad)"/>
+                <rect class="fg-head-face" x="322" y="262" width="64" height="6" rx="2"/>
+                <rect class="fg-head-band" x="376" y="210" width="6" height="58"/>
+              </g>
+
+              <rect class="fg-ambient" id="fgAmbient" width="640" height="440" fill="url(#fgAmbientGrad)"/>
+              <circle class="fg-ripple" id="fgRipple" cx="352" cy="276" r="18"/>
+              <rect class="fg-veil" width="640" height="440"/>
+            </svg>
+            <canvas class="fg-fx" id="fgFx" aria-hidden="true"></canvas>
+            <div class="fg-temp" aria-hidden="true"><i id="fgTempMark"></i></div>
+            <span class="fg-label" id="fgLabel"></span>
+            <div class="fg-res" id="fgRes" aria-hidden="true">
+              <span class="fg-res-label">Resonance</span>
+              <div class="fg-res-track"><span class="fg-res-fill"></span></div>
+            </div>
+          </div>
+
+          <aside class="fg-panel" aria-label="Forge readout">
+            <div class="fg-bp-wrap">
+              <span class="fg-eyebrow">Blueprint</span>
+              <div class="fg-bps" id="fgBlueprints" role="group" aria-label="Blueprint"></div>
+            </div>
+            <div class="fg-gauges">
+              <div class="fg-gauge"><span class="fg-eyebrow">Form</span><div class="fg-bar"><span id="fgForm"></span></div></div>
+              <div class="fg-gauge"><span class="fg-eyebrow">Integrity</span><div class="fg-bar integrity" id="fgIntegrityBar"><span id="fgIntegrity"></span></div></div>
+              <div class="fg-gauge"><span class="fg-eyebrow">Streak</span><b id="fgChain">0</b></div>
+              <div class="fg-gauge"><span class="fg-eyebrow">Heats</span><b id="fgHeats">0</b></div>
+            </div>
+            <div class="fg-result" id="fgResult" aria-live="polite" hidden></div>
+            <p class="fg-hint" id="fgHint">Strike as the metal swells. Keep it hot.</p>
+            <div class="fg-actions">
+              <button class="fg-action" id="fgAction" type="button"><span id="fgActionLabel">Forge</span><kbd id="fgActionKey">Space</kbd></button>
+              <button class="fg-reheat" id="fgReheat" type="button" aria-label="Hold to reheat (R)">
+                <span class="fg-reheat-fill"></span><span class="fg-reheat-ico" aria-hidden="true">🔥</span><span class="fg-reheat-txt">Reheat</span>
+              </button>
+            </div>
+            <div class="fg-armory">
+              <div class="fg-armory-head"><span class="fg-eyebrow">Armory</span><span class="fg-armory-count" id="fgArmoryCount">0 items</span></div>
+              <ul class="fg-armory-list" id="fgArmory"></ul>
+            </div>
+            <div class="fg-foot">
+              <span>Forged <b id="fgForged">0</b></span>
+              <span>Shattered <b id="fgShattered">0</b></span>
+              <span>Best <b id="fgBest">0</b></span>
+              <button class="fg-sound" id="fgSound" type="button" aria-pressed="true" aria-label="Sound">🔊</button>
+            </div>
+          </aside>
+        </div>
+
         <div class="stat-grid">
           <div class="stat-card glass c-gold">
             <span class="stat-card-label">Forge Fuel (Gold)</span>
@@ -1258,13 +1909,10 @@ button { font: inherit; color: inherit; }
             <span class="stat-card-foot"><span data-bind="influencePctLabel"></span> of ascension</span>
           </div>
           <div class="stat-card glass c-green">
-            <span class="stat-card-label">Stored Materials</span>
-            <span class="stat-card-value num"><span data-bind="vaultSlots"></span> / <span data-bind="vaultCap"></span></span>
-            <span class="stat-card-foot">Drawn from the vault</span>
+            <span class="stat-card-label">Items Forged</span>
+            <span class="stat-card-value num" data-bind="forgedCount"></span>
+            <span class="stat-card-foot" data-bind="forgeBest"></span>
           </div>
-        </div>
-        <div class="module-slot" id="module-forge">
-          <div><strong>FORGE ANVIL OFFLINE</strong>Module mounts here in Step 2 · <code>#module-forge</code></div>
         </div>
       </section>
 
@@ -1395,6 +2043,21 @@ button { font: inherit; color: inherit; }
       result: null,           // last outcome summary shown in the result card
       telemetry: [],          // finished attempts' precise timing logs (bounded; never rendered)
     },
+
+    // Resonance Forge (Step 3) — owned by the ForgeCtl controller
+    forge: {
+      phase: "idle",          // idle | heating | working | quench | done | shattered
+      paused: false,          // live session frozen while the tab/page is hidden
+      blueprint: "key",       // selected BLUEPRINTS id
+      session: null,          // live/last session record (see ForgeCtl.start)
+      result: null,           // last outcome summary shown in the result card
+      forged: 0,              // lifetime finished items (drives blueprint unlocks)
+      shattered: 0,
+      bestChain: 0,           // best run of consecutive on-beat blows
+      mastery: {},            // blueprint id → { forged, best } quality records
+      armory: [],             // forged items, newest first (bounded) — future equipment source
+      telemetry: [],          // finished sessions' timing logs (bounded; never rendered)
+    },
   };
 
   /* ---------------- BUS (pub/sub) ---------------- */
@@ -1456,6 +2119,11 @@ button { font: inherit; color: inherit; }
     vaultSlots:          (s) => Fmt.int(s.vaultSlots),
     vaultCap:            ()  => Fmt.int(CONFIG.VAULT_CAP),
     vaultFree:           (s) => Fmt.int(CONFIG.VAULT_CAP - s.vaultSlots),
+    forgedCount:         (s) => Fmt.int(s.forge.forged),
+    forgeBest:           (s) => {
+      const top = s.forge.armory.reduce((best, it) => (!best || it.quality > best.quality ? it : best), null);
+      return top ? `Finest: ${top.name}` : "Nothing forged yet";
+    },
     vaultPct:            (s) => (s.vaultSlots / CONFIG.VAULT_CAP) * 100,
     heat:                (s) => Fmt.pct(s.heat),
     heatPct:             (s) => s.heat,
@@ -1627,6 +2295,26 @@ button { font: inherit; color: inherit; }
     return {
       init() {
         document.getElementById("empireLogo").addEventListener("click", onTap);
+      },
+    };
+  })();
+
+  /* ---------------- Shared input helpers (used by Vault Breach and Resonance Forge) ---------------- */
+  // Event timestamps share performance.now()'s clock in modern browsers; fall back if one doesn't.
+  function inputTime(e) {
+    const now = performance.now();
+    const ts = e && e.timeStamp;
+    return ts > 0 && ts <= now + 1 && now - ts < 1000 ? ts : now;
+  }
+
+  // Haptics: touch devices only, and only once the page has real user activation (browsers block it otherwise)
+  const Haptics = (() => {
+    const coarse = window.matchMedia && matchMedia("(pointer: coarse)").matches;
+    return {
+      buzz(pattern) {
+        if (Sfx.muted || !coarse || !navigator.vibrate) return;
+        if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
+        try { navigator.vibrate(pattern); } catch (_) {}
       },
     };
   })();
@@ -1841,6 +2529,14 @@ button { font: inherit; color: inherit; }
         noise({ freq: 4000, sweepTo: 300, type: "lowpass", peak: 0.2, attack: 0.02, decay: 0.6, at: 0.12 });
         [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone({ freq: f, type: "triangle", peak: 0.11, decay: 0.5, at: 0.2 + i * 0.07 }));
       }),
+      // Shared synth for other modules (Forge); every call is a silent no-op when audio is unavailable or muted
+      synth: {
+        ready: () => ready(),
+        tone: safe(tone),
+        noise: safe(noise),
+        buffer: () => noiseBuf,
+        get out() { return out; },
+      },
       get muted() { return muted; },
       setMuted(m) {
         muted = m;
@@ -1850,8 +2546,8 @@ button { font: inherit; color: inherit; }
     };
   })();
 
-  /* ---------------- Fx (canvas sparks; idle when nothing is alive) ---------------- */
-  const Fx = (() => {
+  /* ---------------- Fx (canvas particles; one instance per canvas, idle when nothing is alive) ---------------- */
+  function createFx() {
     let canvas = null;
     let g = null;
     let w = 0;
@@ -1873,27 +2569,46 @@ button { font: inherit; color: inherit; }
     function frame(now) {
       raf = 0;
       g.clearRect(0, 0, w, h);
-      g.globalCompositeOperation = "lighter";
       for (let i = parts.length - 1; i >= 0; i--) {
         const p = parts[i];
         const dt = Math.min(0.05, Math.max(0, (now - p.t) / 1000));
         p.t = now;
         p.life -= dt;
-        if (p.life <= 0) { parts.splice(i, 1); continue; }
-        const drag = Math.pow(0.93, dt * 60);
+        if (p.life <= 0 || (p.floor && p.y > p.floor)) { parts.splice(i, 1); continue; }
+        const drag = Math.pow(p.drag, dt * 60);
         p.vx *= drag;
         p.vy = p.vy * drag + p.grav * dt;
         p.x += p.vx * dt;
         p.y += p.vy * dt;
-        g.globalAlpha = p.life / p.max;
-        g.strokeStyle = p.color;
-        g.lineWidth = p.size;
-        g.beginPath();
-        g.moveTo(p.x, p.y);
-        g.lineTo(p.x - p.vx * 0.03, p.y - p.vy * 0.03);
-        g.stroke();
+        const fade = p.life / p.max;
+        if (p.shape === "puff") {
+          // soft smoke/steam: grows as it fades
+          g.globalCompositeOperation = "source-over";
+          g.globalAlpha = fade * p.alpha;
+          g.fillStyle = p.color;
+          g.beginPath();
+          g.arc(p.x, p.y, p.size * (1 + (1 - fade) * p.grow), 0, Math.PI * 2);
+          g.fill();
+        } else if (p.shape === "dot") {
+          g.globalCompositeOperation = "lighter";
+          g.globalAlpha = fade * p.alpha;
+          g.fillStyle = p.color;
+          g.beginPath();
+          g.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          g.fill();
+        } else {
+          g.globalCompositeOperation = "lighter";
+          g.globalAlpha = fade * p.alpha;
+          g.strokeStyle = p.color;
+          g.lineWidth = p.size;
+          g.beginPath();
+          g.moveTo(p.x, p.y);
+          g.lineTo(p.x - p.vx * 0.03, p.y - p.vy * 0.03);
+          g.stroke();
+        }
       }
       g.globalAlpha = 1;
+      g.globalCompositeOperation = "source-over";
       if (parts.length) raf = requestAnimationFrame(frame);
     }
 
@@ -1906,8 +2621,13 @@ button { font: inherit; color: inherit; }
         if ("ResizeObserver" in window) new ResizeObserver(resize).observe(el);
         else window.addEventListener("resize", resize);
       },
-      // Sparks from fractional mechanism coords (0–1). dir: 0 = up, clockwise (radians).
-      burst(fx, fy, { count = 10, color = "#00e676", speed = 260, spread = Math.PI * 2, dir = 0, life = 0.5, size = 1.6, grav = 300 } = {}) {
+      // Particles from fractional canvas coords (0–1). dir: 0 = up, clockwise (radians).
+      // shape: "streak" (sparks) | "dot" (embers) | "puff" (smoke/steam). floor: fractional y where particles die.
+      burst(fx, fy, {
+        count = 10, color = "#00e676", speed = 260, spread = Math.PI * 2, dir = 0, life = 0.5, size = 1.6, grav = 300,
+        shape = "streak", drag = 0.93, alpha = 1, grow = 2, floor = 0, jitter = 0,
+      } = {}) {
+        if (g && !w) resize();   // canvas just became visible and hasn't been measured yet
         if (!g || !w) return;
         if (reduceMotion) count = Math.ceil(count / 3);
         const scale = w / 400;
@@ -1917,15 +2637,17 @@ button { font: inherit; color: inherit; }
           const sp = speed * scale * (0.45 + Math.random() * 0.75);
           const l = life * (0.6 + Math.random() * 0.6);
           parts.push({
-            x: fx * w, y: fy * h,
+            x: (fx + (Math.random() - 0.5) * jitter) * w, y: fy * h,
             vx: Math.sin(ang) * sp, vy: -Math.cos(ang) * sp,
-            life: l, max: l, color, size: size * (0.7 + Math.random() * 0.6), grav: grav * scale, t: now,
+            life: l, max: l, color, size: size * (0.7 + Math.random() * 0.6) * (shape === "puff" ? scale : 1),
+            grav: grav * scale, t: now, shape, drag, alpha, grow, floor: floor * h,
           });
         }
         if (!raf) raf = requestAnimationFrame(frame);
       },
     };
-  })();
+  }
+  const Fx = createFx();   // Vault Breach sparks
 
   /* ---------------- VaultView ---------------- */
   const VaultView = (() => {
@@ -2277,20 +2999,8 @@ button { font: inherit; color: inherit; }
 
     const isLive = () => state.vault.phase === "arming" || state.vault.phase === "running";
     const commit = (patch) => setState({ vault: { ...state.vault, ...patch } });
-    // Haptics: touch devices only, and only once the page has real user activation (browsers block it otherwise)
-    const coarsePointer = window.matchMedia && matchMedia("(pointer: coarse)").matches;
-    const buzz = (pattern) => {
-      if (Sfx.muted || !coarsePointer || !navigator.vibrate) return;
-      if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
-      try { navigator.vibrate(pattern); } catch (_) {}
-    };
-
-    // Event timestamps share performance.now()'s clock in modern browsers; fall back if one doesn't.
-    function eventTime(e) {
-      const now = performance.now();
-      const ts = e && e.timeStamp;
-      return ts > 0 && ts <= now + 1 && now - ts < 1000 ? ts : now;
-    }
+    const buzz = Haptics.buzz;
+    const eventTime = inputTime;
 
     function start() {
       if (isLive()) return;
@@ -2599,20 +3309,1334 @@ button { font: inherit; color: inherit; }
     };
   })();
 
+  /* =====================================================================
+     RESONANCE FORGE (Step 3)
+       FORGE       — tuning constants
+       BLUEPRINTS  — forgeable items (data only; add entries to expand)
+       Rules       — shape morphing, heat colour, beat judging, quality, items (pure)
+       Cadence     — isolated detector for an undocumented technique
+       ForgeSfx    — anvil / furnace / quench audio on the shared synth
+       ForgeView   — scene, panel, per-frame rendering, transient fx
+       ForgeCtl    — controller: session lifecycle, heat, beat clock, blows
+     The beat clock schedules each beat one period ahead from the metal's current
+     temperature; every blow is judged against those absolute performance.now() times.
+     ===================================================================== */
+
+  const FORGE = Object.freeze({
+    COLD: 0.22,               // below this the metal is too cold to work: blows crack it
+    STIFF: 0.45,              // below this blows move less metal
+    TEMPER_LO: 0.4,           // quench band for a true temper
+    TEMPER_HI: 0.6,
+    START_TEMP: 0.1,
+    HEAT_RATE: 0.95,          // temperature gained per second in the furnace
+    STRIKE_COOL: 0.008,       // heat drawn off by each blow
+    TEMPO_DRIFT: 0.22,        // cooling metal rings slower: period × (1 + drift × (1 − temp))
+    SLIDE_MS: 320,            // furnace ↔ anvil ↔ trough transfer
+    QUENCH_LOCK_MS: 450,      // ignore quench input just after the final blow
+    REHEAT_HOLD_MS: 380,      // hold time on the reheat control
+    PLUNGE_MS: 750,           // steam before the finished piece is revealed
+    RES: { perfect: 16, good: 5, poor: -8, off: -22, cold: -18, skip: -5 },
+    RES_KEEP_ON_REHEAT: 0.55,
+    INTEGRITY: { poor: -2, off: -9, cold: -16, reheat: -4 },
+    WORK: { perfect: 1, good: 0.7, poor: 0.35 },
+    RES_POWER: 0.6,           // work multiplier at full resonance: 1 + RES_POWER
+    ARMORY_KEEP: 60,
+    TELEMETRY_KEEP: 25,
+    STRIKE_KEYS: ["Space", "KeyF", "KeyJ"],
+    TIERS: [
+      { id: "crude",      name: "Crude",      min: 0,  gold: 0.6, influence: 0.6 },
+      { id: "standard",   name: "Standard",   min: 35, gold: 1.1, influence: 1.0 },
+      { id: "fine",       name: "Fine",       min: 55, gold: 1.5, influence: 1.5 },
+      { id: "superior",   name: "Superior",   min: 72, gold: 2.0, influence: 2.1 },
+      { id: "masterwork", name: "Masterwork", min: 87, gold: 2.8, influence: 3.0 },
+    ],
+    HIDDEN_TIER: { id: "voidforged", name: "Voidforged", gold: 3.6, influence: 4.0 },
+    TIER_GLOW: { crude: "#8b9bb4", standard: "#cfd8e3", fine: "#00e676", superior: "#29b6f6", masterwork: "#ffca28", voidforged: "#a855f7" },
+  });
+  const FORGE_LIVE = new Set(["heating", "working", "quench"]);
+
+  // Each profile returns the finished item's [top, bottom] half-widths along its length (u: 0 → 1).
+  // The billet morphs into this outline as the form fills. Timing values tighten per blueprint.
+  const sym = (w) => [w, w];
+  const lobe = (u, c, r, w, min) => { const d = (u - c) / r; return Math.max(min, w * Math.sqrt(Math.max(0, 1 - d * d))); };
+  const BLUEPRINTS = [
+    {
+      id: "key", name: "Strongroom Key", icon: "🗝️", unlock: 0,
+      fee: 20, influence: 70, work: 8,
+      beatMs: 760, perfectMs: 55, goodMs: 115, poorMs: 185, cool: 0.058,
+      stats: { edge: 2, balance: 5, temper: 7 },
+      span: [-92, 92],
+      profile: (u) => {
+        if (u < 0.26) return sym(lobe(u, 0.13, 0.13, 30, 5));                                   // bow
+        if (u < 0.3) return sym(9);                                                              // collar
+        if (u < 0.78) return sym(5.5);                                                           // shank
+        return [5.5, [18, 11, 18, 8, 14][Math.min(4, Math.floor(((u - 0.78) / 0.22) * 5))]];     // bit
+      },
+    },
+    {
+      id: "dagger", name: "Steel Dagger", icon: "🗡️", unlock: 2,
+      fee: 35, influence: 130, work: 11,
+      beatMs: 690, perfectMs: 50, goodMs: 105, poorMs: 170, cool: 0.064,
+      stats: { edge: 6, balance: 7, temper: 4 },
+      span: [-100, 100],
+      profile: (u) => {
+        if (u < 0.07) return sym(lobe(u, 0.035, 0.035, 10, 4));                                 // pommel
+        if (u < 0.3) return sym(5);                                                              // grip
+        if (u < 0.35) return sym(22);                                                            // guard
+        return sym(Math.max(0.6, 12 * Math.pow(1 - (u - 0.35) / 0.65, 0.75)));                   // blade
+      },
+    },
+    {
+      id: "scepter", name: "Sovereign Scepter", icon: "⚜️", unlock: 5,
+      fee: 55, influence: 230, work: 14,
+      beatMs: 620, perfectMs: 45, goodMs: 95, poorMs: 155, cool: 0.07,
+      stats: { edge: 3, balance: 6, temper: 9 },
+      span: [-110, 110],
+      profile: (u) => {
+        if (u < 0.05) return sym(9);                                                             // cap
+        if (u < 0.62) return sym(Math.abs(u - 0.22) < 0.025 || Math.abs(u - 0.42) < 0.025 ? 9 : 5);   // rod + knops
+        const t = (u - 0.62) / 0.38;
+        return sym(8 + 18 * Math.sin(Math.PI * t) * (0.75 + 0.25 * Math.cos(6 * Math.PI * t)));  // flanged head
+      },
+    },
+    {
+      id: "sword", name: "Obsidian Longsword", icon: "⚔️", unlock: 9,
+      fee: 80, influence: 360, work: 18,
+      beatMs: 560, perfectMs: 40, goodMs: 85, poorMs: 140, cool: 0.078,
+      stats: { edge: 10, balance: 6, temper: 6 },
+      span: [-128, 128],
+      profile: (u) => {
+        if (u < 0.05) return sym(lobe(u, 0.025, 0.025, 11, 4));                                 // pommel
+        if (u < 0.2) return sym(5.5);                                                            // grip
+        if (u < 0.24) return sym(28);                                                            // cross
+        const t = (u - 0.24) / 0.76;
+        return sym(t < 0.86 ? 10 - 2 * t : Math.max(0.6, 8.3 * (1 - (t - 0.86) / 0.14)));        // blade
+      },
+    },
+  ];
+  const blueprintById = (id) => BLUEPRINTS.find((b) => b.id === id) || BLUEPRINTS[0];
+
+  /* ---------------- Forge rules ---------------- */
+  const SHAPE_SAMPLES = 46;
+  const BILLET = { span: [-80, 80], half: 15 };
+  const shapeCache = new Map();
+
+  function shapeOf(bp) {
+    if (!shapeCache.has(bp.id)) {
+      const pts = [];
+      for (let i = 0; i < SHAPE_SAMPLES; i++) {
+        const u = i / (SHAPE_SAMPLES - 1);
+        const [top, bot] = bp.profile(u);
+        pts.push({
+          x: lerp(bp.span[0], bp.span[1], u), top, bot,
+          bx: lerp(BILLET.span[0], BILLET.span[1], u), bh: BILLET.half * (u < 0.03 || u > 0.97 ? 0.8 : 1),
+        });
+      }
+      shapeCache.set(bp.id, pts);
+    }
+    return shapeCache.get(bp.id);
+  }
+  const formEase = (form) => 1 - Math.pow(1 - clamp(form, 0, 1), 1.35);
+  const morphPoint = (pt, e) => ({ x: lerp(pt.bx, pt.x, e), top: -lerp(pt.bh, pt.top, e), bot: lerp(pt.bh, pt.bot, e) });
+
+  function piecePath(bp, form) {
+    const e = formEase(form);
+    const pts = shapeOf(bp).map((pt) => morphPoint(pt, e));
+    const top = pts.map((p) => `${p.x.toFixed(1)} ${p.top.toFixed(1)}`);
+    const bot = pts.map((p) => `${p.x.toFixed(1)} ${p.bot.toFixed(1)}`).reverse();
+    return `M${top.join(" L")} L${bot.join(" L")} Z`;
+  }
+
+  // Upper face of the metal under the hammer (piece-local y, negative = up)
+  function pieceTopAt(bp, form) {
+    const pts = shapeOf(bp);
+    return morphPoint(pts[Math.floor(pts.length / 2)], formEase(form)).top;
+  }
+
+  function crackPath(bp, form, cracks) {
+    if (!cracks.length) return "";
+    const e = formEase(form);
+    const pts = shapeOf(bp);
+    return cracks.map((cr) => {
+      const m = morphPoint(pts[Math.round(cr.u * (pts.length - 1))], e);
+      let seed = Math.floor(cr.seed * 2147483646) + 1;
+      const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      const depth = cr.deep ? 0.95 : 0.55;
+      const out = [];
+      for (let k = 0; k <= 4; k++) {
+        const y = lerp(m.top, lerp(m.top, m.bot, depth), k / 4);
+        out.push(`${(m.x + (rnd() - 0.5) * 7).toFixed(1)} ${y.toFixed(1)}`);
+      }
+      return "M" + out.join(" L");
+    }).join(" ");
+  }
+
+  // Heat colour ramp: black iron → dull red → cherry → orange → yellow → white
+  const HEAT_STOPS = [
+    [0, [42, 42, 46]], [0.2, [74, 28, 20]], [0.35, [143, 31, 18]], [0.5, [214, 57, 26]],
+    [0.65, [255, 106, 26]], [0.8, [255, 166, 48]], [0.92, [255, 224, 122]], [1, [255, 246, 214]],
+  ];
+  // The same ramp re-tinted toward the void: what the metal becomes at high resonance
+  const RESONANT_STOPS = [
+    [0, [34, 22, 44]], [0.2, [58, 20, 86]], [0.35, [96, 30, 150]], [0.5, [134, 52, 208]],
+    [0.65, [164, 92, 240]], [0.8, [196, 142, 255]], [0.92, [224, 196, 255]], [1, [246, 238, 255]],
+  ];
+  const OBSIDIAN_RGB = [24, 10, 40];
+  const ATTUNED_GLOW = [168, 85, 247];
+  const mixRGB = (a, b, k) => a.map((v, i) => Math.round(v + (b[i] - v) * k));
+  const rgb = (c) => `rgb(${c[0]},${c[1]},${c[2]})`;
+  function rampRGB(stops, t) {
+    t = clamp(t, 0, 1);
+    for (let i = 1; i < stops.length; i++) {
+      const [t1, c1] = stops[i];
+      if (t <= t1) {
+        const [t0, c0] = stops[i - 1];
+        return mixRGB(c0, c1, (t - t0) / (t1 - t0));
+      }
+    }
+    return stops[stops.length - 1][1].slice();
+  }
+  const heatRGB = (t) => rampRGB(HEAT_STOPS, t);
+  const smooth = (a, b, x) => { const k = clamp((x - a) / (b - a), 0, 1); return k * k * (3 - 2 * k); };
+  const WHITE_HOT = [255, 246, 232];
+  // Visible metal colour: rising resonance first burns the metal toward white-hot,
+  // then — only as it nears full — it turns over into the void palette.
+  function metalRGB(t, res) {
+    const r = clamp(res / 100, 0, 1);
+    const bright = mixRGB(heatRGB(t), WHITE_HOT, smooth(0.25, 0.85, r) * 0.55 * clamp(t * 1.5, 0, 1));
+    return mixRGB(bright, rampRGB(RESONANT_STOPS, t), smooth(0.84, 1, r) * 0.86);
+  }
+
+  // Beat lookup against the clock's recent (fired) beats and the scheduled next beat
+  function nearestBeat(clock, ts) {
+    let best = { index: clock.nextIndex, at: clock.nextAt, offset: ts - clock.nextAt };
+    for (const b of clock.recent) {
+      const d = ts - b.at;
+      if (Math.abs(d) < Math.abs(best.offset)) best = { index: b.index, at: b.at, offset: d };
+    }
+    return best;
+  }
+  function cycleOf(clock, ts) {
+    const beats = [{ index: 0, at: clock.anchorAt }, ...clock.recent, { index: clock.nextIndex, at: clock.nextAt }];
+    const last = beats[beats.length - 1];
+    let a = beats[0];
+    let b = beats[1];
+    if (ts >= last.at) {
+      const prev = beats[beats.length - 2];
+      a = last;
+      b = { index: last.index + 1, at: last.at + (last.at - prev.at) };
+    } else {
+      for (let i = beats.length - 1; i > 0; i--) {
+        if (ts >= beats[i - 1].at) { a = beats[i - 1]; b = beats[i]; break; }
+      }
+    }
+    const period = b.at - a.at;
+    return { startIndex: a.index, startAt: a.at, period, frac: (ts - a.at) / period };
+  }
+  function gradeFor(p, offset) {
+    const d = Math.abs(offset);
+    return d <= p.perfectMs ? "perfect" : d <= p.goodMs ? "good" : d <= p.poorMs ? "poor" : "off";
+  }
+
+  function forgeQuality(s) {
+    const c = s.counts;
+    const judged = c.perfect + c.good + c.poor + c.off + c.cold;
+    const accuracy = judged ? (c.perfect + 0.6 * c.good + 0.2 * c.poor) / judged : 0;
+    const resonance = s.scored ? (s.resSum / s.scored + s.peakResonance) / 200 : 0;
+    const temper = s.temper ? s.temper.score : 0;
+    const heats = clamp(1 - 0.34 * (s.heats - 1), 0, 1);
+    return Math.round(35 * accuracy + 20 * resonance + 20 * (s.integrity / 100) + 15 * temper + 10 * heats);
+  }
+  const forgeTier = (quality, attuned) => (attuned ? FORGE.HIDDEN_TIER : FORGE.TIERS.filter((t) => quality >= t.min).pop());
+
+  function temperOf(t) {
+    if (t >= FORGE.TEMPER_LO && t <= FORGE.TEMPER_HI) return { kind: "true", score: 1, temp: t };
+    if (t > FORGE.TEMPER_HI) return { kind: "brittle", score: 0.5 * clamp(1 - (t - FORGE.TEMPER_HI) / 0.35, 0, 1), temp: t };
+    return { kind: "soft", score: 0.5 * clamp(1 - (FORGE.TEMPER_LO - t) / 0.3, 0, 1), temp: t };
+  }
+
+  // Item records are the seed of the future equipment system: stats, temper and affixes are data.
+  function makeItem(bp, s, quality, tier) {
+    const mod = { true: [1.05, 1.05, 1.15], brittle: [1.2, 1, 0.8], soft: [0.9, 1, 0.9] }[s.temper.kind];
+    const k = (0.55 + (0.9 * quality) / 100) * (s.attuned ? 1.3 : 1);
+    const stat = (base, m) => Math.max(1, Math.round(base * k * m));
+    const c = s.counts;
+    return {
+      uid: `${bp.id}-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`,
+      blueprint: bp.id,
+      name: s.attuned ? `Voidsung ${bp.name}` : `${tier.name} ${bp.name}`,
+      icon: bp.icon,
+      tier: tier.id,
+      quality,
+      stats: { edge: stat(bp.stats.edge, mod[0]), balance: stat(bp.stats.balance, mod[1]), temper: stat(bp.stats.temper, mod[2]) },
+      temper: s.temper.kind,
+      heats: s.heats,
+      perfects: c.perfect,
+      strikes: c.perfect + c.good + c.poor + c.off + c.cold,
+      peakResonance: s.peakResonance,
+      affixes: s.attuned ? [{ id: "hollow-echo", name: "Echo of the Void", power: Math.round(40 + quality * 0.6) }] : [],
+      forgedAt: Date.now(),
+    };
+  }
+
+  /* ---------------- Cadence (undocumented technique; never surfaced in the UI) ----------------
+     Fed every blow. Returns "overtone" (absorb the blow), "attuned" (sequence complete) or
+     null (judge normally). Later systems can listen for "forge:attuned" or read item.affixes. */
+  const Cadence = {
+    feed(s, b) {
+      const cad = s.cadence;
+      const between = Math.abs(b.halfOffset) <= s.params.halfMs;
+      if (cad.stage === 1) {
+        const onBeat = (b.grade === "perfect" || b.grade === "good") && b.nearest.index === cad.anchor + 2;
+        if (!between && onBeat) { cad.stage = 2; return null; }
+        cad.stage = 0;
+      } else if (cad.stage === 2) {
+        cad.stage = 0;
+        if (between && b.cycle.startIndex === cad.anchor + 2) return "attuned";
+      }
+      if (!between || !b.full) return null;
+      const last = s.lastStrike;
+      if (!s.attuned && last && last.beatIndex === b.cycle.startIndex && (last.grade === "perfect" || last.grade === "good")) {
+        cad.stage = 1;
+        cad.anchor = b.cycle.startIndex;
+      }
+      return "overtone";
+    },
+    // A sequence left hanging past its window lapses as the beats roll on
+    expire(s, beatIndex) { if (s.cadence.stage && beatIndex >= s.cadence.anchor + 3) s.cadence.stage = 0; },
+    // The beat deliberately left silent mid-sequence costs nothing
+    exempt(s, beatIndex) { return s.cadence.stage >= 1 && beatIndex === s.cadence.anchor + 1; },
+  };
+
+  /* ---------------- ForgeSfx (built on the shared synth; silent without audio) ---------------- */
+  const ForgeSfx = (() => {
+    const S = Sfx.synth;
+    const safe = (fn) => (...a) => { try { fn(...a); } catch (_) {} };
+    const MINOR = [0, 2, 3, 5, 7, 8, 10, 12, 14, 15, 17];
+    let amb = null;
+    const secondsUntil = (perfTime) => Math.max(0, (perfTime - performance.now()) / 1000);
+
+    // Struck metal: the inharmonic partials of a free bar
+    function ring(f, { peak = 0.2, decay = 0.9, at = 0, bright = 1 } = {}) {
+      [[1, 1], [2.76, 0.45 * bright], [5.4, 0.22 * bright], [8.93, 0.1 * bright]].forEach(([r, g]) =>
+        S.tone({ freq: f * r, peak: peak * g, attack: 0.002, decay: decay / Math.sqrt(r), at }));
+    }
+
+    function startAmbience() {
+      const c = S.ready();
+      if (!c || amb) return;
+      const t = c.currentTime;
+      const roar = c.createBufferSource();
+      roar.buffer = S.buffer();
+      roar.loop = true;
+      const lp = c.createBiquadFilter();
+      lp.type = "lowpass";
+      lp.frequency.value = 240;
+      const roarGain = c.createGain();
+      roarGain.gain.setValueAtTime(0.0001, t);
+      roarGain.gain.exponentialRampToValueAtTime(0.05, t + 0.6);
+      roar.connect(lp);
+      lp.connect(roarGain);
+      roarGain.connect(S.out);
+      const hum = c.createOscillator();
+      hum.frequency.value = 98;
+      const over = c.createOscillator();
+      over.frequency.value = 147;
+      const overGain = c.createGain();
+      overGain.gain.value = 0;
+      const humGain = c.createGain();
+      humGain.gain.value = 0.0001;
+      hum.connect(humGain);
+      over.connect(overGain);
+      overGain.connect(humGain);
+      humGain.connect(S.out);
+      roar.start();
+      hum.start();
+      over.start();
+      amb = { c, roar, roarGain, hum, over, overGain, humGain };
+    }
+
+    function stopAmbience() {
+      if (!amb) return;
+      const { c, roar, roarGain, hum, over, humGain } = amb;
+      amb = null;
+      const t = c.currentTime;
+      roarGain.gain.cancelScheduledValues(t);
+      roarGain.gain.setTargetAtTime(0.0001, t, 0.15);
+      humGain.gain.cancelScheduledValues(t);
+      humGain.gain.setTargetAtTime(0.0001, t, 0.1);
+      [roar, hum, over].forEach((n) => n.stop(t + 0.8));
+    }
+
+    return {
+      startAmbience: safe(startAmbience),
+      stopAmbience: safe(stopAmbience),
+      // The metal's hum swells into each beat; pitch and overtone climb with resonance
+      swell: safe((beatAt, res, attuned) => {
+        if (!amb) startAmbience();
+        if (!amb) return;
+        const { c, hum, over, overGain, humGain } = amb;
+        const t = c.currentTime;
+        const end = t + secondsUntil(beatAt);
+        const r = res / 100;
+        hum.frequency.setTargetAtTime(98 * Math.pow(2, (5 * r) / 12), t, 0.2);
+        over.frequency.setTargetAtTime(attuned ? 98 * Math.SQRT2 * 2 : 147 * Math.pow(2, (5 * r) / 12), t, 0.2);
+        overGain.gain.setTargetAtTime(attuned ? 0.7 : Math.max(0, (r - 0.6) / 0.4) * 0.6, t, 0.3);
+        humGain.gain.cancelScheduledValues(t);
+        humGain.gain.setValueAtTime(Math.max(0.0001, humGain.gain.value), t);
+        humGain.gain.linearRampToValueAtTime(0.018 + 0.05 * r, end);
+        humGain.gain.setTargetAtTime(0.004, end + 0.01, 0.09);
+      }),
+      hush: safe(() => {
+        if (!amb) return;
+        const t = amb.c.currentTime;
+        amb.humGain.gain.cancelScheduledValues(t);
+        amb.humGain.gain.setTargetAtTime(0.0001, t, 0.12);
+      }),
+      // A faint ting of the metal on each beat, scheduled sample-accurately ahead of time
+      tick: safe((beatAt, temp) => S.tone({ freq: 1500 + 900 * temp, peak: 0.03, decay: 0.06, at: secondsUntil(beatAt) })),
+      blow: safe((grade, chain, res) => {
+        const f = 330 * Math.pow(2, MINOR[Math.min(chain, MINOR.length - 1)] / 12);   // the ring climbs with the streak
+        const r = res / 100;
+        S.tone({ freq: 150, to: 46, peak: 0.5 + 0.3 * r, decay: 0.14 });                 // hammer body
+        S.noise({ freq: 3200, q: 1, peak: 0.32, decay: 0.03 });                           // steel on steel
+        if (grade === "perfect") {
+          ring(f, { peak: 0.24, decay: 1.5, bright: 1.2 });
+          S.tone({ freq: f * 2, peak: 0.07, decay: 1.8, at: 0.01 });
+          if (r > 0.55) S.tone({ freq: f * 1.498, peak: 0.06 * r, attack: 0.01, decay: 1.4, at: 0.02 });
+        } else if (grade === "good") {
+          ring(f, { peak: 0.18, decay: 0.8 });
+        } else if (grade === "poor") {
+          ring(f * 0.94, { peak: 0.08, decay: 0.3, bright: 0.4 });
+          S.noise({ freq: 500, type: "lowpass", q: 0.8, peak: 0.2, decay: 0.08 });
+        } else if (grade === "off") {
+          ring(f * 1.06, { peak: 0.13, decay: 0.35, bright: 1.4 });
+          ring(f * 1.13, { peak: 0.09, decay: 0.3 });
+          S.noise({ freq: 1200, q: 0.7, peak: 0.24, decay: 0.12 });
+        } else if (grade === "cold") {
+          S.noise({ freq: 5200, type: "highpass", q: 0.7, peak: 0.38, decay: 0.05 });
+          S.tone({ freq: 2400, type: "triangle", peak: 0.06, decay: 0.15, at: 0.03 });
+        }
+      }),
+      overtone: safe(() => {
+        S.tone({ freq: 1244.5, peak: 0.08, attack: 0.03, decay: 1.4 });
+        S.tone({ freq: 1760, peak: 0.05, attack: 0.06, decay: 1.9 });
+        S.noise({ freq: 2600, q: 6, peak: 0.05, attack: 0.16, decay: 0.03 });
+      }),
+      attune: safe(() => {
+        S.noise({ freq: 280, sweepTo: 5200, q: 2, peak: 0.12, attack: 0.85, decay: 0.05 });       // reversed rush
+        S.tone({ freq: 82, to: 27, peak: 0.6, attack: 0.02, decay: 1.9, at: 0.9 });               // the floor drops away
+        [110, 116.54, 155.56, 220, 311.13].forEach((f, i) =>
+          S.tone({ freq: f, type: i % 2 ? "triangle" : "sine", peak: 0.06, attack: 0.3, decay: 2.8, at: 0.9 + 0.05 * i }));
+        ring(196, { peak: 0.26, decay: 2.4, at: 0.9, bright: 1.3 });
+      }),
+      formed: safe(() => {
+        ring(523.25, { peak: 0.16, decay: 1.6 });
+        S.tone({ freq: 784, type: "triangle", peak: 0.06, decay: 1.2, at: 0.08 });
+      }),
+      bellows: safe(() => {
+        S.noise({ freq: 200, sweepTo: 1400, type: "lowpass", q: 0.7, peak: 0.22, attack: 0.25, decay: 0.55 });
+        S.noise({ freq: 200, sweepTo: 1200, type: "lowpass", q: 0.7, peak: 0.16, attack: 0.25, decay: 0.5, at: 0.55 });
+      }),
+      land: safe(() => {
+        S.tone({ freq: 120, to: 60, peak: 0.25, decay: 0.08 });
+        S.noise({ freq: 1800, q: 2, peak: 0.08, decay: 0.03 });
+      }),
+      steam: safe(() => {
+        S.noise({ freq: 7000, sweepTo: 1800, type: "highpass", q: 0.6, peak: 0.26, attack: 0.02, decay: 1.3 });
+        for (let i = 0; i < 7; i++) S.tone({ freq: 380 + Math.random() * 520, to: 900 + Math.random() * 400, peak: 0.03, decay: 0.05, at: 0.15 + Math.random() * 0.8 });
+      }),
+      reward: safe((tierId) => {
+        const notes = tierId === "voidforged" ? [220, 311.13, 415.3, 440]
+          : tierId === "masterwork" ? [523.25, 659.25, 783.99, 1046.5]
+          : [392, 493.88, 587.33];
+        notes.forEach((f, i) => S.tone({ freq: f, type: "triangle", peak: 0.09, decay: 0.7, at: 0.05 + i * 0.08 }));
+      }),
+      shatter: safe(() => {
+        S.noise({ freq: 1800, q: 0.6, peak: 0.5, decay: 0.28 });
+        S.tone({ freq: 110, to: 38, peak: 0.5, decay: 0.3 });
+        for (let i = 0; i < 6; i++) S.tone({ freq: 1800 + Math.random() * 2400, type: "triangle", peak: 0.05, decay: 0.12, at: 0.04 + Math.random() * 0.35 });
+      }),
+      denied: safe(() => S.tone({ freq: 180, type: "square", peak: 0.05, decay: 0.12 })),
+    };
+  })();
+
+  /* ---------------- ForgeView ---------------- */
+  const ForgeView = (() => {
+    const VB_W = 640;
+    const VB_H = 440;
+    const PIECE_AT = { anvil: [350, 286, 1], furnace: [98, 322, 0.46], trough: [558, 374, 0.5] };
+    const HAMMER = { x: 612, y: 238, reach: 258, face: 268, rest: 30, idle: 36 };
+    const PHASE_UI = {
+      idle:      { pill: "Cold",      tone: "",       label: "" },
+      heating:   { pill: "Heating",   tone: "fire",   label: "Heating" },
+      working:   { pill: "Forging",   tone: "fire",   label: "" },
+      quench:    { pill: "Quench",    tone: "live",   label: "Quench" },
+      done:      { pill: "Forged",    tone: "gold",   label: "" },
+      shattered: { pill: "Shattered", tone: "danger", label: "" },
+    };
+    const el = {};
+    const fx = createFx();
+    const hammer = { angle: HAMMER.idle, vel: 0 };
+    let pieceKey = "";
+    let sessionId = null;
+    let shownResult = null;
+    let armoryKey = "";
+    let labelKey = "";
+    let nextEmber = 0;
+
+    function build() {
+      [
+        "fgStage", "fgPieceWrap", "fgPiece", "fgPieceGlow", "fgPieceHi", "fgCracks", "fgFace", "fgFlash",
+        "fgHammer", "fgAmbient", "fgRipple", "fgFx", "fgTempMark", "fgLabel", "fgRes", "fgBlueprints",
+        "fgForm", "fgIntegrity", "fgIntegrityBar", "fgChain", "fgHeats", "fgResult", "fgHint", "fgAction",
+        "fgActionLabel", "fgActionKey", "fgReheat", "fgArmoryCount", "fgArmory", "fgForged", "fgShattered",
+        "fgBest", "fgSound", "forgePill",
+      ].forEach((id) => (el[id] = document.getElementById(id)));
+      BLUEPRINTS.forEach((bp) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "fg-bp";
+        b.dataset.bp = bp.id;
+        b.innerHTML = `<span class="fg-bp-ico" aria-hidden="true">${bp.icon}</span><span class="fg-bp-name">${bp.name}</span><span class="fg-bp-fee"></span>`;
+        el.fgBlueprints.appendChild(b);
+      });
+      el.chips = [...el.fgBlueprints.children];
+      fx.init(el.fgFx);
+      el.fgHammer.setAttribute("transform", `rotate(${HAMMER.idle} ${HAMMER.x} ${HAMMER.y})`);
+    }
+
+    // Scene (viewBox) coordinates → fractional stage coordinates, matching preserveAspectRatio="slice"
+    function toFrac(x, y) {
+      const r = el.fgStage.getBoundingClientRect();
+      if (!r.width) return [x / VB_W, y / VB_H];
+      const k = Math.max(r.width / VB_W, r.height / VB_H);
+      return [((r.width - VB_W * k) / 2 + x * k) / r.width, ((r.height - VB_H * k) / 2 + y * k) / r.height];
+    }
+
+    function setLabel(text, tone) {
+      const key = text + "|" + tone;
+      if (key === labelKey) return;
+      labelKey = key;
+      el.fgLabel.textContent = text;
+      if (tone) el.fgLabel.dataset.tone = tone;
+      else delete el.fgLabel.dataset.tone;
+    }
+
+    function resultHTML(r) {
+      if (r.outcome === "shattered") {
+        return `
+          <div class="fg-item" data-tier="shattered">
+            <div class="fg-item-head"><span class="fg-item-icon">${r.icon}</span><div class="fg-item-title"><span class="fg-item-tier">Shattered</span><b class="fg-item-name">${r.name} lost</b></div></div>
+            <div class="fg-loot"><div class="neg"><b>−$${r.fee}</b><small>Materials</small></div><div class="neg"><b>${Math.round(r.form * 100)}%</b><small>Formed</small></div></div>
+            <div class="fg-item-meta">The piece gave way on the anvil.</div>
+          </div>`;
+      }
+      const it = r.item;
+      const temper = { true: "True temper", brittle: "Brittle temper", soft: "Soft temper" }[it.temper];
+      const meta = [temper, `${it.heats} heat${it.heats === 1 ? "" : "s"}`, `◆ ${it.perfects}/${it.strikes} perfect`, `×${r.bestChain} streak`];
+      const affixes = it.affixes.map((a) => `<div class="fg-item-affix">◈ ${a.name}</div>`).join("");
+      return `
+        <div class="fg-item" data-tier="${it.tier}">
+          <div class="fg-item-head"><span class="fg-item-icon">${it.icon}</span><div class="fg-item-title"><span class="fg-item-tier">${r.tierName}</span><b class="fg-item-name">${it.name}</b></div><span class="fg-item-q" title="Quality">${it.quality}</span></div>
+          <div class="fg-item-stats"><span>Edge <b>${it.stats.edge}</b></span><span>Balance <b>${it.stats.balance}</b></span><span>Temper <b>${it.stats.temper}</b></span></div>
+          ${affixes}
+          <div class="fg-loot"><div><b>+$${Fmt.int(r.gold)}</b><small>Gold</small></div><div><b>+${Fmt.int(r.influence)}</b><small>Influence</small></div></div>
+          <div class="fg-item-meta">${meta.join(" · ")}</div>
+        </div>`;
+    }
+
+    function render() {
+      const f = state.forge;
+      const s = f.session;
+      const phase = f.phase;
+      const live = FORGE_LIVE.has(phase);
+      const ui = PHASE_UI[phase];
+      const bp = blueprintById(f.blueprint);
+
+      el.fgStage.dataset.phase = phase;
+      el.fgStage.toggleAttribute("data-live", live && !f.paused);
+      el.fgStage.toggleAttribute("data-attuned", !!(s && s.attuned));
+      el.fgStage.dataset.furnace = s && live && s.pos === "furnace" ? "hot" : "";
+
+      // Workpiece
+      el.fgPieceWrap.style.opacity = s && phase !== "shattered" ? "1" : "0";
+      if (s) {
+        const [x, y, k] = PIECE_AT[s.pos];
+        const tf = `translate(${x}px, ${y}px) scale(${k})`;
+        if (s.id !== sessionId) {
+          // a fresh billet appears in the fire rather than sliding over from the last piece
+          sessionId = s.id;
+          el.fgPieceWrap.style.transition = "none";
+          el.fgPieceWrap.style.transform = tf;
+          void el.fgPieceWrap.getBoundingClientRect();
+          el.fgPieceWrap.style.transition = "";
+        } else {
+          el.fgPieceWrap.style.transform = tf;
+        }
+        const sbp = blueprintById(s.bp);
+        const form = s.progress / s.params.work;
+        const key = `${s.id}:${form.toFixed(3)}:${s.cracks.length}`;
+        if (key !== pieceKey) {
+          pieceKey = key;
+          const d = piecePath(sbp, form);
+          el.fgPiece.setAttribute("d", d);
+          el.fgPieceGlow.setAttribute("d", d);
+          el.fgPieceHi.setAttribute("d", d);
+          el.fgCracks.setAttribute("d", crackPath(sbp, form, s.cracks));
+        }
+        if (phase === "done") {
+          const tierId = f.result && f.result.tier;
+          el.fgPiece.setAttribute("fill", s.attuned ? "url(#fgVoidGrad)" : "url(#fgFinishGrad)");
+          el.fgPieceGlow.setAttribute("stroke", FORGE.TIER_GLOW[tierId] || "#cfd8e3");
+          el.fgPieceGlow.style.opacity = tierId === "crude" || tierId === "standard" ? "0.18" : "0.55";
+        }
+      }
+      if (!live) {
+        el.fgFace.style.opacity = "0";
+        el.fgAmbient.style.opacity = "0.08";
+        el.fgTempMark.style.setProperty("--t", "0");
+        setLabel(ui.label, "");
+      }
+
+      // Resonance (no numbers — the bar, its glow and the sound carry it)
+      const res = s ? s.resonance : 0;
+      el.fgRes.style.setProperty("--res", res.toFixed(1) + "%");
+      el.fgRes.toggleAttribute("data-full", !!s && live && res >= 100);
+      el.fgRes.toggleAttribute("data-hollow", !!(s && s.attuned));
+
+      // Gauges
+      el.fgForm.style.width = (s ? clamp(s.progress / s.params.work, 0, 1) * 100 : 0).toFixed(1) + "%";
+      const integrity = s ? s.integrity : 100;
+      el.fgIntegrity.style.width = integrity + "%";
+      el.fgIntegrityBar.toggleAttribute("data-low", integrity < 35);
+      const chain = s ? s.chain : 0;
+      el.fgChain.textContent = chain;
+      el.fgChain.classList.toggle("hot", chain >= 4);
+      el.fgHeats.textContent = s ? s.heats : 0;
+
+      // Blueprints
+      el.chips.forEach((chip) => {
+        const b = blueprintById(chip.dataset.bp);
+        const locked = f.forged < b.unlock;
+        chip.setAttribute("aria-pressed", String(f.blueprint === b.id));
+        chip.disabled = live || locked;
+        chip.toggleAttribute("data-locked", locked);
+        chip.querySelector(".fg-bp-fee").textContent = locked ? `🔒 ${b.unlock}` : `$${b.fee}`;
+        chip.title = locked ? `Unlocks after ${b.unlock} forged items` : `${b.name} · $${b.fee}`;
+      });
+
+      // Actions
+      let mode = "start";
+      let label;
+      let disabled = false;
+      if (!live) {
+        const afford = state.gold >= bp.fee;
+        label = afford ? `${f.result ? "Forge again" : "Forge"} · $${bp.fee}` : `Need $${bp.fee}`;
+        disabled = !afford || f.forged < bp.unlock;
+      } else if (phase === "heating") {
+        mode = "busy";
+        label = "Heating…";
+        disabled = true;
+      } else if (phase === "working") {
+        mode = "strike";
+        label = "Strike";
+      } else {
+        mode = "quench";
+        label = s.plunged ? "Quenching…" : "Quench";
+        disabled = s.plunged;
+      }
+      if (f.paused) { label = "Paused"; disabled = true; }
+      el.fgAction.dataset.mode = mode;
+      el.fgActionLabel.textContent = label;
+      el.fgAction.disabled = disabled;
+      el.fgReheat.disabled = !(s && !f.paused && s.onAnvil && !s.plunged && (phase === "working" || phase === "quench"));
+
+      // Result + armory
+      if (f.result !== shownResult) {
+        shownResult = f.result;
+        if (f.result) el.fgResult.innerHTML = resultHTML(f.result);
+      }
+      el.fgResult.hidden = live || !f.result;
+      el.fgHint.hidden = f.forged > 0;
+      const aKey = `${f.armory.length}:${f.armory[0] ? f.armory[0].uid : ""}`;
+      if (aKey !== armoryKey) {
+        armoryKey = aKey;
+        el.fgArmoryCount.textContent = `${f.armory.length} item${f.armory.length === 1 ? "" : "s"}`;
+        el.fgArmory.innerHTML = f.armory.length
+          ? f.armory.slice(0, 5).map((it) => `<li data-tier="${it.tier}"><i></i><span>${it.name}</span><small>${it.quality}</small></li>`).join("")
+          : `<li class="empty">Nothing forged yet</li>`;
+      }
+      el.fgForged.textContent = Fmt.int(f.forged);
+      el.fgShattered.textContent = Fmt.int(f.shattered);
+      el.fgBest.textContent = Fmt.int(f.bestChain);
+      el.fgSound.setAttribute("aria-pressed", String(!Sfx.muted));
+      el.fgSound.textContent = Sfx.muted ? "🔇" : "🔊";
+      el.forgePill.textContent = f.paused ? "Paused" : ui.pill;
+      if (ui.tone && !f.paused) el.forgePill.dataset.tone = ui.tone;
+      else delete el.forgePill.dataset.tone;
+    }
+
+    // Per-frame: heat colour, beat swell, light, hammer spring, embers
+    function frame(s, now, dt) {
+      const f = state.forge;
+      const phase = f.phase;
+      const live = FORGE_LIVE.has(phase);
+      let swell = 0;
+      let flash = 0;
+      const c = s && s.clock;
+      if (phase === "working" && c && s.onAnvil && !f.paused) {
+        const last = c.recent[c.recent.length - 1];
+        const prevAt = last ? last.at : c.anchorAt;
+        swell = Math.pow(clamp((now - prevAt) / (c.nextAt - prevAt), 0, 1), 2.4);   // builds toward the beat
+        flash = last ? Math.exp(-(now - last.at) / 90) : 0;                          // brief bloom as it rings
+      }
+      const pulse = Math.max(swell, flash);
+
+      if (s && live) {
+        const t = s.temp;
+        let col = metalRGB(t, s.resonance);
+        if (s.attuned) col = mixRGB(col, OBSIDIAN_RGB, 0.5);
+        el.fgPiece.setAttribute("fill", rgb(col));
+        el.fgPieceGlow.setAttribute("stroke", rgb(s.attuned ? ATTUNED_GLOW : col));
+        const vis = clamp(t * 1.4 - 0.2, 0, 1);
+        el.fgPieceGlow.style.opacity = (vis * (0.3 + 0.7 * pulse)).toFixed(3);
+        el.fgFace.style.opacity = s.pos === "anvil" ? (vis * (0.2 + 0.5 * pulse)).toFixed(3) : "0";
+        el.fgAmbient.style.opacity = (0.08 + 0.34 * vis * (0.55 + 0.45 * pulse)).toFixed(3);
+        el.fgTempMark.style.setProperty("--t", t.toFixed(3));
+
+        let label = PHASE_UI[phase].label;
+        let tone = phase === "quench" ? "quench" : phase === "heating" ? "fire" : "";
+        if (f.paused) { label = "Paused"; tone = ""; }
+        else if (phase === "working" && t < FORGE.COLD) { label = "Too cold"; tone = "danger"; }
+        else if (phase === "quench" && s.plunged) label = "";
+        setLabel(label, tone);
+        el.fgStage.toggleAttribute("data-band", phase === "quench" && !s.plunged && t >= FORGE.TEMPER_LO && t <= FORGE.TEMPER_HI);
+        el.fgReheat.toggleAttribute("data-urge", phase === "working" && t < FORGE.COLD + 0.06);
+
+        if (now > nextEmber && !f.paused) {
+          nextEmber = now + 160 + Math.random() * 280;
+          const [ex, ey] = toFrac(98, 300);
+          fx.burst(ex, ey, {
+            count: 1, shape: "dot", color: s.attuned ? "#c084fc" : "#ffae5c", speed: 50, spread: 0.9,
+            grav: -30, drag: 0.985, life: 1.8, size: 1.3, alpha: 0.8, jitter: 0.08,
+          });
+        }
+      } else {
+        el.fgStage.removeAttribute("data-band");
+        el.fgReheat.removeAttribute("data-urge");
+      }
+
+      // Hammer: a damped spring toward rest; the rest pose lifts as each beat approaches
+      const target = phase === "working" && !f.paused ? HAMMER.rest + 8 * swell : HAMMER.idle;
+      const steps = Math.max(1, Math.ceil(dt / (1 / 120)));   // sub-step so the spring stays stable on slow frames
+      for (let i = 0; i < steps; i++) {
+        hammer.vel += (320 * (target - hammer.angle) - 24 * hammer.vel) * (dt / steps);
+        hammer.angle += hammer.vel * (dt / steps);
+      }
+      el.fgHammer.setAttribute("transform", `rotate(${hammer.angle.toFixed(2)} ${HAMMER.x} ${HAMMER.y})`);
+    }
+
+    /* ---- transient effects ---- */
+    function restart(node, ...cls) {
+      node.classList.remove(...cls);
+      void node.offsetWidth;
+      node.classList.add(...cls);
+    }
+    function pop(x, y, text, cls) {
+      const n = document.createElement("span");
+      n.className = "fg-pop " + cls;
+      n.textContent = text;
+      n.style.left = (x * 100).toFixed(2) + "%";
+      n.style.top = (y * 100).toFixed(2) + "%";
+      el.fgStage.appendChild(n);
+      const done = () => n.remove();
+      n.addEventListener("animationend", done, { once: true });
+      setTimeout(done, 2500);
+    }
+    function bumpHud(keys) {
+      keys.forEach((k) => {
+        const n = document.querySelector(`.hud-stat[data-stat="${k}"]`);
+        if (n) restart(n, "bump");
+      });
+    }
+    function impact(s) {
+      const top = PIECE_AT.anvil[1] + pieceTopAt(blueprintById(s.bp), s.progress / s.params.work);
+      return { top, frac: toFrac(352, top), floor: toFrac(0, 392)[1] };
+    }
+
+    return {
+      el,
+      build,
+      render,
+      frame,
+
+      fxBlow(grade, s, offset) {
+        const { top, frac: [ix, iy], floor } = impact(s);
+        hammer.angle = -((top - HAMMER.face) / HAMMER.reach) * (180 / Math.PI);   // head meets the metal
+        hammer.vel = grade === "perfect" ? 240 : 190;
+        const r = s.resonance / 100;
+        const hot = rgb(metalRGB(Math.max(0.55, s.temp), s.resonance));
+        const say = offset < 0 ? "EARLY" : "LATE";
+        if (grade === "perfect") {
+          restart(el.fgFlash, "on", "perfect");
+          restart(el.fgStage, "impact");
+          fx.burst(ix, iy, { count: 16 + Math.round(16 * r), color: hot, speed: 430, spread: 2.7, grav: 900, life: 0.6, floor, jitter: 0.03 });
+          fx.burst(ix, iy, { count: 8, color: "#ffffff", speed: 280, spread: 2.2, grav: 700, life: 0.35, floor });
+          pop(ix, iy - 0.12, "PERFECT", "perfect");
+        } else if (grade === "good") {
+          el.fgFlash.classList.remove("perfect");
+          restart(el.fgFlash, "on");
+          fx.burst(ix, iy, { count: 11, color: hot, speed: 340, spread: 2.4, grav: 900, life: 0.5, floor, jitter: 0.02 });
+        } else if (grade === "poor") {
+          fx.burst(ix, iy, { count: 5, color: "#b86a2c", speed: 200, spread: 2, grav: 900, life: 0.35, floor });
+          pop(ix, iy - 0.12, say, "weak");
+        } else if (grade === "off") {
+          restart(el.fgStage, "jolt");
+          fx.burst(ix, iy, { count: 7, color: "#ff5a3c", speed: 240, spread: 2.6, grav: 900, life: 0.4, floor });
+          fx.burst(ix, iy, { count: 3, shape: "puff", color: "#3a3f48", alpha: 0.35, speed: 30, grav: -40, drag: 0.95, life: 1.1, size: 6, grow: 2.5 });
+          pop(ix, iy - 0.12, say, "bad");
+        } else if (grade === "cold") {
+          restart(el.fgStage, "jolt");
+          fx.burst(ix, iy, { count: 4, color: "#9aa4b2", speed: 200, spread: 2.4, grav: 900, life: 0.3, floor });
+          fx.burst(ix, iy, { count: 4, shape: "puff", color: "#4a4f58", alpha: 0.3, speed: 40, grav: -20, drag: 0.95, life: 1, size: 5, grow: 2 });
+          pop(ix, iy - 0.12, "COLD", "bad");
+        }
+      },
+      fxOvertone(s) {
+        const { frac: [ix, iy] } = impact(s);
+        hammer.angle = 6;
+        hammer.vel = 120;
+        restart(el.fgRipple, "on");
+        fx.burst(ix, iy, { count: 6, shape: "dot", color: "#d8b4fe", speed: 70, spread: 1.6, grav: -60, drag: 0.97, life: 1.2, size: 1.4 });
+      },
+      fxAttune(s) {
+        const { frac: [ix, iy] } = impact(s);
+        hammer.angle = 4;
+        hammer.vel = 90;
+        restart(el.fgStage, "attune");
+        restart(el.fgRipple, "on");
+        fx.burst(ix, iy, { count: 38, shape: "dot", color: "#c084fc", speed: 110, spread: 1.5, grav: -150, drag: 0.97, life: 2.3, size: 1.8, jitter: 0.22 });
+        fx.burst(ix, iy, { count: 12, shape: "dot", color: "#f5ecff", speed: 60, spread: 2, grav: -90, drag: 0.97, life: 1.8, size: 1.2, jitter: 0.1 });
+      },
+      fxFormed(s) {
+        const { frac: [ix, iy] } = impact(s);
+        el.fgFlash.classList.remove("perfect");
+        restart(el.fgFlash, "on");
+        fx.burst(ix, iy, { count: 14, shape: "dot", color: "#ffd98a", speed: 150, spread: 3.2, grav: 0, drag: 0.94, life: 0.8, size: 1.5, jitter: 0.25 });
+      },
+      fxSteam() {
+        const [sx, sy] = toFrac(558, 356);
+        fx.burst(sx, sy, { count: 18, shape: "puff", color: "#cfd8e3", alpha: 0.28, speed: 70, spread: 1.3, grav: -60, drag: 0.95, life: 1.8, size: 7, grow: 3, jitter: 0.1 });
+      },
+      fxReveal(r) {
+        const [px, py] = toFrac(350, 286);
+        const color = FORGE.TIER_GLOW[r.tier] || "#cfd8e3";
+        const rich = r.tier === "masterwork" || r.tier === "voidforged" || r.tier === "superior";
+        fx.burst(px, py, { count: rich ? 26 : 10, shape: "dot", color, speed: 120, spread: 3.2, grav: -25, drag: 0.96, life: 1.4, size: 1.5, jitter: 0.3 });
+        bumpHud(["gold", "influence"]);
+      },
+      fxShatter(s) {
+        const { frac: [ix, iy], floor } = impact(s);
+        restart(el.fgStage, "jolt");
+        fx.burst(ix, iy, { count: 26, color: "#ff7a3c", speed: 380, spread: 3, grav: 1000, life: 0.7, floor });
+        fx.burst(ix, iy, { count: 14, shape: "dot", color: "#5a4a44", speed: 260, spread: 2.6, grav: 1100, drag: 0.97, life: 0.9, size: 2.2, alpha: 0.9, floor });
+        fx.burst(ix, iy, { count: 6, shape: "puff", color: "#3a3f48", alpha: 0.4, speed: 40, grav: -30, drag: 0.95, life: 1.4, size: 7, grow: 3 });
+      },
+      fxDenied() { restart(el.fgAction, "denied"); },
+      ensureVisible() {
+        const r = el.fgStage.getBoundingClientRect();
+        const top = document.getElementById("hud").getBoundingClientRect().bottom + 8;
+        const nav = document.getElementById("nav");
+        const bottom = (getComputedStyle(nav).position === "fixed" ? nav.getBoundingClientRect().top : window.innerHeight) - 8;
+        const need = r.height + 60;   // stage plus the strike/reheat row beneath it
+        if (r.top >= top && r.top + need <= bottom) return;
+        const y = window.scrollY + r.top - top - Math.max(0, (bottom - top - need) / 2);
+        window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+      },
+    };
+  })();
+
+  /* ---------------- ForgeCtl controller ---------------- */
+  const ForgeCtl = (() => {
+    let raf = 0;
+    let lastFrame = 0;
+    let tailUntil = 0;
+    let nextId = 0;
+    let holdTimer = 0;
+    const commit = (patch) => setState({ forge: { ...state.forge, ...patch } });
+    const isLive = () => FORGE_LIVE.has(state.forge.phase);
+    // Cooling metal rings slower: the beat period stretches as temperature falls
+    const period = (s) => s.params.beatMs * (1 + FORGE.TEMPO_DRIFT * (1 - s.temp));
+
+    function loop() {
+      if (raf) return;
+      lastFrame = performance.now();
+      raf = requestAnimationFrame(tick);
+    }
+    function tick() {
+      raf = 0;
+      const now = performance.now();
+      // Real elapsed time (so cooling is identical at 30, 60 or 144 fps); long stalls are capped,
+      // and leaving the tab pauses the session outright.
+      const dt = Math.min(0.25, Math.max(0, (now - lastFrame) / 1000));
+      lastFrame = now;
+      const s = state.forge.session;
+      if (!s) return;
+      if (isLive() && !state.forge.paused) step(s, now, dt);
+      ForgeView.frame(s, now, dt);
+      if ((isLive() && !state.forge.paused) || now < tailUntil) raf = requestAnimationFrame(tick);
+    }
+
+    function start() {
+      const f = state.forge;
+      if (isLive()) return;
+      const bp = blueprintById(f.blueprint);
+      if (f.forged < bp.unlock || state.gold < bp.fee) { ForgeView.fxDenied(); ForgeSfx.denied(); return; }
+      Sfx.unlock();
+      const now = performance.now();
+      setState({ gold: state.gold - bp.fee });
+      const session = {
+        id: ++nextId,
+        bp: bp.id,
+        params: {
+          beatMs: bp.beatMs, perfectMs: bp.perfectMs, goodMs: bp.goodMs, poorMs: bp.poorMs,
+          halfMs: bp.perfectMs, cool: bp.cool, work: bp.work,
+        },
+        temp: FORGE.START_TEMP,
+        pos: "furnace",               // furnace | anvil | trough
+        onAnvil: false,
+        slideUntil: 0,
+        formed: false,                // shaping complete → quench
+        plunged: false,
+        quenchAt: 0,
+        finishAt: 0,
+        heats: 1,
+        progress: 0,                  // work units toward params.work
+        integrity: 100,
+        resonance: 0,                 // 0–100
+        peakResonance: 0,
+        chain: 0,
+        bestChain: 0,
+        counts: { perfect: 0, good: 0, poor: 0, off: 0, cold: 0, overtone: 0, skip: 0 },
+        resSum: 0,                    // resonance summed at each judged blow (for quality)
+        scored: 0,
+        cracks: [],
+        clock: null,                  // beat clock for the current heat (see startClock)
+        lastAt: null,
+        lastStrike: null,
+        cadence: { stage: 0, anchor: -1 },
+        attuned: false,
+        temper: null,
+        // Precise timing log — kept for later systems, never shown raw. performance.now() clock.
+        timing: { startedAt: now, heats: [{ at: now, from: FORGE.START_TEMP }], beats: [], strikes: [], quench: null },
+      };
+      commit({ phase: "heating", session, result: null, paused: false });
+      ForgeSfx.startAmbience();
+      ForgeSfx.bellows();
+      ForgeView.ensureVisible();
+      loop();
+    }
+
+    function step(s, now, dt) {
+      if (s.slideUntil) {
+        if (now < s.slideUntil) return;
+        s.slideUntil = 0;
+        arrive(s, now);
+      }
+      const phase = state.forge.phase;
+      if (phase === "heating") {
+        if (s.pos === "furnace") {
+          s.temp = Math.min(1, s.temp + FORGE.HEAT_RATE * dt);
+          if (s.temp >= 1) moveTo(s, "anvil", now);
+        }
+      } else if (phase === "working") {
+        s.temp = Math.max(0, s.temp - s.params.cool * dt);
+        fireBeats(s, now);
+      } else if (phase === "quench") {
+        if (!s.plunged) s.temp = Math.max(0, s.temp - s.params.cool * dt);
+        else if (s.finishAt && now >= s.finishAt) complete(s);
+      }
+    }
+
+    function moveTo(s, pos, now) {
+      s.pos = pos;
+      s.onAnvil = false;
+      s.slideUntil = now + FORGE.SLIDE_MS;
+      commit({});
+    }
+
+    function arrive(s, now) {
+      if (s.pos === "anvil") {
+        s.onAnvil = true;
+        ForgeSfx.land();
+        if (s.formed) {
+          s.quenchAt = now + FORGE.QUENCH_LOCK_MS;
+          commit({ phase: "quench" });
+        } else {
+          startClock(s, now);
+          commit({ phase: "working" });
+        }
+      } else if (s.pos === "trough") {
+        s.temp = 0.06;
+        s.finishAt = now + FORGE.PLUNGE_MS;
+        ForgeView.fxSteam();
+        ForgeSfx.steam();
+        commit({});
+      }
+    }
+
+    // A fresh beat grid each time the metal lands; the first beat arrives one period later.
+    function startClock(s, now) {
+      s.clock = { anchorAt: now, recent: [], nextIndex: 1, nextAt: now + period(s), claimed: new Set(), began: false, tickAt: 0 };
+      s.cadence.stage = 0;
+      s.lastStrike = null;
+      ForgeSfx.swell(s.clock.nextAt, s.resonance, s.attuned);
+    }
+
+    function fireBeats(s, now) {
+      const c = s.clock;
+      if (!c) return;
+      while (now >= c.nextAt) {
+        const beat = { index: c.nextIndex, at: c.nextAt };
+        const prev = c.recent[c.recent.length - 1];
+        if (prev && c.began && !c.claimed.has(prev.index) && !Cadence.exempt(s, prev.index)) skipBeat(s, prev);
+        c.recent.push(beat);
+        if (c.recent.length > 4) c.recent.shift();
+        c.nextIndex += 1;
+        c.nextAt = beat.at + period(s);
+        if (s.timing.beats.length < 600) s.timing.beats.push({ heat: s.heats, index: beat.index, at: beat.at });
+        Cadence.expire(s, beat.index);
+        ForgeSfx.swell(c.nextAt, s.resonance, s.attuned);
+        for (const k of c.claimed) if (k < beat.index - 4) c.claimed.delete(k);
+      }
+      if (c.tickAt !== c.nextAt && c.nextAt - now < 110) {
+        c.tickAt = c.nextAt;
+        ForgeSfx.tick(c.nextAt, s.temp);
+      }
+    }
+
+    // Once you've started striking, letting a beat pass drains a little resonance and breaks the streak
+    function skipBeat(s, beat) {
+      s.resonance = Math.max(0, s.resonance + FORGE.RES.skip);
+      s.chain = 0;
+      s.counts.skip += 1;
+      logStrike(s, { kind: "skip", heat: s.heats, beatIndex: beat.index, beatAt: beat.at, resAfter: s.resonance });
+      commit({});
+    }
+
+    function logStrike(s, rec) {
+      if (s.timing.strikes.length < 400) s.timing.strikes.push(rec);
+    }
+
+    function strike(ts, source) {
+      const f = state.forge;
+      const s = f.session;
+      Sfx.unlock();
+      if (!s || f.paused || !isLive()) return;
+      if (f.phase === "quench") { quench(); return; }
+      if (f.phase !== "working" || !s.onAnvil || !s.clock) return;
+      const c = s.clock;
+      const nearest = nearestBeat(c, ts);
+      const cycle = cycleOf(c, ts);
+      let grade = gradeFor(s.params, nearest.offset);
+      if (grade !== "off" && c.claimed.has(nearest.index)) grade = "off";   // a second blow on a beat that already rang
+      const rec = {
+        kind: "blow", source, ts, heat: s.heats,
+        beatIndex: nearest.index, beatAt: nearest.at, offset: nearest.offset,
+        period: cycle.period, phase: cycle.frac, halfOffset: ts - (cycle.startAt + cycle.period / 2),
+        temp: s.temp, resBefore: s.resonance, chainBefore: s.chain,
+        sinceLast: s.lastAt === null ? null : ts - s.lastAt, cadenceStage: s.cadence.stage, grade: null,
+      };
+      s.lastAt = ts;
+      c.began = true;
+      const cold = s.temp < FORGE.COLD;
+      const verdict = cold ? null : Cadence.feed(s, { halfOffset: rec.halfOffset, nearest, cycle, grade, full: s.resonance >= 100 });
+      if (verdict === "overtone") return overtone(s, rec);
+      if (verdict === "attuned") return attune(s, rec);
+      blow(s, cold ? "cold" : grade, nearest, rec);
+    }
+
+    function blow(s, grade, nearest, rec) {
+      if (grade === "perfect" || grade === "good" || grade === "poor") s.clock.claimed.add(nearest.index);
+      const eff = s.temp >= FORGE.STIFF ? 1 : 0.65;
+      const work = (FORGE.WORK[grade] || 0) * eff * (1 + FORGE.RES_POWER * (s.resonance / 100));
+      s.resSum += s.resonance;
+      s.scored += 1;
+      s.progress = Math.min(s.params.work, s.progress + work);
+      s.resonance = clamp(s.resonance + FORGE.RES[grade], 0, 100);
+      s.peakResonance = Math.max(s.peakResonance, s.resonance);
+      s.integrity = Math.max(0, s.integrity + (FORGE.INTEGRITY[grade] || 0));
+      if (grade === "perfect" || grade === "good") {
+        s.chain += 1;
+        s.bestChain = Math.max(s.bestChain, s.chain);
+      } else {
+        s.chain = 0;
+      }
+      s.counts[grade] += 1;
+      s.temp = Math.max(0, s.temp - FORGE.STRIKE_COOL);
+      if (grade === "off" || grade === "cold") s.cracks.push({ u: 0.12 + Math.random() * 0.76, seed: Math.random(), deep: grade === "cold" });
+      s.lastStrike = { beatIndex: nearest.index, grade, heat: s.heats };
+      Object.assign(rec, { grade, work, resAfter: s.resonance, chain: s.chain, integrity: s.integrity, progress: s.progress });
+      logStrike(s, rec);
+
+      ForgeView.fxBlow(grade, s, nearest.offset);
+      ForgeSfx.blow(grade, s.chain, s.resonance);
+      Haptics.buzz(grade === "perfect" ? [10, 25, 16] : grade === "good" ? 12 : grade === "poor" ? 6 : 40);
+      Bus.emit("forge:strike", rec);
+
+      if (s.integrity <= 0) return shatter(s);
+      if (s.progress >= s.params.work - 1e-6) return beginQuench(s);
+      commit({});
+    }
+
+    function overtone(s, rec) {
+      rec.grade = "overtone";
+      s.counts.overtone += 1;
+      logStrike(s, rec);
+      ForgeView.fxOvertone(s);
+      ForgeSfx.overtone();
+      Bus.emit("forge:overtone", rec);
+      commit({});
+    }
+
+    function attune(s, rec) {
+      rec.grade = "attuned";
+      s.counts.overtone += 1;
+      s.attuned = true;
+      s.attunedAt = rec.ts;
+      logStrike(s, rec);
+      ForgeView.fxAttune(s);
+      ForgeSfx.attune();
+      Haptics.buzz([30, 60, 30, 60, 120]);
+      Bus.emit("forge:attuned", { session: s.id, blueprint: s.bp, at: rec.ts });
+      commit({});
+    }
+
+    function beginQuench(s) {
+      s.formed = true;
+      s.clock = null;
+      s.quenchAt = performance.now() + FORGE.QUENCH_LOCK_MS;
+      ForgeSfx.hush();
+      ForgeSfx.formed();
+      ForgeView.fxFormed(s);
+      commit({ phase: "quench" });
+    }
+
+    // The temper depends on the colour of the metal when it hits the water
+    function quench() {
+      const s = state.forge.session;
+      const now = performance.now();
+      if (!s.onAnvil || s.plunged || now < s.quenchAt) return;
+      s.temper = temperOf(s.temp);
+      s.timing.quench = { at: now, temp: s.temp, kind: s.temper.kind };
+      s.plunged = true;
+      moveTo(s, "trough", now);
+    }
+
+    function complete(s) {
+      const f = state.forge;
+      const bp = blueprintById(s.bp);
+      const quality = forgeQuality(s);
+      const tier = forgeTier(quality, s.attuned);
+      const item = makeItem(bp, s, quality, tier);
+      const gold = Math.round(bp.fee * tier.gold);
+      const influenceBefore = state.influence;
+      setState({ gold: state.gold + gold, influence: state.influence + Math.round(bp.influence * tier.influence) });   // clamped by setState
+      const result = {
+        outcome: "forged", item, tier: tier.id, tierName: tier.name, quality,
+        gold, influence: state.influence - influenceBefore, fee: bp.fee, bestChain: s.bestChain, attuned: s.attuned,
+      };
+      const prev = f.mastery[bp.id] || { forged: 0, best: 0 };
+      s.pos = "anvil";
+      s.finishAt = 0;
+      archive(s, "forged");
+      commit({
+        phase: "done",
+        result,
+        forged: f.forged + 1,
+        bestChain: Math.max(f.bestChain, s.bestChain),
+        mastery: { ...f.mastery, [bp.id]: { forged: prev.forged + 1, best: Math.max(prev.best, quality) } },
+        armory: [item, ...f.armory].slice(0, FORGE.ARMORY_KEEP),
+      });
+      tailUntil = performance.now() + 1200;
+      ForgeSfx.stopAmbience();
+      ForgeSfx.reward(tier.id);
+      ForgeView.fxReveal(result);
+      Bus.emit("forge:complete", result);
+    }
+
+    function shatter(s) {
+      const f = state.forge;
+      const bp = blueprintById(s.bp);
+      s.clock = null;
+      archive(s, "shattered");
+      const result = { outcome: "shattered", name: bp.name, icon: bp.icon, fee: bp.fee, form: s.progress / s.params.work };
+      commit({ phase: "shattered", result, shattered: f.shattered + 1, bestChain: Math.max(f.bestChain, s.bestChain) });
+      tailUntil = performance.now() + 1200;
+      ForgeSfx.stopAmbience();
+      ForgeSfx.shatter();
+      ForgeView.fxShatter(s);
+      Haptics.buzz([60, 40, 120]);
+      Bus.emit("forge:shattered", result);
+    }
+
+    // Back into the fire: full heat again, at the cost of a little integrity and much of the resonance
+    function reheat() {
+      const f = state.forge;
+      const s = f.session;
+      if (!s || f.paused || !s.onAnvil || s.plunged || (f.phase !== "working" && f.phase !== "quench")) return;
+      const now = performance.now();
+      s.heats += 1;
+      s.integrity = Math.max(1, s.integrity + FORGE.INTEGRITY.reheat);
+      s.resonance = Math.floor(s.resonance * FORGE.RES_KEEP_ON_REHEAT);
+      s.chain = 0;
+      s.clock = null;
+      s.cadence.stage = 0;
+      s.timing.heats.push({ at: now, from: s.temp });
+      s.pos = "furnace";
+      s.onAnvil = false;
+      s.slideUntil = now + FORGE.SLIDE_MS;
+      ForgeSfx.hush();
+      ForgeSfx.bellows();
+      commit({ phase: "heating" });
+      Bus.emit("forge:reheat", { heats: s.heats, temp: s.temp });
+    }
+
+    function archive(s, outcome) {
+      const log = state.forge.telemetry;
+      log.push({ id: s.id, blueprint: s.bp, outcome, params: s.params, counts: { ...s.counts }, attuned: s.attuned, timing: s.timing });
+      if (log.length > FORGE.TELEMETRY_KEEP) log.splice(0, log.length - FORGE.TELEMETRY_KEEP);
+    }
+
+    // Leaving the tab (or the page) freezes the metal; coming back restarts the beat cleanly
+    function pause() {
+      const f = state.forge;
+      if (!f.session || f.paused || !isLive()) return;
+      cancelHold();
+      ForgeSfx.stopAmbience();
+      commit({ paused: true });
+    }
+    function resume() {
+      const f = state.forge;
+      if (!f.paused) return;
+      const s = f.session;
+      const now = performance.now();
+      if (s.slideUntil) s.slideUntil = now + 80;
+      if (f.phase === "working" && s.onAnvil) startClock(s, now);
+      if (f.phase === "quench") {
+        if (s.plunged) s.finishAt = now + 300;
+        else s.quenchAt = now + FORGE.QUENCH_LOCK_MS;
+      }
+      commit({ paused: false });
+      ForgeSfx.startAmbience();
+      loop();
+    }
+
+    function cancelHold() {
+      clearTimeout(holdTimer);
+      holdTimer = 0;
+      ForgeView.el.fgReheat.classList.remove("holding");
+    }
+
+    function onKey(e) {
+      if (state.activeTab !== "forge" || e.ctrlKey || e.metaKey || e.altKey) return;
+      const tgt = e.target && e.target.closest ? e.target : null;
+      if (tgt && tgt.closest("input, textarea, select, [contenteditable]")) return;
+      const live = isLive();
+      if (live && FORGE.STRIKE_KEYS.includes(e.code)) {
+        e.preventDefault();
+        if (!e.repeat) strike(inputTime(e), "key");
+        return;
+      }
+      if (live && e.code === "KeyR") {
+        e.preventDefault();
+        if (!e.repeat) reheat();
+        return;
+      }
+      if (!live && (e.code === "Space" || e.code === "Enter" || e.code === "NumpadEnter")) {
+        if (tgt && tgt.closest("button, a, [role='tab']")) return;   // focused controls activate themselves
+        e.preventDefault();
+        if (!e.repeat) start();
+        return;
+      }
+      if (live && /^Digit\d$/.test(e.code)) e.preventDefault();   // a stray digit shouldn't walk away from the anvil
+    }
+
+    function init() {
+      const v = ForgeView.el;
+      const primary = (e) => e.pointerType || "pointer";
+      // The whole stage is the strike surface (pointerdown: lowest latency, honest timestamp)
+      v.fgStage.addEventListener("pointerdown", (e) => {
+        if (e.button > 0 || !isLive()) return;
+        e.preventDefault();
+        strike(inputTime(e), primary(e));
+      }, { passive: false });
+      v.fgStage.addEventListener("contextmenu", (e) => { if (isLive()) e.preventDefault(); });
+      v.fgAction.addEventListener("pointerdown", (e) => {
+        const ph = state.forge.phase;
+        if (e.button > 0 || (ph !== "working" && ph !== "quench")) return;
+        e.preventDefault();
+        strike(inputTime(e), primary(e));
+      }, { passive: false });
+      v.fgAction.addEventListener("click", () => { if (!isLive()) start(); });
+      // Reheat needs a short deliberate hold so rhythm taps can't trigger it by accident
+      v.fgReheat.addEventListener("pointerdown", (e) => {
+        if (e.button > 0 || v.fgReheat.disabled) return;
+        e.preventDefault();
+        try { v.fgReheat.setPointerCapture(e.pointerId); } catch (_) {}
+        v.fgReheat.classList.add("holding");
+        clearTimeout(holdTimer);
+        holdTimer = setTimeout(() => { cancelHold(); reheat(); }, FORGE.REHEAT_HOLD_MS);
+      });
+      ["pointerup", "pointercancel", "lostpointercapture"].forEach((t) => v.fgReheat.addEventListener(t, cancelHold));
+      v.fgReheat.addEventListener("contextmenu", (e) => e.preventDefault());
+      v.fgBlueprints.addEventListener("click", (e) => {
+        const chip = e.target.closest(".fg-bp");
+        if (!chip || chip.disabled || isLive()) return;
+        commit({ blueprint: chip.dataset.bp });
+      });
+      v.fgSound.addEventListener("click", () => {
+        Sfx.setMuted(!Sfx.muted);
+        if (Sfx.muted) ForgeSfx.stopAmbience();
+        else if (isLive()) ForgeSfx.startAmbience();
+        setState({});
+      });
+      window.addEventListener("keydown", onKey, true);   // capture: claims keys before Step 1 hotkeys
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) pause();
+        else if (state.activeTab === "forge") resume();
+      });
+      Bus.on("tab:change", ({ from, to }) => {
+        if (from === "forge") pause();
+        if (to === "forge") resume();
+      });
+      Bus.on("state:change", () => ForgeView.render());
+    }
+
+    return { init, start, strike, reheat, quench, pause, resume, blueprints: BLUEPRINTS };
+  })();
+
   /* ---------------- BOOT ---------------- */
   function boot() {
     VaultView.build();        // inject tumblers / face details before bindings are cached
     VaultBreach.init();
+    ForgeView.build();
+    ForgeCtl.init();
     Render.collect();
     initRouter();
     Emblem.init();
     switchTab(state.activeTab);
     Render.flush();
     VaultView.render();
+    ForgeView.render();
   }
 
   // Public API for later steps and console debugging.
-  window.EmpireAscent = { state, setState, switchTab, Bus, Render, Bindings, Fmt, CONFIG, TABS, VAULT, VaultBreach };
+  window.EmpireAscent = {
+    state, setState, switchTab, Bus, Render, Bindings, Fmt, CONFIG, TABS,
+    VAULT, VaultBreach, FORGE, BLUEPRINTS, ForgeCtl,
+  };
   window.switchTab = switchTab;
 
   boot();
