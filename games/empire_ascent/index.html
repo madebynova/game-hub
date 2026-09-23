@@ -475,6 +475,565 @@ button { font: inherit; color: inherit; }
   .nav-title { font-size: 9.5px; }
   .hud-stat-value { font-size: 11.5px; }
 }
+
+/* =====================================================================
+   9. VAULT BREACH (Step 2)
+     9a. Shared hooks (status pill tones, HUD bump)
+     9b. Module layout
+     9c. Mechanism face (SVG)
+     9d. Core
+     9e. Tumblers + approach rings
+     9f. Popups & keyframes
+     9g. Side panel
+     9h. Responsive
+   ===================================================================== */
+
+/* ---------- 9a. Shared hooks ---------- */
+.status-pill[data-tone="live"]   { --accent: var(--cyan); }
+.status-pill[data-tone="gold"]   { --accent: var(--gold); }
+.status-pill[data-tone="danger"] { --accent: var(--danger); }
+
+/* HUD chip flares when a reward or penalty lands on it */
+.hud-stat[data-stat="influence"], .hud-stat[data-stat="gold"] { --bump-color: var(--gold); }
+.hud-stat[data-stat="vault"] { --bump-color: var(--green); }
+.hud-stat[data-stat="heat"]  { --bump-color: var(--danger); }
+.hud-stat.bump { animation: hud-bump 0.8s var(--ease); }
+@keyframes hud-bump {
+  25% {
+    transform: translateY(-2px);
+    border-color: var(--bump-color);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--bump-color) 45%, transparent);
+  }
+}
+
+/* ---------- 9b. Module layout ---------- */
+.vb {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 300px);
+  align-items: center;
+  gap: 24px;
+  padding: 22px;
+  border-radius: var(--radius-lg);
+}
+.vb-stage { display: grid; place-items: center; min-width: 0; }
+
+.vb-mech {
+  --momentum: 0;
+  position: relative;
+  width: min(100%, 460px);
+  aspect-ratio: 1;
+  container-type: inline-size;      /* cqw units scale labels with the mechanism */
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.vb-mech[data-live] { touch-action: none; }   /* no scroll/zoom while a breach is running */
+.vb-mech.shake { animation: vb-shake 0.28s linear; }
+.vb-face, .vb-fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.vb-fx { z-index: 5; }
+
+/* ---------- 9c. Mechanism face (400×400 SVG units) ---------- */
+.vb-bezel { fill: url(#vbBezelGrad); stroke: #2a3444; stroke-width: 1.5; }
+.vb-plate { fill: url(#vbPlateGrad); stroke: #1d2531; stroke-width: 2; }
+.vb-tick { stroke: #283243; stroke-width: 1.4; }
+.vb-tick.major { stroke: #4a5a70; stroke-width: 2.4; }
+.vb-bolt { fill: #1b222d; stroke: #3a475a; stroke-width: 1; }
+.vb-bolt-core { fill: #0a0d13; }
+.vb-track { fill: none; stroke: #1c2430; stroke-width: 1.2; stroke-dasharray: 2 6; }
+.vb-momentum {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 1.5;
+  opacity: calc(0.06 + var(--momentum) * 0.6);
+  transition: opacity 0.3s;
+}
+.vb-groove { stroke: #06080c; stroke-width: 11; stroke-linecap: round; }
+.vb-channel { stroke: var(--green); stroke-width: 3.5; stroke-linecap: round; opacity: 0; transition: opacity 0.25s, stroke 0.25s; }
+.vb-channel.on { opacity: 0.85; }
+.vb-channel.live { stroke: var(--cyan); opacity: 0.6; }
+.vb-mech[data-phase="cracked"] .vb-channel { stroke: var(--gold); opacity: 0.9; }
+.vb-alarm-ring { fill: none; stroke: var(--danger); stroke-width: 5; opacity: 0; }
+.vb-mech[data-phase="alarm"] .vb-alarm-ring { animation: vb-siren 0.6s ease-in-out 4; }
+
+/* ---------- 9d. Core ---------- */
+.vb-core {
+  --core-rim: #283243;
+  --core-glow: rgba(0, 230, 118, 0.35);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  width: 40%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 34% 28%, #3a4557 0%, #1b222e 46%, #0a0e14 100%);
+  box-shadow:
+    inset 0 2px 1px rgba(255, 255, 255, 0.07),
+    inset 0 -8px 18px rgba(0, 0, 0, 0.6),
+    0 0 0 4px #090c11,
+    0 0 0 6px var(--core-rim),
+    0 12px 30px rgba(0, 0, 0, 0.55),
+    0 0 calc(6px + var(--momentum) * 36px) var(--core-glow);
+  cursor: pointer;
+  transition: box-shadow 0.35s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.vb-mech[data-live] .vb-core { cursor: default; }
+.vb-core:focus-visible { outline: 2px solid var(--green); outline-offset: 8px; }
+.vb-core.thump { animation: vb-thump 0.2s var(--ease); }
+.vb-core::after {
+  /* idle "invitation" ring */
+  content: "";
+  position: absolute;
+  inset: -7%;
+  border-radius: 50%;
+  border: 1px solid var(--green);
+  opacity: 0;
+  pointer-events: none;
+}
+.vb-mech[data-phase="idle"] .vb-core::after,
+.vb-mech[data-phase="aborted"] .vb-core::after { animation: vb-invite 2.4s ease-out infinite; }
+
+.vb-core-ring { position: absolute; inset: 3%; width: 94%; height: 94%; overflow: visible; }
+.vb-seg { fill: none; stroke: #222b39; stroke-width: 3.4; stroke-linecap: round; transition: stroke 0.2s; }
+.vb-seg.live { stroke: var(--cyan); }
+.vb-seg.clean { stroke: var(--green); }
+.vb-seg.perfect { stroke: var(--purple); }
+.vb-mech[data-phase="cracked"] .vb-seg { stroke: var(--gold); }
+
+.vb-wheel {
+  position: absolute;
+  inset: 10%;
+  border-radius: 50%;
+  transform: rotate(var(--turn, 0deg));
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);   /* overshoot = mechanical detent */
+}
+.vb-mech[data-phase="cracked"] .vb-wheel { transition-duration: 1.2s; transition-timing-function: cubic-bezier(0.2, 0.9, 0.25, 1); }
+.vb-mech[data-phase="arming"] .vb-wheel { transition-duration: 0.7s; }
+.vb-spoke {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 11%;
+  margin-top: -5.5%;
+  border-radius: 99px;
+  background: linear-gradient(180deg, #4a576c, #242c39 55%, #141a23);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+.vb-spoke:nth-child(2) { transform: rotate(60deg); }
+.vb-spoke:nth-child(3) { transform: rotate(120deg); }
+
+.vb-hub {
+  --hub-rim: #2c3646;
+  position: absolute;
+  inset: 22%;
+  border-radius: 50%;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  background: radial-gradient(circle at 40% 30%, #1a212c, #0a0d12 75%);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 0 0 2px var(--hub-rim), 0 0 14px rgba(0, 0, 0, 0.6);
+  transition: box-shadow 0.3s;
+}
+.vb-core-main {
+  font-size: 15px;
+  font-size: 4.6cqw;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  color: var(--core-text, var(--text));
+  transition: color 0.2s;
+}
+.vb-core-main.big { font-family: var(--mono); font-size: 26px; font-size: 8cqw; letter-spacing: 0; }
+.vb-core-sub {
+  margin-top: 4px;
+  font-size: clamp(9px, 2.2cqw, 11px);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.vb-mech[data-phase="idle"] .vb-core-main,
+.vb-mech[data-phase="aborted"] .vb-core-main { --core-text: var(--green); }
+.vb-mech[data-phase="running"] .vb-core { --core-text: color-mix(in srgb, var(--green) calc(var(--momentum) * 100%), var(--text)); }
+.vb-mech[data-phase="cracked"] .vb-core { --core-rim: var(--gold); --core-glow: rgba(255, 202, 40, 0.5); --momentum: 1; --core-text: var(--gold); }
+.vb-mech[data-phase="cracked"] .vb-hub { --hub-rim: var(--gold); }
+.vb-mech[data-phase="alarm"] .vb-core { --core-rim: var(--danger); --core-glow: rgba(255, 82, 82, 0.45); --momentum: 0.6; --core-text: var(--danger); }
+.vb-mech[data-phase="alarm"] .vb-hub { --hub-rim: var(--danger); }
+.vb-mech[data-phase="alarm"] .vb-core-main { animation: blink 0.6s 4; }
+
+/* ---------- 9e. Tumblers ---------- */
+.vb-tumbler {
+  position: absolute;
+  z-index: 3;
+  width: 20%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.vb-tumbler::before { content: ""; position: absolute; inset: -12%; border-radius: 50%; }  /* enlarged touch target */
+.vb-tumbler::after {
+  /* impact shockwave */
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--wave, var(--green));
+  opacity: 0;
+  pointer-events: none;
+}
+.vb-t-body {
+  --t-rim: #2a3444;
+  --t-pin: #3b4759;
+  --t-glow: transparent;
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #333e50 0%, #171d28 55%, #0b0f15 100%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.08),
+    inset 0 -5px 12px rgba(0, 0, 0, 0.55),
+    0 0 0 3px #090c11,
+    0 0 0 5px var(--t-rim),
+    0 6px 16px rgba(0, 0, 0, 0.5),
+    0 0 22px var(--t-glow);
+  transition: box-shadow 0.15s, transform 0.18s var(--ease);
+}
+.vb-t-cap {
+  position: absolute;
+  inset: 24%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #222a37, #0b0f15);
+  box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.75), 0 0 0 1.5px #283242;
+  transition: transform 0.18s var(--ease), box-shadow 0.18s;
+}
+.vb-t-pin {
+  /* notch facing the core */
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9%;
+  height: 16%;
+  border-radius: 3px;
+  background: var(--t-pin);
+  transform: translate(-50%, -50%) rotate(var(--rot)) translateY(250%);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.vb-key {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-items: center;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: clamp(10px, 2.4cqw, 12px);
+  color: #52617a;
+  pointer-events: none;
+}
+@media (hover: hover) and (pointer: fine) { .vb-key { display: grid; } }
+
+.vb-approach {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--cyan);
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* States: idle · next (preview) · active · open (window live) · set · jam */
+.vb-tumbler.next .vb-t-body { --t-rim: #2c4d60; }
+.vb-tumbler[data-state="active"] .vb-t-body { --t-rim: var(--cyan); --t-pin: var(--cyan); --t-glow: rgba(41, 182, 246, 0.35); }
+.vb-tumbler[data-state="active"] .vb-key { color: var(--cyan); }
+.vb-tumbler.open .vb-t-body { --t-rim: #e8fbff; --t-glow: rgba(0, 230, 118, 0.5); }
+.vb-tumbler.open .vb-approach { border-color: #eafff4; box-shadow: 0 0 10px rgba(0, 230, 118, 0.7), inset 0 0 8px rgba(0, 230, 118, 0.4); }
+.vb-tumbler[data-state="set"] .vb-t-body { --t-rim: color-mix(in srgb, var(--green) 70%, #0b0e14); --t-pin: var(--green); --t-glow: rgba(0, 230, 118, 0.14); }
+.vb-tumbler[data-state="set"] .vb-t-cap { transform: scale(0.88); box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.75), 0 0 0 1.5px color-mix(in srgb, var(--green) 50%, transparent); }
+.vb-tumbler[data-state="set"] .vb-key { color: color-mix(in srgb, var(--green) 60%, #52617a); }
+.vb-tumbler[data-state="set"][data-grade="perfect"] .vb-t-pin { background: var(--purple); box-shadow: 0 0 8px var(--purple); }
+.vb-tumbler[data-state="jam"] .vb-t-body { --t-rim: var(--danger); --t-pin: var(--danger); --t-glow: rgba(255, 82, 82, 0.45); }
+.vb-mech[data-phase="cracked"] .vb-tumbler[data-state="set"] .vb-t-body { --t-rim: var(--gold); --t-glow: rgba(255, 202, 40, 0.22); }
+
+/* Transient reactions (classes restarted by VaultView) */
+.vb-tumbler.hit .vb-t-body { animation: vb-press 0.22s var(--ease); }
+.vb-tumbler.hit::after { animation: vb-wave 0.45s ease-out; }
+.vb-tumbler.hit.perfect { --wave: var(--purple); }
+.vb-tumbler.hit.perfect::after { border-width: 3px; box-shadow: 0 0 16px var(--purple); animation-duration: 0.6s; }
+.vb-tumbler.hit.perfect .vb-t-body { animation: vb-press-perfect 0.32s var(--ease); }
+.vb-tumbler.rattle .vb-t-body { animation: vb-rattle 0.18s linear; }
+.vb-tumbler.jolt .vb-t-body { animation: vb-rattle 0.3s linear; }
+
+/* ---------- 9f. Popups & keyframes ---------- */
+.vb-pop {
+  position: absolute;
+  z-index: 6;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  white-space: nowrap;
+  font-weight: 800;
+  font-size: clamp(10px, 2.7cqw, 13px);
+  letter-spacing: 0.16em;
+  text-shadow: 0 0 10px currentColor;
+  animation: vb-pop 0.75s var(--ease) forwards;
+}
+.vb-pop.clean { color: var(--green); }
+.vb-pop.perfect { color: #e7c3ef; font-size: clamp(11px, 3.2cqw, 15px); text-shadow: 0 0 12px var(--purple), 0 0 2px #fff; }
+.vb-pop.miss { color: var(--danger); }
+.vb-pop.loot {
+  text-align: center;
+  font-family: var(--mono);
+  font-size: clamp(15px, 4.6cqw, 21px);
+  letter-spacing: 0.02em;
+  color: var(--gold);
+  text-shadow: 0 0 14px rgba(255, 202, 40, 0.6), 0 2px 6px rgba(0, 0, 0, 0.8);
+  animation: vb-loot 1.7s var(--ease) forwards;
+}
+.vb-pop.loot small { display: block; margin-top: 2px; font-size: 0.55em; letter-spacing: 0.12em; color: #ffe38a; }
+
+@keyframes vb-press { 40% { transform: scale(0.9); } }
+@keyframes vb-press-perfect { 35% { transform: scale(0.86); filter: brightness(1.7); } }
+@keyframes vb-wave { from { opacity: 0.9; transform: scale(1); } to { opacity: 0; transform: scale(1.75); } }
+@keyframes vb-rattle { 25% { transform: translateX(-2px) rotate(-4deg); } 75% { transform: translateX(2px) rotate(4deg); } }
+@keyframes vb-shake {
+  20% { transform: translate(-4px, 1px); }
+  40% { transform: translate(4px, -1px); }
+  60% { transform: translate(-3px, 0); }
+  80% { transform: translate(2px, 1px); }
+}
+@keyframes vb-thump { 40% { transform: translate(-50%, -50%) scale(0.965); } }
+@keyframes vb-siren { 50% { opacity: 0.85; } }
+@keyframes vb-invite { from { opacity: 0.45; transform: scale(0.98); } to { opacity: 0; transform: scale(1.14); } }
+@keyframes vb-pop {
+  from { opacity: 0; transform: translate(-50%, -30%) scale(0.9); }
+  20%  { opacity: 1; transform: translate(-50%, -60%) scale(1.05); }
+  to   { opacity: 0; transform: translate(-50%, -130%) scale(1); }
+}
+@keyframes vb-loot {
+  from { opacity: 0; transform: translate(-50%, -40%) scale(0.9); }
+  15%  { opacity: 1; transform: translate(-50%, -55%) scale(1.04); }
+  75%  { opacity: 1; }
+  to   { opacity: 0; transform: translate(-50%, -110%); }
+}
+
+/* ---------- 9g. Side panel ---------- */
+.vb-panel { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.vb-eyebrow {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.vb-target { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.vb-target-name { display: block; margin-top: 2px; font-size: 17px; font-weight: 700; }
+.vb-sec {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 54px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--green) 35%, var(--surface-border));
+  background: color-mix(in srgb, var(--green) 7%, transparent);
+}
+.vb-sec span { font-size: 9px; letter-spacing: 0.16em; color: var(--text-muted); }
+.vb-sec b { font: 800 20px/1.1 var(--mono); color: var(--green); }
+
+.vb-gauges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.vb-gauge {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(11, 14, 20, 0.55);
+  border: 1px solid var(--surface-border);
+}
+.vb-gauge b { font: 700 18px/1 var(--mono); }
+.vb-streak { transition: color 0.2s; }
+.vb-streak.hot { color: var(--green); }
+.vb-lights { display: flex; align-items: center; gap: 6px; height: 18px; }
+.vb-lights i {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #2a1518;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7), 0 0 0 1px #3a1f24;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.vb-lights i.on { background: var(--danger); box-shadow: 0 0 10px var(--danger), 0 0 0 1px #ff8a8a; }
+
+.vb-prec-bar {
+  position: relative;
+  height: 22px;
+  margin-top: 6px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--surface-border);
+  background: rgba(255, 82, 82, 0.07);
+}
+.vb-prec-good {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(0, 230, 118, 0.1);
+  border-left: 1px solid rgba(0, 230, 118, 0.3);
+  border-right: 1px solid rgba(0, 230, 118, 0.3);
+}
+.vb-prec-perfect { position: absolute; top: 0; bottom: 0; background: rgba(171, 71, 188, 0.24); }
+.vb-prec-center { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgba(255, 255, 255, 0.35); }
+.vb-prec-marks i {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  width: 3px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: var(--mk);
+  opacity: var(--o, 1);
+}
+.vb-prec-marks i.latest { top: 2px; bottom: 2px; box-shadow: 0 0 8px var(--mk); }
+.vb-prec-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.vb-result {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--r-border, var(--surface-border));
+  background: var(--r-bg, rgba(11, 14, 20, 0.5));
+  animation: view-in 0.3s var(--ease);
+}
+.vb-result[data-outcome="cracked"] {
+  --r-border: color-mix(in srgb, var(--gold) 40%, transparent);
+  --r-bg: linear-gradient(135deg, rgba(255, 202, 40, 0.1), rgba(0, 230, 118, 0.04));
+}
+.vb-result[data-outcome="alarm"] {
+  --r-border: color-mix(in srgb, var(--danger) 45%, transparent);
+  --r-bg: linear-gradient(135deg, rgba(255, 82, 82, 0.12), transparent);
+}
+.vb-result-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.vb-result-title { font-size: 13px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+.vb-result[data-outcome="cracked"] .vb-result-title { color: var(--gold); }
+.vb-result[data-outcome="alarm"] .vb-result-title { color: var(--danger); }
+.vb-grade {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  border: 1px solid currentColor;
+  font: 800 20px/1 var(--mono);
+}
+.vb-grade[data-g="S"] { color: var(--purple); box-shadow: 0 0 14px rgba(171, 71, 188, 0.45); }
+.vb-grade[data-g="A"] { color: var(--gold); }
+.vb-grade[data-g="B"] { color: var(--green); }
+.vb-grade[data-g="C"] { color: var(--text-muted); }
+.vb-loot { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; }
+.vb-loot-item { padding: 8px 4px; border-radius: 8px; background: rgba(11, 14, 20, 0.5); text-align: center; }
+.vb-loot-item b { display: block; font: 700 15px/1.25 var(--mono); }
+.vb-loot-item small { font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+.vb-loot-item.c-gold b { color: var(--gold); }
+.vb-loot-item.c-green b { color: var(--green); }
+.vb-loot-item.c-danger b { color: var(--danger); }
+.vb-loot-item.c-muted b { color: var(--text-muted); }
+.vb-result-meta { font-size: 12px; color: var(--text-muted); }
+
+.vb-hint { margin: 0; font-size: 12.5px; color: var(--text-muted); }
+.vb-hint::before { content: "◇ "; color: var(--green); }
+
+.vb-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 18px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--green) 55%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--green) 26%, #10161f), color-mix(in srgb, var(--green) 10%, #0b0f15));
+  color: #eafff3;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 8px 22px rgba(0, 230, 118, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 0.12s var(--ease), filter 0.15s, opacity 0.2s;
+}
+.vb-action:hover:not(:disabled) { filter: brightness(1.15); }
+.vb-action:active:not(:disabled) { transform: scale(0.98); }
+.vb-action:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+.vb-action:disabled { cursor: default; opacity: 0.5; filter: saturate(0.3); }
+.vb-action kbd {
+  display: none;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font: 600 10px var(--mono);
+  letter-spacing: 0;
+  color: rgba(234, 255, 243, 0.7);
+}
+@media (hover: hover) and (pointer: fine) { .vb-action:not(:disabled) kbd { display: inline-block; } }
+
+.vb-foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--surface-border);
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.vb-foot b { color: var(--text); font-weight: 600; }
+.vb-sound {
+  margin-left: auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  border: 1px solid var(--surface-border);
+  background: rgba(11, 14, 20, 0.5);
+  font-size: 15px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.vb-sound:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+.vb-sound[aria-pressed="false"] { opacity: 0.55; }
+
+/* ---------- 9h. Responsive ---------- */
+@media (max-width: 1000px) {
+  .vb { grid-template-columns: 1fr; }
+  .vb-panel { width: 100%; max-width: 520px; margin: 0 auto; }
+}
+@media (max-width: 820px) {
+  .vb { padding: 12px; gap: 14px; border-radius: var(--radius); }
+  .vb-panel { gap: 12px; }
+  .vb-result { order: -1; }   /* outcome sits directly under the mechanism */
+  .vb-target-name { font-size: 15px; }
+}
 </style>
 </head>
 <body>
@@ -574,8 +1133,87 @@ button { font: inherit; color: inherit; }
             <h1 class="view-title">Vault Breach</h1>
             <p class="view-desc">Crack secured vaults, haul the take, and stash it before the heat catches up.</p>
           </div>
-          <span class="status-pill">Standby</span>
+          <span class="status-pill" id="vaultPill">Standby</span>
         </div>
+
+        <!-- Vault Breach module (Step 2). Tumblers, ticks and bolts are injected by VaultView.build(). -->
+        <div class="vb glass" id="module-vault">
+          <div class="vb-stage">
+            <div class="vb-mech" id="vbMech" data-phase="idle">
+              <svg class="vb-face" viewBox="0 0 400 400" aria-hidden="true">
+                <defs>
+                  <radialGradient id="vbBezelGrad" cx="50%" cy="42%" r="60%">
+                    <stop offset="0" stop-color="#2a3446"/>
+                    <stop offset=".7" stop-color="#141a24"/>
+                    <stop offset="1" stop-color="#0a0d13"/>
+                  </radialGradient>
+                  <radialGradient id="vbPlateGrad" cx="50%" cy="45%" r="55%">
+                    <stop offset="0" stop-color="#121822"/>
+                    <stop offset="1" stop-color="#080b10"/>
+                  </radialGradient>
+                </defs>
+                <circle class="vb-bezel" cx="200" cy="200" r="199"/>
+                <g id="vbTicks"></g>
+                <circle class="vb-plate" cx="200" cy="200" r="186"/>
+                <g id="vbBolts"></g>
+                <circle class="vb-track" cx="200" cy="200" r="142"/>
+                <circle class="vb-momentum" cx="200" cy="200" r="95"/>
+                <g id="vbChannels"></g>
+                <circle class="vb-alarm-ring" cx="200" cy="200" r="197"/>
+              </svg>
+              <button class="vb-core" id="vbCore" type="button" aria-label="Vault core — start breach">
+                <svg class="vb-core-ring" id="vbCoreRing" viewBox="0 0 100 100" aria-hidden="true"></svg>
+                <span class="vb-wheel" id="vbWheel" aria-hidden="true"><span class="vb-spoke"></span><span class="vb-spoke"></span><span class="vb-spoke"></span></span>
+                <span class="vb-hub"><span class="vb-core-main" id="vbCoreMain">BREACH</span><span class="vb-core-sub" id="vbCoreSub">start</span></span>
+              </button>
+              <canvas class="vb-fx" id="vbFx" aria-hidden="true"></canvas>
+            </div>
+          </div>
+
+          <aside class="vb-panel" aria-label="Breach readout">
+            <div class="vb-target">
+              <div>
+                <span class="vb-eyebrow" id="vbTargetLabel">Target</span>
+                <span class="vb-target-name" id="vbTarget">Merchant Strongbox</span>
+              </div>
+              <div class="vb-sec" title="Security level"><span>SEC</span><b id="vbLevel">1</b></div>
+            </div>
+            <div class="vb-gauges">
+              <div class="vb-gauge">
+                <span class="vb-eyebrow">Alarm</span>
+                <div class="vb-lights" id="vbLights"><i></i><i></i></div>
+              </div>
+              <div class="vb-gauge">
+                <span class="vb-eyebrow">Streak</span>
+                <b class="vb-streak" id="vbStreak">0</b>
+              </div>
+              <div class="vb-gauge">
+                <span class="vb-eyebrow">Pins</span>
+                <b id="vbProgress">0/6</b>
+              </div>
+            </div>
+            <div class="vb-result" id="vbResult" aria-live="polite" hidden></div>
+            <div class="vb-precision">
+              <span class="vb-eyebrow">Precision</span>
+              <div class="vb-prec-bar">
+                <span class="vb-prec-good" id="vbPrecGood"></span>
+                <span class="vb-prec-perfect" id="vbPrecPerfect"></span>
+                <span class="vb-prec-center"></span>
+                <span class="vb-prec-marks" id="vbPrecMarks"></span>
+              </div>
+              <div class="vb-prec-scale"><span>Early</span><span>Late</span></div>
+            </div>
+            <p class="vb-hint" id="vbHint">Strike each tumbler as its ring closes.</p>
+            <button class="vb-action" id="vbAction" type="button"><span id="vbActionLabel">Begin breach</span><kbd>Space</kbd></button>
+            <div class="vb-foot">
+              <span>Cracked <b id="vbCracked">0</b></span>
+              <span>Alarms <b id="vbAlarms">0</b></span>
+              <span>Best <b id="vbBest">0</b></span>
+              <button class="vb-sound" id="vbSound" type="button" aria-pressed="true" aria-label="Sound">🔊</button>
+            </div>
+          </aside>
+        </div>
+
         <div class="stat-grid">
           <div class="stat-card glass c-green">
             <span class="stat-card-label">Vault Capacity</span>
@@ -594,9 +1232,6 @@ button { font: inherit; color: inherit; }
             <span class="stat-card-value num" data-bind="gold"></span>
             <span class="stat-card-foot">Breach funding available</span>
           </div>
-        </div>
-        <div class="module-slot" id="module-vault">
-          <div><strong>BREACH CONSOLE OFFLINE</strong>Module mounts here in Step 2 · <code>#module-vault</code></div>
         </div>
       </section>
 
@@ -715,6 +1350,7 @@ button { font: inherit; color: inherit; }
      Render   — batched DOM sync from state
      Router   — tab switching (switchTab)
      Emblem   — 5-tap dev unlock tracker
+   Step 2 adds the Vault Breach section (VAULT, Sfx, Fx, VaultView, VaultBreach).
    ===================================================================== */
 (function () {
   "use strict";
@@ -747,6 +1383,18 @@ button { font: inherit; color: inherit; }
     themeAccent: TABS[CONFIG.DEFAULT_TAB].accent,
     devModeState: "locked",   // "locked" | "unlocked" | (Step 2+: "open")
     devUnlocked: false,
+
+    // Vault Breach (Step 2) — owned by the VaultBreach controller
+    vault: {
+      phase: "idle",          // idle | arming | running | cracked | alarm | aborted
+      level: 1,               // security level 1–12; drives difficulty and rewards
+      cracked: 0,             // lifetime successful breaches
+      alarms: 0,              // lifetime alarms tripped
+      bestStreak: 0,          // best consecutive clean hits in any attempt
+      attempt: null,          // live/last attempt record (see VaultBreach.start)
+      result: null,           // last outcome summary shown in the result card
+      telemetry: [],          // finished attempts' precise timing logs (bounded; never rendered)
+    },
   };
 
   /* ---------------- BUS (pub/sub) ---------------- */
@@ -924,6 +1572,7 @@ button { font: inherit; color: inherit; }
 
     // Number keys 1–4 jump straight to a tab
     document.addEventListener("keydown", (e) => {
+      if (e.defaultPrevented) return;   // claimed by a module (e.g. a live vault breach)
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.target.closest("input, textarea, select, [contenteditable]")) return;
       const btn = navButtons[Number(e.key) - 1];
@@ -982,17 +1631,988 @@ button { font: inherit; color: inherit; }
     };
   })();
 
+  /* =====================================================================
+     VAULT BREACH (Step 2)
+       VAULT       — tuning constants
+       Rules       — difficulty profile, sequence builder, rewards (pure functions)
+       Sfx         — synthesized mechanical audio (Web Audio; entirely optional)
+       Fx          — canvas spark particles
+       VaultView   — mechanism + panel DOM (render = persistent state, fx* = transient)
+       VaultBreach — controller: attempt lifecycle, timing windows, input judging
+     Timing runs on performance.now() / event.timeStamp (one shared clock),
+     never on frame counts, so windows hold steady across refresh rates.
+     ===================================================================== */
+
+  const VAULT = Object.freeze({
+    TUMBLERS: 6,
+    MAX_LEVEL: 12,
+    MAX_MISSES: 2,          // the second miss trips the alarm
+    ALARM_HEAT: 15,         // heat % added by an alarm
+    ARM_MS: 750,            // wind-up before the first tumbler
+    JAM_MS: 800,            // recovery after a miss before the same step re-arms
+    EARLY_ZONE_MS: 180,     // presses this close before the window opens are EARLY misses; earlier ones are ignored
+    LATE_GRACE_MS: 34,      // lets an in-window input land before a silent tumbler is ruled LATE
+    RING_START: 1.9,        // approach-ring scale at activation (1.0 = on the rim = dead centre)
+    TELEMETRY_KEEP: 25,     // finished attempts retained in state.vault.telemetry
+    // Physical key positions mirror the ring: Q W E over A S D (layout-independent via e.code)
+    KEYS: { KeyW: 0, KeyE: 1, KeyD: 2, KeyS: 3, KeyA: 4, KeyQ: 5 },
+    KEY_LABELS: ["W", "E", "D", "S", "A", "Q"],
+    TARGETS: [
+      "Merchant Strongbox", "Guildhall Safe", "Counting House", "Harbor Customs Vault",
+      "Private Bank Vault", "Syndicate Reserve", "Royal Mint Deposit", "Treasury Annex",
+      "Crown Treasury", "Sovereign Reserve", "Obsidian Depository", "The Black Vault",
+    ],
+  });
+
+  /* ---------------- Rules ---------------- */
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const vaultTarget = (level) => VAULT.TARGETS[clamp(level, 1, VAULT.MAX_LEVEL) - 1];
+
+  // Difficulty for a security level. Early levels are generous and predictable;
+  // later ones tighten the window, quicken the pace, lengthen and scramble the order.
+  function vaultProfile(level) {
+    const L = clamp(level, 1, VAULT.MAX_LEVEL);
+    const t = (L - 1) / (VAULT.MAX_LEVEL - 1);
+    return {
+      level: L,
+      approachMs: Math.round(lerp(1050, 560, t)),  // activation → dead centre
+      goodMs:     Math.round(lerp(190, 100, t)),   // ± window around dead centre
+      perfectMs:  Math.round(lerp(55, 33, t)),     // ± precision band inside the window
+      gapMs:      Math.round(lerp(420, 170, t)),   // hit → next activation
+      steps:      VAULT.TUMBLERS + Math.floor((L - 1) / 3),
+      pattern:    L <= 2 ? "clockwise" : L <= 4 ? "sweep" : L <= 7 ? "star" : "random",
+      preview:    L <= 6,                          // faint cue on the upcoming tumbler
+    };
+  }
+
+  function buildSequence(p) {
+    const n = VAULT.TUMBLERS;
+    const rnd = (k) => Math.floor(Math.random() * k);
+    const s = rnd(n);
+    const d = Math.random() < 0.5 ? 1 : -1;
+    const wrap = (k) => ((k % n) + n) % n;
+    let seq;
+    if (p.pattern === "clockwise") seq = [0, 1, 2, 3, 4, 5];
+    else if (p.pattern === "sweep") seq = [0, 1, 2, 3, 4, 5].map((k) => wrap(s + d * k));
+    else if (p.pattern === "star") seq = [0, 2, 4, 1, 3, 5].map((k) => wrap(s + d * k));
+    else {
+      seq = [0, 1, 2, 3, 4, 5];
+      for (let i = n - 1; i > 0; i--) { const j = rnd(i + 1); [seq[i], seq[j]] = [seq[j], seq[i]]; }
+    }
+    // Extra steps revisit tumblers (never the same one twice in a row)
+    while (seq.length < p.steps) {
+      let k;
+      do { k = rnd(n); } while (k === seq[seq.length - 1]);
+      seq.push(k);
+    }
+    return seq;
+  }
+
+  // Conservative placeholder economy: base scales with level, precision adds up to +50%, a clean run +15%.
+  function vaultRewards(a) {
+    const L = a.profile.level;
+    const mult = 1 + 0.5 * (a.perfects / a.sequence.length) + (a.misses === 0 ? 0.15 : 0);
+    return {
+      gold: Math.round((40 + 18 * (L - 1)) * mult),
+      influence: Math.round((120 + 60 * (L - 1)) * mult),
+    };
+  }
+
+  function vaultGrade(a) {
+    if (a.misses) return "C";
+    const r = a.perfects / a.sequence.length;
+    return r >= 0.83 ? "S" : r >= 0.5 ? "A" : "B";
+  }
+
+  /* ---------------- Sfx (synthesized; silent if audio is unavailable) ---------------- */
+  const Sfx = (() => {
+    let ctx = null;
+    let out = null;
+    let noiseBuf = null;
+    let muted = false;
+    try { muted = localStorage.getItem("empireAscent.muted") === "1"; } catch (_) {}
+
+    function ready() {
+      if (muted) return null;
+      try {
+        if (!ctx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return null;
+          ctx = new AC();
+          const comp = ctx.createDynamicsCompressor();
+          comp.threshold.value = -14;
+          comp.ratio.value = 6;
+          out = ctx.createGain();
+          out.gain.value = 0.55;
+          out.connect(comp);
+          comp.connect(ctx.destination);
+          noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.5), ctx.sampleRate);
+          const d = noiseBuf.getChannelData(0);
+          for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        }
+        if (ctx.state === "suspended") ctx.resume();
+        return ctx;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function env(g, t, peak, attack, decay) {
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(peak, t + attack);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay);
+    }
+
+    function tone({ freq, to, type = "sine", peak = 0.3, attack = 0.004, decay = 0.2, at = 0 }) {
+      const c = ready();
+      if (!c) return;
+      const t = c.currentTime + at;
+      const o = c.createOscillator();
+      const g = c.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(freq, t);
+      if (to) o.frequency.exponentialRampToValueAtTime(to, t + attack + decay);
+      env(g, t, peak, attack, decay);
+      o.connect(g);
+      g.connect(out);
+      o.start(t);
+      o.stop(t + attack + decay + 0.05);
+    }
+
+    function noise({ freq = 2000, sweepTo, q = 1, type = "bandpass", peak = 0.3, attack = 0.002, decay = 0.08, at = 0 }) {
+      const c = ready();
+      if (!c) return;
+      const t = c.currentTime + at;
+      const src = c.createBufferSource();
+      const f = c.createBiquadFilter();
+      const g = c.createGain();
+      src.buffer = noiseBuf;
+      f.type = type;
+      f.Q.value = q;
+      f.frequency.setValueAtTime(freq, t);
+      if (sweepTo) f.frequency.exponentialRampToValueAtTime(sweepTo, t + attack + decay);
+      env(g, t, peak, attack, decay);
+      src.connect(f);
+      f.connect(g);
+      g.connect(out);
+      src.start(t);
+      src.stop(t + attack + decay + 0.05);
+    }
+
+    // Pitch climbs a major-pentatonic ladder as the sequence advances
+    const LADDER = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21];
+    const stepFreq = (base, step) => base * Math.pow(2, LADDER[Math.min(step, LADDER.length - 1)] / 12);
+    const safe = (fn) => (...args) => { try { fn(...args); } catch (_) {} };
+
+    return {
+      unlock: safe(() => ready()),
+      tick: safe((step) => tone({ freq: stepFreq(1400, step), type: "square", peak: 0.03, decay: 0.03 })),
+      // The heavy CLACK: low thump + metal transient + a pitched ring that rises with progress
+      clack: safe((step, perfect) => {
+        tone({ freq: 170, to: 52, peak: 0.7, decay: 0.16 });
+        noise({ freq: 2600, q: 1.2, peak: 0.45, decay: 0.045 });
+        noise({ freq: 380, q: 0.8, type: "lowpass", peak: 0.35, decay: 0.07 });
+        const f = stepFreq(330, step);
+        tone({ freq: f, type: "triangle", peak: 0.16, decay: 0.22, at: 0.005 });
+        if (perfect) {
+          tone({ freq: f * 2, peak: 0.12, decay: 0.45, at: 0.01 });
+          tone({ freq: f * 3, peak: 0.05, decay: 0.6, at: 0.02 });
+        }
+      }),
+      rattle: safe(() => {
+        noise({ freq: 1400, q: 3, peak: 0.08, decay: 0.05 });
+        noise({ freq: 1900, q: 3, peak: 0.05, decay: 0.04, at: 0.04 });
+      }),
+      miss: safe(() => {
+        tone({ freq: 98, type: "sawtooth", peak: 0.2, decay: 0.3 });
+        tone({ freq: 104, type: "sawtooth", peak: 0.16, decay: 0.3 });
+        noise({ freq: 420, q: 2, peak: 0.25, decay: 0.18 });
+      }),
+      alarm: safe(() => {
+        for (let i = 0; i < 4; i++) tone({ freq: i % 2 ? 740 : 988, type: "square", peak: 0.07, attack: 0.01, decay: 0.16, at: 0.18 + i * 0.19 });
+      }),
+      arm: safe(() => {
+        noise({ freq: 300, sweepTo: 2400, q: 4, peak: 0.1, attack: 0.05, decay: 0.45 });
+        tone({ freq: 55, to: 82, peak: 0.25, attack: 0.05, decay: 0.5 });
+      }),
+      crack: safe(() => {
+        tone({ freq: 130, to: 38, peak: 0.9, decay: 0.35, at: 0.06 });
+        noise({ freq: 1800, q: 0.9, peak: 0.5, decay: 0.08, at: 0.06 });
+        noise({ freq: 4000, sweepTo: 300, type: "lowpass", peak: 0.2, attack: 0.02, decay: 0.6, at: 0.12 });
+        [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone({ freq: f, type: "triangle", peak: 0.11, decay: 0.5, at: 0.2 + i * 0.07 }));
+      }),
+      get muted() { return muted; },
+      setMuted(m) {
+        muted = m;
+        try { localStorage.setItem("empireAscent.muted", m ? "1" : "0"); } catch (_) {}
+        try { if (ctx) (m ? ctx.suspend() : ctx.resume()); } catch (_) {}
+      },
+    };
+  })();
+
+  /* ---------------- Fx (canvas sparks; idle when nothing is alive) ---------------- */
+  const Fx = (() => {
+    let canvas = null;
+    let g = null;
+    let w = 0;
+    let h = 0;
+    let raf = 0;
+    const parts = [];
+    const reduceMotion = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function resize() {
+      const r = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = r.width;
+      h = r.height;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function frame(now) {
+      raf = 0;
+      g.clearRect(0, 0, w, h);
+      g.globalCompositeOperation = "lighter";
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const p = parts[i];
+        const dt = Math.min(0.05, Math.max(0, (now - p.t) / 1000));
+        p.t = now;
+        p.life -= dt;
+        if (p.life <= 0) { parts.splice(i, 1); continue; }
+        const drag = Math.pow(0.93, dt * 60);
+        p.vx *= drag;
+        p.vy = p.vy * drag + p.grav * dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        g.globalAlpha = p.life / p.max;
+        g.strokeStyle = p.color;
+        g.lineWidth = p.size;
+        g.beginPath();
+        g.moveTo(p.x, p.y);
+        g.lineTo(p.x - p.vx * 0.03, p.y - p.vy * 0.03);
+        g.stroke();
+      }
+      g.globalAlpha = 1;
+      if (parts.length) raf = requestAnimationFrame(frame);
+    }
+
+    return {
+      init(el) {
+        canvas = el;
+        g = el.getContext("2d");
+        if (!g) return;
+        resize();
+        if ("ResizeObserver" in window) new ResizeObserver(resize).observe(el);
+        else window.addEventListener("resize", resize);
+      },
+      // Sparks from fractional mechanism coords (0–1). dir: 0 = up, clockwise (radians).
+      burst(fx, fy, { count = 10, color = "#00e676", speed = 260, spread = Math.PI * 2, dir = 0, life = 0.5, size = 1.6, grav = 300 } = {}) {
+        if (!g || !w) return;
+        if (reduceMotion) count = Math.ceil(count / 3);
+        const scale = w / 400;
+        const now = performance.now();
+        for (let i = 0; i < count; i++) {
+          const ang = dir + (Math.random() - 0.5) * spread;
+          const sp = speed * scale * (0.45 + Math.random() * 0.75);
+          const l = life * (0.6 + Math.random() * 0.6);
+          parts.push({
+            x: fx * w, y: fy * h,
+            vx: Math.sin(ang) * sp, vy: -Math.cos(ang) * sp,
+            life: l, max: l, color, size: size * (0.7 + Math.random() * 0.6), grav: grav * scale, t: now,
+          });
+        }
+        if (!raf) raf = requestAnimationFrame(frame);
+      },
+    };
+  })();
+
+  /* ---------------- VaultView ---------------- */
+  const VaultView = (() => {
+    const ORBIT = 0.355;          // tumbler orbit radius, fraction of mechanism size
+    const PREC_SPAN = 1.35;       // precision bar half-width in window units (1 = window edge)
+    const NS = "http://www.w3.org/2000/svg";
+    const TRANSIENT = ["hit", "perfect", "rattle", "jolt"];
+    const PHASE_UI = {
+      idle:    { main: "BREACH", sub: "start",   pill: "Standby",   tone: "",       action: "Begin breach" },
+      aborted: { main: "BREACH", sub: "start",   pill: "Standby",   tone: "",       action: "Begin breach" },
+      arming:  { main: "READY",  sub: "arming",  pill: "Arming",    tone: "live",   action: "Arming…" },
+      running: { main: "",       sub: "streak",  pill: "Breaching", tone: "live",   action: "Breach in progress" },
+      cracked: { main: "OPEN",   sub: "next ▸",  pill: "Cracked",   tone: "gold",   action: "Next vault" },
+      alarm:   { main: "ALARM",  sub: "retry ▸", pill: "Alarm",     tone: "danger", action: "Retry breach" },
+    };
+    const el = {};
+    const tumblers = [];          // { btn, ring, x, y, a }
+    const channels = [];
+    let segs = [];
+    let ringKey = "";
+    let shownResult = null;
+
+    function svg(tag, attrs, parent) {
+      const n = document.createElementNS(NS, tag);
+      for (const k in attrs) n.setAttribute(k, attrs[k]);
+      parent.appendChild(n);
+      return n;
+    }
+    const polar = (r, deg) => {
+      const t = (deg * Math.PI) / 180;
+      return [+(200 + r * Math.sin(t)).toFixed(2), +(200 - r * Math.cos(t)).toFixed(2)];
+    };
+
+    function build() {
+      [
+        "vbMech", "vbCore", "vbCoreRing", "vbWheel", "vbCoreMain", "vbCoreSub", "vbFx",
+        "vbTargetLabel", "vbTarget", "vbLevel", "vbLights", "vbStreak", "vbProgress", "vbResult",
+        "vbPrecGood", "vbPrecPerfect", "vbPrecMarks", "vbHint", "vbAction", "vbActionLabel",
+        "vbCracked", "vbAlarms", "vbBest", "vbSound", "vaultPill",
+      ].forEach((id) => (el[id] = document.getElementById(id)));
+      el.lights = [...el.vbLights.children];
+
+      // Face details: bezel ticks, bolts, core channels
+      const ticks = document.getElementById("vbTicks");
+      for (let k = 0; k < 60; k++) {
+        const major = k % 10 === 0;
+        const [x1, y1] = polar(major ? 187.5 : 190.5, k * 6);
+        const [x2, y2] = polar(196, k * 6);
+        svg("line", { x1, y1, x2, y2, class: major ? "vb-tick major" : "vb-tick" }, ticks);
+      }
+      const bolts = document.getElementById("vbBolts");
+      for (let k = 0; k < 6; k++) {
+        const [cx, cy] = polar(170, 30 + k * 60);
+        svg("circle", { cx, cy, r: 4.5, class: "vb-bolt" }, bolts);
+        svg("circle", { cx, cy, r: 1.4, class: "vb-bolt-core" }, bolts);
+      }
+      const ch = document.getElementById("vbChannels");
+      for (let k = 0; k < VAULT.TUMBLERS; k++) {
+        const [x1, y1] = polar(88, k * 60);
+        const [x2, y2] = polar(104, k * 60);
+        svg("line", { x1, y1, x2, y2, class: "vb-groove" }, ch);
+        channels.push(svg("line", { x1, y1, x2, y2, class: "vb-channel" }, ch));
+      }
+
+      // Six pressure tumblers, clockwise from the top
+      for (let i = 0; i < VAULT.TUMBLERS; i++) {
+        const a = (i * 2 * Math.PI) / VAULT.TUMBLERS;
+        const x = 0.5 + ORBIT * Math.sin(a);
+        const y = 0.5 - ORBIT * Math.cos(a);
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "vb-tumbler";
+        btn.dataset.i = i;
+        btn.dataset.state = "idle";
+        btn.tabIndex = -1;       // keyboard play uses Q W E / A S D rather than focus
+        btn.setAttribute("aria-label", `Tumbler ${i + 1} (${VAULT.KEY_LABELS[i]})`);
+        btn.style.left = (x * 100).toFixed(3) + "%";
+        btn.style.top = (y * 100).toFixed(3) + "%";
+        btn.style.setProperty("--rot", i * 60 + "deg");
+        btn.innerHTML =
+          `<span class="vb-t-body"><span class="vb-t-cap"></span><span class="vb-t-pin"></span>` +
+          `<span class="vb-key">${VAULT.KEY_LABELS[i]}</span></span><span class="vb-approach"></span>`;
+        el.vbMech.insertBefore(btn, el.vbFx);
+        tumblers.push({ btn, ring: btn.querySelector(".vb-approach"), x, y, a });
+      }
+      Fx.init(el.vbFx);
+    }
+
+    function buildCoreRing(n) {
+      el.vbCoreRing.textContent = "";
+      const gap = 7;
+      const pt = (deg) => {
+        const t = (deg * Math.PI) / 180;
+        return `${(50 + 45 * Math.sin(t)).toFixed(2)} ${(50 - 45 * Math.cos(t)).toFixed(2)}`;
+      };
+      segs = [];
+      for (let k = 0; k < n; k++) {
+        const a0 = (k * 360) / n + gap / 2;
+        const a1 = ((k + 1) * 360) / n - gap / 2;
+        segs.push(svg("path", { d: `M${pt(a0)} A45 45 0 0 1 ${pt(a1)}`, class: "vb-seg" }, el.vbCoreRing));
+      }
+    }
+
+    function clearRing(i) {
+      const t = tumblers[i];
+      if (!t) return;
+      t.ring.style.opacity = "0";
+      t.btn.classList.remove("open");
+    }
+
+    function renderPrecision(p, a) {
+      const px = (x) => 50 + (clamp(x, -PREC_SPAN, PREC_SPAN) / PREC_SPAN) * 50;
+      const pf = p.perfectMs / p.goodMs;
+      el.vbPrecGood.style.left = px(-1) + "%";
+      el.vbPrecGood.style.width = px(1) - px(-1) + "%";
+      el.vbPrecPerfect.style.left = px(-pf) + "%";
+      el.vbPrecPerfect.style.width = px(pf) - px(-pf) + "%";
+      const marks = a ? a.timing.events.filter((r) => r.kind === "hit" || r.kind === "miss").slice(-8) : [];
+      el.vbPrecMarks.innerHTML = marks.map((r, k) => {
+        const x = r.offset !== null ? r.offset / p.goodMs : r.grade === "early" ? -PREC_SPAN : PREC_SPAN;
+        const color = r.kind === "miss" ? "var(--danger)" : r.grade === "perfect" ? "var(--purple)" : "var(--green)";
+        const o = (0.3 + 0.7 * ((k + 1) / marks.length)).toFixed(2);
+        return `<i class="${k === marks.length - 1 ? "latest" : ""}" style="left:${px(x).toFixed(2)}%;--mk:${color};--o:${o}"></i>`;
+      }).join("");
+    }
+
+    function resultHTML(r) {
+      if (r.outcome === "cracked") {
+        const meta = [r.target, `◆ ${r.perfects}/${r.steps} perfect`, `×${r.bestStreak} streak`];
+        if (!r.misses) meta.push("flawless");
+        const slot = r.slot
+          ? `<div class="vb-loot-item c-green"><b>+1</b><small>Vault slot</small></div>`
+          : `<div class="vb-loot-item c-muted"><b>Full</b><small>Vault slot</small></div>`;
+        return `
+          <div class="vb-result-head"><span class="vb-result-title">Vault cracked</span><span class="vb-grade" data-g="${r.grade}" title="Breach grade">${r.grade}</span></div>
+          <div class="vb-loot">
+            <div class="vb-loot-item c-gold"><b>+$${Fmt.int(r.gold)}</b><small>Gold</small></div>
+            <div class="vb-loot-item c-gold"><b>+${Fmt.int(r.influence)}</b><small>Influence</small></div>
+            ${slot}
+          </div>
+          <div class="vb-result-meta">${meta.join(" · ")}</div>`;
+      }
+      if (r.outcome === "alarm") {
+        const how = r.reason === "alarm" ? `reached ${r.reached}/${r.steps}` : "left mid-breach";
+        return `
+          <div class="vb-result-head"><span class="vb-result-title">Alarm tripped</span></div>
+          <div class="vb-loot">
+            <div class="vb-loot-item c-danger"><b>+${r.heat}%</b><small>Heat</small></div>
+            <div class="vb-loot-item c-muted"><b>0</b><small>Loot</small></div>
+          </div>
+          <div class="vb-result-meta">${r.target} · ${how}</div>`;
+      }
+      return `
+        <div class="vb-result-head"><span class="vb-result-title">Breach abandoned</span></div>
+        <div class="vb-result-meta">${r.target} · no loot recovered</div>`;
+    }
+
+    function render() {
+      const v = state.vault;
+      const phase = v.phase;
+      const live = phase === "arming" || phase === "running";
+      const a = phase === "aborted" ? null : v.attempt;
+      const cur = live && a ? a.current : null;
+      const p = a ? a.profile : vaultProfile(v.level);
+      const ui = PHASE_UI[phase];
+
+      el.vbMech.dataset.phase = phase;
+      el.vbMech.toggleAttribute("data-live", live);
+      el.vbMech.style.setProperty("--momentum", live && a ? Math.min(1, a.streak / 6).toFixed(2) : "0");
+
+      // Tumblers + channels
+      const upcoming = live && a ? a.sequence[cur ? a.step + 1 : a.step] : -1;
+      tumblers.forEach((t, i) => {
+        let s = "idle";
+        if (a) {
+          if (a.setBy[i]) s = "set";
+          if (a.jam === i) s = "jam";
+          if (cur && cur.tumbler === i) s = "active";
+        }
+        t.btn.dataset.state = s;
+        if (a && a.setBy[i]) t.btn.dataset.grade = a.setBy[i];
+        else delete t.btn.dataset.grade;
+        t.btn.classList.toggle("next", live && p.preview && i === upcoming && s !== "active");
+        if (s !== "active") clearRing(i);
+        channels[i].classList.toggle("on", !!(a && a.setBy[i]));
+        channels[i].classList.toggle("live", s === "active");
+      });
+
+      // Core
+      el.vbCoreMain.textContent = phase === "running" ? String(a.streak) : ui.main;
+      el.vbCoreMain.classList.toggle("big", phase === "running");
+      el.vbCoreSub.textContent = ui.sub;
+      el.vbCore.setAttribute("aria-label", live ? "Vault core" : `Vault core — ${ui.action}`);
+      el.vbWheel.style.setProperty("--turn", (a ? a.hits * 30 : 0) + (phase === "cracked" ? 360 : 0) + "deg");
+
+      const steps = a ? a.sequence.length : p.steps;
+      const key = a ? `a${a.id}` : `p${steps}`;
+      if (key !== ringKey) { buildCoreRing(steps); ringKey = key; }
+      segs.forEach((s, k) => {
+        const g = a && a.grades[k];
+        s.setAttribute("class", "vb-seg" + (g ? " " + g : "") + (cur && cur.step === k ? " live" : ""));
+      });
+
+      // Panel
+      const level = live ? a.profile.level : v.level;
+      el.vbTargetLabel.textContent = !live && v.result ? "Next target" : "Target";
+      el.vbTarget.textContent = vaultTarget(level);
+      el.vbLevel.textContent = level;
+      const misses = a ? a.misses : 0;
+      el.lights.forEach((n, k) => n.classList.toggle("on", k < misses));
+      const streak = a ? a.streak : 0;
+      el.vbStreak.textContent = streak;
+      el.vbStreak.classList.toggle("hot", streak >= 3);
+      el.vbProgress.textContent = `${a ? a.step : 0}/${steps}`;
+      renderPrecision(p, a);
+
+      if (v.result !== shownResult) {
+        shownResult = v.result;
+        if (v.result) {
+          el.vbResult.dataset.outcome = v.result.outcome;
+          el.vbResult.innerHTML = resultHTML(v.result);
+        }
+      }
+      el.vbResult.hidden = live || !v.result;
+      el.vbHint.hidden = v.cracked > 0;
+
+      el.vbActionLabel.textContent = ui.action;
+      el.vbAction.disabled = live;
+      el.vbCracked.textContent = Fmt.int(v.cracked);
+      el.vbAlarms.textContent = Fmt.int(v.alarms);
+      el.vbBest.textContent = Fmt.int(v.bestStreak);
+      el.vbSound.setAttribute("aria-pressed", String(!Sfx.muted));
+      el.vbSound.textContent = Sfx.muted ? "🔇" : "🔊";
+
+      el.vaultPill.textContent = ui.pill;
+      if (ui.tone) el.vaultPill.dataset.tone = ui.tone;
+      else delete el.vaultPill.dataset.tone;
+    }
+
+    /* ---- transient effects ---- */
+    function restart(node, ...cls) {
+      node.classList.remove(...cls);
+      void node.offsetWidth;
+      node.classList.add(...cls);
+    }
+    function react(btn, ...cls) {
+      btn.classList.remove(...TRANSIENT);
+      void btn.offsetWidth;
+      btn.classList.add(...cls);
+    }
+    function pop(x, y, cls, html) {
+      const n = document.createElement("span");
+      n.className = "vb-pop " + cls;
+      n.innerHTML = html;
+      n.style.left = (x * 100).toFixed(2) + "%";
+      n.style.top = (y * 100).toFixed(2) + "%";
+      el.vbMech.appendChild(n);
+      const done = () => n.remove();
+      n.addEventListener("animationend", done, { once: true });
+      setTimeout(done, 2500);   // safety net when animations are disabled
+    }
+    const popY = (t) => (t.y < 0.3 ? t.y + 0.14 : t.y - 0.14);
+    function bumpHud(keys) {
+      keys.forEach((k) => {
+        const n = document.querySelector(`.hud-stat[data-stat="${k}"]`);
+        if (n) restart(n, "bump");
+      });
+    }
+
+    return {
+      el,
+      build,
+      render,
+      clearRing,
+
+      // Per-frame approach ring, driven purely by elapsed time
+      frame(cur, now) {
+        const t = tumblers[cur.tumbler];
+        let s;
+        let o;
+        if (now < cur.sweetAt) {
+          const k = clamp((now - cur.activatedAt) / (cur.sweetAt - cur.activatedAt), 0, 1);
+          s = lerp(VAULT.RING_START, 1, k);
+          o = 0.3 + 0.7 * k;
+        } else {
+          const k = clamp((now - cur.sweetAt) / (cur.closeAt - cur.sweetAt), 0, 1);
+          s = 1 - 0.28 * k;
+          o = 1 - 0.6 * k;
+        }
+        t.ring.style.transform = `scale(${s.toFixed(3)})`;
+        t.ring.style.opacity = o.toFixed(2);
+        t.btn.classList.toggle("open", now >= cur.openAt && now <= cur.closeAt);
+      },
+
+      fxArm() {
+        tumblers.forEach((t) => t.btn.classList.remove(...TRANSIENT));
+      },
+      fxHit(i, perfect) {
+        const t = tumblers[i];
+        react(t.btn, ...(perfect ? ["hit", "perfect"] : ["hit"]));
+        restart(el.vbCore, "thump");
+        pop(t.x, popY(t), perfect ? "perfect" : "clean", perfect ? "PERFECT" : "CLEAN");
+        Fx.burst(t.x, t.y, {
+          dir: t.a, spread: 2, count: perfect ? 20 : 10,
+          color: perfect ? "#d79be6" : "#00e676", speed: perfect ? 330 : 230, life: perfect ? 0.6 : 0.42,
+        });
+        if (perfect) Fx.burst(t.x, t.y, { count: 8, color: "#ffffff", speed: 140, life: 0.35, grav: 0 });
+      },
+      fxMiss(i, kind) {
+        const t = tumblers[i];
+        react(t.btn, "jolt");
+        restart(el.vbMech, "shake");
+        pop(t.x, popY(t), "miss", kind === "early" ? "EARLY" : "LATE");
+        Fx.burst(t.x, t.y, { count: 7, color: "#ff5252", speed: 150, life: 0.35, grav: 520 });
+      },
+      fxStray(i) {
+        if (tumblers[i]) react(tumblers[i].btn, "rattle");
+      },
+      fxCrack(r) {
+        Fx.burst(0.5, 0.5, { count: 38, color: "#ffca28", speed: 380, life: 0.85, size: 2 });
+        Fx.burst(0.5, 0.5, { count: 12, color: "#00e676", speed: 250, life: 0.6 });
+        pop(0.5, 0.5, "loot", `+$${Fmt.int(r.gold)}<small>+${Fmt.int(r.influence)} influence</small>`);
+        bumpHud(r.slot ? ["gold", "influence", "vault"] : ["gold", "influence"]);
+      },
+      fxAlarm() {
+        restart(el.vbMech, "shake");
+        bumpHud(["heat"]);
+      },
+
+      // On small screens, bring the whole mechanism into view when a breach starts
+      ensureVisible() {
+        const r = el.vbMech.getBoundingClientRect();
+        const top = document.getElementById("hud").getBoundingClientRect().bottom + 8;
+        const nav = document.getElementById("nav");
+        const bottom = (getComputedStyle(nav).position === "fixed" ? nav.getBoundingClientRect().top : window.innerHeight) - 8;
+        if (r.top >= top && r.bottom <= bottom) return;
+        const y = window.scrollY + r.top - top - Math.max(0, (bottom - top - r.height) / 2);
+        window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+      },
+    };
+  })();
+
+  /* ---------------- VaultBreach controller ---------------- */
+  const VaultBreach = (() => {
+    let raf = 0;
+    let nextId = 0;
+    // Extension point for later systems: fn(rec, attempt) → true to claim an input before standard judging.
+    const resolvers = [];
+
+    const isLive = () => state.vault.phase === "arming" || state.vault.phase === "running";
+    const commit = (patch) => setState({ vault: { ...state.vault, ...patch } });
+    // Haptics: touch devices only, and only once the page has real user activation (browsers block it otherwise)
+    const coarsePointer = window.matchMedia && matchMedia("(pointer: coarse)").matches;
+    const buzz = (pattern) => {
+      if (Sfx.muted || !coarsePointer || !navigator.vibrate) return;
+      if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
+      try { navigator.vibrate(pattern); } catch (_) {}
+    };
+
+    // Event timestamps share performance.now()'s clock in modern browsers; fall back if one doesn't.
+    function eventTime(e) {
+      const now = performance.now();
+      const ts = e && e.timeStamp;
+      return ts > 0 && ts <= now + 1 && now - ts < 1000 ? ts : now;
+    }
+
+    function start() {
+      if (isLive()) return;
+      Sfx.unlock();
+      const profile = vaultProfile(state.vault.level);
+      const now = performance.now();
+      const attempt = {
+        id: ++nextId,
+        profile,
+        sequence: buildSequence(profile),
+        step: 0,                        // index into sequence
+        current: null,                  // open activation window (see activate)
+        pendingAt: now + VAULT.ARM_MS,  // when the next activation is due; null when none
+        jam: -1,                        // tumbler showing the last miss
+        hits: 0,
+        perfects: 0,
+        misses: 0,
+        streak: 0,
+        bestStreak: 0,
+        grades: [],                     // per step: "perfect" | "clean"
+        setBy: Array(VAULT.TUMBLERS).fill(null),   // per tumbler: grade that last seated it
+        // Precise timing log — kept for later systems, never shown raw in the UI.
+        // Every timestamp is on the performance.now() clock.
+        timing: {
+          startedAt: now,
+          activations: [],              // { step, tumbler, scheduledAt, activatedAt, sweetAt, openAt, closeAt }
+          events: [],                   // every input and timeout (fields in input())
+          hitIntervals: [],             // ms between consecutive successful hits
+          chain: 0,                     // current run of consecutive successful hits
+          maxChain: 0,
+          lastHitAt: null,
+        },
+      };
+      commit({ phase: "arming", attempt, result: null });
+      VaultView.fxArm();
+      Sfx.arm();
+      VaultView.ensureVisible();
+      if (!raf) raf = requestAnimationFrame(tick);
+    }
+
+    function tick() {
+      raf = 0;
+      if (!isLive()) return;
+      const a = state.vault.attempt;
+      const now = performance.now();
+      if (a.pendingAt !== null && now >= a.pendingAt) activate(a, now);
+      const cur = a.current;
+      if (cur) {
+        if (now > cur.closeAt + VAULT.LATE_GRACE_MS) miss(a, cur, "late", null);
+        else VaultView.frame(cur, now);
+      }
+      if (isLive()) raf = requestAnimationFrame(tick);
+    }
+
+    function activate(a, now) {
+      const p = a.profile;
+      // Anchor to the scheduled time so windows never drift with frame rate; re-anchor only after a real stall.
+      const at = now - a.pendingAt > 50 ? now : a.pendingAt;
+      const cur = {
+        step: a.step,
+        tumbler: a.sequence[a.step],
+        scheduledAt: a.pendingAt,
+        activatedAt: at,
+        sweetAt: at + p.approachMs,
+        openAt: at + p.approachMs - p.goodMs,
+        closeAt: at + p.approachMs + p.goodMs,
+      };
+      a.current = cur;
+      a.pendingAt = null;
+      a.jam = -1;
+      a.timing.activations.push({ ...cur });
+      Sfx.tick(a.step);
+      commit({ phase: "running" });
+      Bus.emit("vault:activate", cur);
+    }
+
+    function logEvent(a, rec) {
+      a.timing.events.push(rec);
+      Bus.emit("vault:event", rec);
+    }
+
+    function input(i, inputAt, source) {
+      Sfx.unlock();
+      if (!isLive()) { VaultView.fxStray(i); Sfx.rattle(); return; }
+      const a = state.vault.attempt;
+      const cur = a.current;
+      const t = a.timing;
+      const rec = {
+        kind: null,                     // hit | miss | stray | hold | pre
+        grade: null,                    // perfect | clean | early | late
+        step: a.step,
+        tumbler: i,                     // what was pressed
+        target: cur ? cur.tumbler : null,
+        upcoming: a.sequence[cur ? a.step + 1 : a.step] ?? null,
+        source,                         // mouse | touch | pen | key | timeout
+        inputAt,
+        offset: cur ? inputAt - cur.sweetAt : null,               // signed ms from dead centre
+        sinceActivation: cur ? inputAt - cur.activatedAt : null,
+        untilActivation: !cur && a.pendingAt !== null ? a.pendingAt - inputAt : null,
+        sinceLastHit: t.lastHitAt === null ? null : inputAt - t.lastHitAt,
+        chain: t.chain,
+      };
+      for (const resolve of resolvers) if (resolve(rec, a) === true) return;
+
+      const ignore = (kind) => { rec.kind = kind; logEvent(a, rec); VaultView.fxStray(i); Sfx.rattle(); };
+      if (!cur) return ignore("pre");                                     // nothing armed yet
+      if (i !== cur.tumbler) return ignore("stray");                      // wrong tumbler: no penalty
+      if (inputAt < cur.openAt - VAULT.EARLY_ZONE_MS) return ignore("hold"); // far too soon: ignored
+      if (inputAt < cur.openAt) return miss(a, cur, "early", rec);
+      if (inputAt > cur.closeAt) return miss(a, cur, "late", rec);
+      hit(a, cur, rec);
+    }
+
+    function hit(a, cur, rec) {
+      const perfect = Math.abs(rec.offset) <= a.profile.perfectMs;
+      const t = a.timing;
+      rec.kind = "hit";
+      rec.grade = perfect ? "perfect" : "clean";
+      if (t.lastHitAt !== null) t.hitIntervals.push(rec.inputAt - t.lastHitAt);
+      t.lastHitAt = rec.inputAt;
+      t.chain += 1;
+      t.maxChain = Math.max(t.maxChain, t.chain);
+      rec.chain = t.chain;
+      logEvent(a, rec);
+
+      a.current = null;
+      a.hits += 1;
+      if (perfect) a.perfects += 1;
+      a.streak += 1;
+      a.bestStreak = Math.max(a.bestStreak, a.streak);
+      a.grades[cur.step] = rec.grade;
+      a.setBy[cur.tumbler] = rec.grade;
+      a.step += 1;
+
+      VaultView.clearRing(cur.tumbler);
+      VaultView.fxHit(cur.tumbler, perfect);
+      Sfx.clack(cur.step, perfect);
+      buzz(perfect ? [8, 30, 14] : 10);
+      Bus.emit("vault:hit", rec);
+
+      if (a.step >= a.sequence.length) return crack(a);
+      a.pendingAt = rec.inputAt + a.profile.gapMs;
+      commit({});
+    }
+
+    function miss(a, cur, kind, rec) {
+      rec = rec || {
+        kind: null, grade: null, step: a.step, tumbler: cur.tumbler, target: cur.tumbler,
+        upcoming: a.sequence[a.step + 1] ?? null, source: "timeout", inputAt: null, offset: null,
+        sinceActivation: null, untilActivation: null, sinceLastHit: null, chain: a.timing.chain,
+      };
+      rec.kind = "miss";
+      rec.grade = kind;
+      a.timing.chain = 0;
+      logEvent(a, rec);
+
+      a.current = null;
+      a.misses += 1;
+      a.streak = 0;
+      a.jam = cur.tumbler;
+
+      VaultView.clearRing(cur.tumbler);
+      VaultView.fxMiss(cur.tumbler, kind);
+      Sfx.miss();
+      buzz(45);
+      Bus.emit("vault:miss", rec);
+
+      if (a.misses >= VAULT.MAX_MISSES) return alarm(a, "alarm");
+      a.pendingAt = performance.now() + VAULT.JAM_MS;   // the same step re-arms once the jam clears
+      commit({});
+    }
+
+    function archive(a, outcome) {
+      a.current = null;
+      a.pendingAt = null;
+      const log = state.vault.telemetry;
+      log.push({ id: a.id, outcome, profile: a.profile, sequence: a.sequence.slice(), timing: a.timing });
+      if (log.length > VAULT.TELEMETRY_KEEP) log.splice(0, log.length - VAULT.TELEMETRY_KEEP);
+    }
+
+    function crack(a) {
+      const v = state.vault;
+      const loot = vaultRewards(a);
+      const slot = state.vaultSlots < CONFIG.VAULT_CAP;
+      const influenceBefore = state.influence;
+      // setState clamps influence (1,000,000) and vault slots (50)
+      setState({
+        gold: state.gold + loot.gold,
+        influence: state.influence + loot.influence,
+        vaultSlots: state.vaultSlots + (slot ? 1 : 0),
+      });
+      const result = {
+        outcome: "cracked",
+        level: a.profile.level,
+        target: vaultTarget(a.profile.level),
+        gold: loot.gold,
+        influence: state.influence - influenceBefore,
+        slot,
+        perfects: a.perfects,
+        steps: a.sequence.length,
+        misses: a.misses,
+        bestStreak: a.bestStreak,
+        grade: vaultGrade(a),
+      };
+      archive(a, "cracked");
+      commit({
+        phase: "cracked",
+        result,
+        level: Math.min(VAULT.MAX_LEVEL, v.level + 1),
+        cracked: v.cracked + 1,
+        bestStreak: Math.max(v.bestStreak, a.bestStreak),
+      });
+      VaultView.fxCrack(result);
+      Sfx.crack();
+      buzz([20, 40, 70]);
+      Bus.emit("vault:cracked", result);
+    }
+
+    function alarm(a, reason) {
+      const v = state.vault;
+      const heatBefore = state.heat;
+      setState({ heat: state.heat + VAULT.ALARM_HEAT });   // clamped to 100 by setState
+      const result = {
+        outcome: "alarm",
+        reason,                         // alarm | abandoned | interrupted
+        level: a.profile.level,
+        target: vaultTarget(a.profile.level),
+        heat: state.heat - heatBefore,
+        reached: a.step,
+        steps: a.sequence.length,
+      };
+      archive(a, "alarm");
+      commit({
+        phase: "alarm",
+        result,
+        level: Math.max(1, v.level - 1),   // security eases after a failure so the curve self-corrects
+        alarms: v.alarms + 1,
+        bestStreak: Math.max(v.bestStreak, a.bestStreak),
+      });
+      VaultView.fxAlarm();
+      Sfx.alarm();
+      buzz([90, 60, 90]);
+      Bus.emit("vault:alarm", result);
+    }
+
+    // Leaving mid-breach: no loot. If a tumbler was already missed, the alarm trips anyway.
+    function abort(reason) {
+      if (!isLive()) return;
+      const a = state.vault.attempt;
+      if (a.current) VaultView.clearRing(a.current.tumbler);
+      a.current = null;
+      a.pendingAt = null;
+      if (a.misses > 0) return alarm(a, reason);
+      archive(a, "aborted");
+      commit({ phase: "aborted", result: { outcome: "aborted", reason, level: a.profile.level, target: vaultTarget(a.profile.level) } });
+    }
+
+    function onKey(e) {
+      if (state.activeTab !== "vault" || e.ctrlKey || e.metaKey || e.altKey) return;
+      const tgt = e.target && e.target.closest ? e.target : null;
+      if (tgt && tgt.closest("input, textarea, select, [contenteditable]")) return;
+      const idx = VAULT.KEYS[e.code];
+      if (idx !== undefined) {
+        e.preventDefault();
+        if (!e.repeat) input(idx, eventTime(e), "key");
+        return;
+      }
+      if (e.code === "Space" || e.code === "Enter" || e.code === "NumpadEnter") {
+        if (tgt && tgt.closest("button, a, [role='tab']")) return;   // focused controls activate themselves
+        e.preventDefault();
+        if (!e.repeat && !isLive()) start();
+        return;
+      }
+      if (isLive() && /^Digit\d$/.test(e.code)) e.preventDefault();   // a stray digit shouldn't abandon a live breach
+    }
+
+    function init() {
+      const { vbMech, vbCore, vbAction, vbSound } = VaultView.el;
+      // pointerdown (not click) for the lowest-latency, most honest timestamp on mouse, touch and pen
+      vbMech.addEventListener("pointerdown", (e) => {
+        const btn = e.target.closest(".vb-tumbler");
+        if (!btn || e.button > 0) return;
+        e.preventDefault();
+        input(Number(btn.dataset.i), eventTime(e), e.pointerType || "pointer");
+      }, { passive: false });
+      vbMech.addEventListener("contextmenu", (e) => e.preventDefault());
+      vbCore.addEventListener("click", () => { if (!isLive()) start(); });
+      vbAction.addEventListener("click", start);
+      vbSound.addEventListener("click", () => { Sfx.setMuted(!Sfx.muted); VaultView.render(); });
+      window.addEventListener("keydown", onKey, true);   // capture: claims keys before Step 1 hotkeys
+      document.addEventListener("visibilitychange", () => { if (document.hidden) abort("interrupted"); });
+      Bus.on("tab:change", ({ from }) => { if (from === "vault") abort("abandoned"); });
+      Bus.on("state:change", () => VaultView.render());
+    }
+
+    return {
+      init,
+      start,
+      abort,
+      input,
+      profile: vaultProfile,
+      addResolver(fn) {
+        resolvers.push(fn);
+        return () => { const i = resolvers.indexOf(fn); if (i >= 0) resolvers.splice(i, 1); };
+      },
+    };
+  })();
+
   /* ---------------- BOOT ---------------- */
   function boot() {
+    VaultView.build();        // inject tumblers / face details before bindings are cached
+    VaultBreach.init();
     Render.collect();
     initRouter();
     Emblem.init();
     switchTab(state.activeTab);
     Render.flush();
+    VaultView.render();
   }
 
   // Public API for later steps and console debugging.
-  window.EmpireAscent = { state, setState, switchTab, Bus, Render, Bindings, Fmt, CONFIG, TABS };
+  window.EmpireAscent = { state, setState, switchTab, Bus, Render, Bindings, Fmt, CONFIG, TABS, VAULT, VaultBreach };
   window.switchTab = switchTab;
 
   boot();
