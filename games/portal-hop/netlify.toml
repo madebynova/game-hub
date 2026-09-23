@@ -1,0 +1,13 @@
+# Netlify reads this on every deploy; no settings need to be configured in the UI.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Single-page game: anything that isn't a real file falls back to index.html.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
